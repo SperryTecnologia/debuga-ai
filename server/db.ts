@@ -1,11 +1,10 @@
-import { eq } from "drizzle-orm";
+import { eq, desc, and, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, conversations, messages, type InsertConversation, type InsertMessage } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -89,4 +88,88 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ── Conversations ──
+
+export async function createConversation(userId: number, title?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const values: InsertConversation = { userId, title: title || "Nova conversa" };
+  const result = await db.insert(conversations).values(values);
+  const insertId = result[0].insertId;
+
+  const rows = await db.select().from(conversations).where(eq(conversations.id, insertId)).limit(1);
+  return rows[0];
+}
+
+export async function listConversations(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return db
+    .select()
+    .from(conversations)
+    .where(eq(conversations.userId, userId))
+    .orderBy(desc(conversations.updatedAt));
+}
+
+export async function getConversation(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const rows = await db
+    .select()
+    .from(conversations)
+    .where(and(eq(conversations.id, id), eq(conversations.userId, userId)))
+    .limit(1);
+
+  return rows[0] || null;
+}
+
+export async function updateConversationTitle(id: number, userId: number, title: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(conversations)
+    .set({ title })
+    .where(and(eq(conversations.id, id), eq(conversations.userId, userId)));
+}
+
+export async function deleteConversation(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(messages).where(eq(messages.conversationId, id));
+  await db.delete(conversations).where(and(eq(conversations.id, id), eq(conversations.userId, userId)));
+}
+
+// ── Messages ──
+
+export async function addMessage(data: InsertMessage) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(messages).values(data);
+  const insertId = result[0].insertId;
+
+  // Touch conversation updatedAt
+  await db
+    .update(conversations)
+    .set({ updatedAt: new Date() })
+    .where(eq(conversations.id, data.conversationId));
+
+  const rows = await db.select().from(messages).where(eq(messages.id, insertId)).limit(1);
+  return rows[0];
+}
+
+export async function getMessages(conversationId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return db
+    .select()
+    .from(messages)
+    .where(eq(messages.conversationId, conversationId))
+    .orderBy(asc(messages.createdAt));
+}

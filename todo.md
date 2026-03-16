@@ -1,0 +1,19 @@
+# debuga.ai - Project TODO
+
+- [x] Dark theme setup (green #4AB648 + black) with terminal/shell aesthetic
+- [x] Upload and configure logo/avatar assets via CDN
+- [x] Database schema: conversations and messages tables
+- [x] Backend: chat router with create conversation, send message, list history
+- [x] Backend: LLM integration with streaming SSE endpoint
+- [x] Backend: system prompt for IT/Security/Telecom agent persona
+- [x] Frontend: Chat interface with terminal-style design
+- [x] Frontend: Message bubbles with avatar icons and timestamps
+- [x] Frontend: Streaming text display with typing animation
+- [x] Frontend: Markdown rendering with syntax highlighting
+- [x] Frontend: Conversation sidebar with history list
+- [x] Frontend: New chat creation and conversation switching
+- [x] Frontend: Loading states and micro-interactions
+- [x] Authentication: protected chat routes, login redirect
+- [x] Role-based access: admin/user distinction
+- [x] Prepared tool-use stubs for Zabbix, Wazuh, Prometheus, NetBox APIs
+- [x] Vitest tests for backend procedures (15 tests passing)
