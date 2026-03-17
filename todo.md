@@ -32,3 +32,6 @@
 - [x] Protect chat routes by active subscription
 - [x] Subscription management page (current plan, cancel, upgrade) - via Stripe Customer Portal
 - [x] Vitest tests for subscription and payment flows (24 tests passing)
+- [x] Ícones dinâmicos contextuais nas conversas da sidebar (baseados no tema/conteúdo)
+- [x] Detecção automática de tema por keywords no título da conversa
+- [x] Ícone exibido na sidebar e no header da conversa ativa

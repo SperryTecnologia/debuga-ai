@@ -29,6 +29,20 @@ import {
   Check,
   X,
   MoreHorizontal,
+  Bug,
+  Database,
+  Cloud,
+  Lock,
+  FileCode,
+  Network,
+  Cpu,
+  HardDrive,
+  Globe,
+  Flame,
+  AlertTriangle,
+  Key,
+  Container,
+  type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Streamdown } from "streamdown";
@@ -46,6 +60,123 @@ type ChatMessage = {
   content: string;
   createdAt: Date;
 };
+
+// ── Topic Detection & Icon Mapping ──
+interface TopicConfig {
+  icon: LucideIcon;
+  color: string; // tailwind text color
+  keywords: string[];
+}
+
+const TOPIC_MAP: TopicConfig[] = [
+  {
+    icon: Shield,
+    color: "text-emerald-400",
+    keywords: ["seguranca", "segurança", "security", "firewall", "waf", "ids", "ips", "siem", "wazuh", "hardening", "pentest", "vulnerabilidade", "cve", "nist", "iso 27001", "compliance", "auditoria"],
+  },
+  {
+    icon: Bug,
+    color: "text-red-400",
+    keywords: ["bug", "erro", "error", "debug", "crash", "exception", "traceback", "stack trace", "falha", "fix"],
+  },
+  {
+    icon: Network,
+    color: "text-blue-400",
+    keywords: ["rede", "network", "tcp", "udp", "dns", "dhcp", "vlan", "switch", "router", "roteador", "latencia", "latência", "ping", "traceroute", "vpn", "subnet", "ip"],
+  },
+  {
+    icon: Wifi,
+    color: "text-cyan-400",
+    keywords: ["wifi", "wireless", "telecom", "telecomunicacao", "telecomunicação", "5g", "4g", "lte", "fibra", "óptica", "optica", "antena", "radiofrequencia"],
+  },
+  {
+    icon: Server,
+    color: "text-orange-400",
+    keywords: ["servidor", "server", "linux", "windows server", "apache", "nginx", "iis", "cpu", "memoria", "memória", "ram", "uptime", "reboot"],
+  },
+  {
+    icon: Database,
+    color: "text-violet-400",
+    keywords: ["banco de dados", "database", "mysql", "postgres", "mongodb", "redis", "sql", "query", "backup", "restore", "replicacao", "replicação"],
+  },
+  {
+    icon: Cloud,
+    color: "text-sky-400",
+    keywords: ["cloud", "nuvem", "aws", "azure", "gcp", "s3", "ec2", "lambda", "terraform", "cloudformation", "iaas", "paas", "saas"],
+  },
+  {
+    icon: Container,
+    color: "text-blue-300",
+    keywords: ["docker", "container", "kubernetes", "k8s", "pod", "helm", "compose", "swarm", "registry", "imagem"],
+  },
+  {
+    icon: Terminal,
+    color: "text-green-400",
+    keywords: ["script", "bash", "shell", "powershell", "automacao", "automação", "cron", "ansible", "puppet", "chef", "ci/cd", "pipeline", "jenkins", "github actions"],
+  },
+  {
+    icon: Lock,
+    color: "text-yellow-400",
+    keywords: ["senha", "password", "autenticacao", "autenticação", "oauth", "jwt", "ssl", "tls", "certificado", "https", "criptografia", "encryption", "mfa", "2fa"],
+  },
+  {
+    icon: Cpu,
+    color: "text-pink-400",
+    keywords: ["monitoramento", "monitoring", "zabbix", "prometheus", "grafana", "nagios", "alerta", "metrica", "métrica", "dashboard", "observabilidade"],
+  },
+  {
+    icon: HardDrive,
+    color: "text-amber-400",
+    keywords: ["disco", "disk", "storage", "raid", "nas", "san", "lvm", "partição", "particao", "filesystem", "ext4", "ntfs", "zfs"],
+  },
+  {
+    icon: FileCode,
+    color: "text-teal-400",
+    keywords: ["codigo", "código", "code", "python", "javascript", "java", "api", "rest", "json", "yaml", "xml", "git", "deploy"],
+  },
+  {
+    icon: Globe,
+    color: "text-indigo-400",
+    keywords: ["web", "site", "dominio", "domínio", "http", "proxy", "load balancer", "cdn", "cache", "wordpress"],
+  },
+  {
+    icon: Flame,
+    color: "text-red-500",
+    keywords: ["incidente", "incident", "emergencia", "emergência", "urgente", "critico", "crítico", "downtime", "outage", "indisponivel"],
+  },
+  {
+    icon: AlertTriangle,
+    color: "text-yellow-500",
+    keywords: ["alerta", "warning", "aviso", "atencao", "atenção", "problema", "issue", "troubleshoot"],
+  },
+  {
+    icon: Key,
+    color: "text-amber-300",
+    keywords: ["acesso", "permissao", "permissão", "rbac", "iam", "ldap", "active directory", "ad", "grupo", "usuario", "usuário"],
+  },
+];
+
+function detectTopicFromTitle(title: string): TopicConfig {
+  const normalized = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  
+  for (const topic of TOPIC_MAP) {
+    for (const kw of topic.keywords) {
+      const normalizedKw = kw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (normalized.includes(normalizedKw)) {
+        return topic;
+      }
+    }
+  }
+  
+  // Default: generic message icon
+  return { icon: MessageSquare, color: "text-muted-foreground", keywords: [] };
+}
+
+function ConversationIcon({ title, className }: { title: string; className?: string }) {
+  const topic = detectTopicFromTitle(title);
+  const Icon = topic.icon;
+  return <Icon className={cn("w-4 h-4 shrink-0", topic.color, className)} />;
+}
 
 const SUGGESTED_PROMPTS = [
   {
@@ -98,6 +229,10 @@ export default function ChatPage() {
 
   const utils = trpc.useUtils();
 
+  // Subscription check - admins bypass
+  const subQuery = trpc.subscription.status.useQuery(undefined, { enabled: !!user });
+  const hasAccess = subQuery.data?.isAdmin || subQuery.data?.hasActiveSubscription;
+
   // Load messages when conversation changes
   useEffect(() => {
     if (messagesQuery.data) {
@@ -116,6 +251,16 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingContent]);
+
+  // Checkout success handler
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "success") {
+      toast.success("Assinatura ativada com sucesso! Bem-vindo ao debuga.ai.");
+      window.history.replaceState({}, "", "/chat");
+      subQuery.refetch();
+    }
+  }, []);
 
   const handleNewChat = useCallback(async () => {
     try {
@@ -325,19 +470,6 @@ export default function ChatPage() {
     );
   }
 
-  // Subscription check - admins bypass
-  const subQuery = trpc.subscription.status.useQuery(undefined, { enabled: !!user });
-  const hasAccess = subQuery.data?.isAdmin || subQuery.data?.hasActiveSubscription;
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("checkout") === "success") {
-      toast.success("Assinatura ativada com sucesso! Bem-vindo ao debuga.ai.");
-      window.history.replaceState({}, "", "/chat");
-      subQuery.refetch();
-    }
-  }, []);
-
   // Show paywall if no subscription and not admin
   if (!subQuery.isLoading && !hasAccess) {
     return (
@@ -434,7 +566,7 @@ export default function ChatPage() {
                   setStreamingContent("");
                 }}
               >
-                <MessageSquare className="w-4 h-4 shrink-0 opacity-50" />
+                <ConversationIcon title={conv.title || ""} />
                 {editingTitle === conv.id ? (
                   <div className="flex-1 flex items-center gap-1">
                     <input
@@ -566,6 +698,18 @@ export default function ChatPage() {
                 {isStreaming ? "Processando..." : "Online"}
               </span>
             </div>
+            {activeConversationId && (() => {
+              const activeConv = conversations.find((c: any) => c.id === activeConversationId);
+              if (!activeConv) return null;
+              return (
+                <div className="flex items-center gap-2 ml-2 px-2 py-1 rounded-md bg-card/50 border border-border/50">
+                  <ConversationIcon title={activeConv.title || ""} />
+                  <span className="font-mono text-xs text-foreground/80 truncate max-w-[200px]">
+                    {activeConv.title}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono text-muted-foreground/50">
