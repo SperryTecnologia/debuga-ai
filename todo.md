@@ -17,3 +17,9 @@
 - [x] Role-based access: admin/user distinction
 - [x] Prepared tool-use stubs for Zabbix, Wazuh, Prometheus, NetBox APIs
 - [x] Vitest tests for backend procedures (15 tests passing)
+- [x] Generate new professional Logo Icon (3D, high quality)
+- [x] Generate new professional Logo Full (3D, high quality)
+- [x] Generate new professional Agent Avatar (3D, high quality)
+- [x] Generate new Hero 3D image for landing page
+- [x] Generate new OG Image for social media
+- [x] Upload all assets to CDN and update frontend URLs
