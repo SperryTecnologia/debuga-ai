@@ -229,9 +229,10 @@ export default function ChatPage() {
 
   const utils = trpc.useUtils();
 
-  // Subscription check - admins bypass
+  // Subscription check - admins and free tier bypass
   const subQuery = trpc.subscription.status.useQuery(undefined, { enabled: !!user });
-  const hasAccess = subQuery.data?.isAdmin || subQuery.data?.hasActiveSubscription;
+  // All authenticated users get free tier access; paid plans unlock more features
+  const hasAccess = !!user || subQuery.data?.isAdmin || subQuery.data?.hasActiveSubscription;
 
   // Load messages when conversation changes
   useEffect(() => {

@@ -9,6 +9,8 @@ import {
   Crown,
   Building2,
   Loader2,
+  Gift,
+  ArrowRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -33,60 +35,108 @@ interface PlanDisplay {
   description: string;
   icon: typeof Zap;
   features: string[];
+  priceMonthly: number; // in BRL (not cents)
+  priceYearly: number;  // in BRL (not cents) — total annual
   popular?: boolean;
   cta: string;
   highlight?: boolean;
+  isFree?: boolean;
+  badge?: string;
 }
 
 const PLANS: PlanDisplay[] = [
   {
+    id: "free",
+    name: "Gratuito",
+    description: "Conheça o debuga.ai sem compromisso",
+    icon: Gift,
+    priceMonthly: 0,
+    priceYearly: 0,
+    features: [
+      "5 mensagens por dia",
+      "3 conversas por mês",
+      "Análise básica de TI",
+      "Respostas com IA generativa",
+    ],
+    cta: "Começar Grátis",
+    isFree: true,
+  },
+  {
     id: "starter",
     name: "Starter",
-    description: "Para profissionais de TI que querem comecar a usar IA no dia a dia",
+    description: "Para profissionais de TI que usam IA no dia a dia",
     icon: Zap,
+    priceMonthly: 49.90,
+    priceYearly: 479.00,
     features: [
-      "50 mensagens por dia",
-      "10 conversas por mes",
-      "Analise de seguranca basica",
-      "Scripts de automacao",
+      "100 mensagens por dia",
+      "30 conversas por mês",
+      "Análise de segurança básica",
+      "Scripts de automação",
+      "Histórico de 30 dias",
       "Suporte por email",
     ],
-    cta: "Comecar com Starter",
+    cta: "Assinar Starter",
   },
   {
     id: "pro",
     name: "Pro",
     description: "Para equipes de TI que precisam de poder total",
     icon: Crown,
+    priceMonthly: 149.90,
+    priceYearly: 1439.00,
     features: [
       "Mensagens ilimitadas",
       "Conversas ilimitadas",
-      "Analise avancada de seguranca",
-      "Integracao com Zabbix, Wazuh, Prometheus",
-      "Geracao de relatorios",
-      "Suporte prioritario",
+      "Análise avançada de segurança",
+      "Integração Zabbix, Wazuh, Prometheus",
+      "Geração de relatórios PDF",
+      "Histórico completo",
+      "Suporte prioritário via chat",
     ],
     popular: true,
     highlight: true,
     cta: "Assinar Pro",
+    badge: "MAIS POPULAR",
   },
   {
     id: "enterprise",
     name: "Enterprise",
-    description: "Para empresas que precisam de controle total e personalizacao",
+    description: "Para empresas com necessidades avançadas de compliance",
     icon: Building2,
+    priceMonthly: 499.90,
+    priceYearly: 4799.00,
     features: [
-      "Tudo do Pro",
-      "API dedicada",
+      "Tudo do Pro incluído",
+      "API dedicada com SLA",
       "Sandbox Docker para scripts",
-      "Integracao com NetBox e CMDB",
-      "SSO / SAML",
-      "SLA garantido",
+      "Integração NetBox e CMDB",
+      "SSO / SAML / LDAP",
+      "Relatórios de compliance",
       "Gerente de conta dedicado",
+      "Treinamento da equipe",
     ],
     cta: "Falar com Vendas",
   },
 ];
+
+function formatBRL(value: number): string {
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+  });
+}
+
+function getMonthlyFromYearly(yearly: number): number {
+  return Math.round((yearly / 12) * 100) / 100;
+}
+
+function getSavingsPercent(monthly: number, yearly: number): number {
+  if (monthly === 0) return 0;
+  const fullYear = monthly * 12;
+  return Math.round(((fullYear - yearly) / fullYear) * 100);
+}
 
 export default function PricingPage() {
   const { user, loading: authLoading } = useAuth();
@@ -97,18 +147,27 @@ export default function PricingPage() {
 
   useEffect(() => {
     if (search.includes("checkout=canceled")) {
-      toast.error("Checkout cancelado. Voce pode tentar novamente quando quiser.");
+      toast.error("Checkout cancelado. Você pode tentar novamente quando quiser.");
     }
   }, [search]);
 
   const handleSubscribe = async (planId: string) => {
+    if (planId === "free") {
+      if (!user) {
+        window.location.href = getLoginUrl("/chat");
+        return;
+      }
+      setLocation("/chat");
+      return;
+    }
+
     if (!user) {
       window.location.href = getLoginUrl("/pricing");
       return;
     }
 
     if (planId === "enterprise") {
-      toast.info("Entre em contato conosco para o plano Enterprise: contato@sperrytecnologia.com.br");
+      toast.info("Entre em contato: contato@sperrytecnologia.com.br");
       return;
     }
 
@@ -122,13 +181,13 @@ export default function PricingPage() {
 
       const data = await res.json();
       if (data.url) {
-        toast.info("Redirecionando para o checkout...");
+        toast.info("Redirecionando para o checkout seguro...");
         window.open(data.url, "_blank");
       } else {
-        toast.error("Erro ao criar sessao de checkout");
+        toast.error(data.error || "Erro ao criar sessão de checkout");
       }
     } catch (err) {
-      toast.error("Erro ao processar pagamento");
+      toast.error("Erro ao processar pagamento. Tente novamente.");
     } finally {
       setLoadingPlan(null);
     }
@@ -169,14 +228,14 @@ export default function PricingPage() {
           className="text-center mb-12"
         >
           <motion.p variants={fadeInUp} className="text-primary font-mono text-sm mb-3">
-            {"// PLANOS"}
+            {"// PLANOS & PREÇOS"}
           </motion.p>
           <motion.h1 variants={fadeInUp} className="text-3xl md:text-5xl font-bold mb-4">
             Escolha o plano ideal para sua equipe
           </motion.h1>
           <motion.p variants={fadeInUp} className="text-muted-foreground max-w-2xl mx-auto mb-8">
-            Todos os planos incluem acesso ao agente autonomo de IA especializado em TI,
-            seguranca da informacao e DevOps.
+            Todos os planos pagos incluem acesso ao agente autônomo de IA especializado em TI,
+            segurança da informação e DevOps. Comece grátis e escale quando precisar.
           </motion.p>
 
           {/* Interval Toggle */}
@@ -202,8 +261,8 @@ export default function PricingPage() {
               )}
             >
               Anual
-              <span className="absolute -top-2 -right-2 text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-bold">
-                -17%
+              <span className="absolute -top-2 -right-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full font-bold">
+                Economize
               </span>
             </button>
           </motion.div>
@@ -214,75 +273,224 @@ export default function PricingPage() {
           initial="hidden"
           animate="visible"
           variants={stagger}
-          className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
+          className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto"
         >
-          {PLANS.map((plan) => (
-            <motion.div
-              key={plan.id}
-              variants={fadeInUp}
-              className={cn(
-                "relative flex flex-col p-6 rounded-2xl border transition-all duration-300",
-                plan.highlight
-                  ? "border-primary bg-card shadow-lg shadow-primary/10 scale-[1.02]"
-                  : "border-border/50 bg-card/50 hover:border-primary/30"
-              )}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-mono font-bold">
-                  MAIS POPULAR
-                </div>
-              )}
+          {PLANS.map((plan) => {
+            const displayPrice = interval === "monthly"
+              ? plan.priceMonthly
+              : getMonthlyFromYearly(plan.priceYearly);
+            const savings = getSavingsPercent(plan.priceMonthly, plan.priceYearly);
 
-              <div className="mb-6">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <plan.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground">{plan.description}</p>
-              </div>
-
-              <div className="flex-1 mb-6">
-                <ul className="space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-sm">
-                      <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      <span className="text-muted-foreground">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <Button
-                onClick={() => handleSubscribe(plan.id)}
-                disabled={!!loadingPlan}
+            return (
+              <motion.div
+                key={plan.id}
+                variants={fadeInUp}
                 className={cn(
-                  "w-full font-mono gap-2",
+                  "relative flex flex-col p-6 rounded-2xl border transition-all duration-300",
                   plan.highlight
-                    ? ""
-                    : "bg-transparent border border-primary/30 text-primary hover:bg-primary/10"
+                    ? "border-primary bg-card shadow-lg shadow-primary/10 scale-[1.02]"
+                    : "border-border/50 bg-card/50 hover:border-primary/30"
                 )}
-                variant={plan.highlight ? "default" : "outline"}
               >
-                {loadingPlan === plan.id ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : null}
-                {plan.cta}
-              </Button>
-            </motion.div>
-          ))}
+                {plan.badge && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-mono font-bold whitespace-nowrap">
+                    {plan.badge}
+                  </div>
+                )}
+
+                <div className="mb-5">
+                  <div className={cn(
+                    "w-11 h-11 rounded-lg flex items-center justify-center mb-4",
+                    plan.isFree ? "bg-muted" : "bg-primary/10"
+                  )}>
+                    <plan.icon className={cn(
+                      "w-5 h-5",
+                      plan.isFree ? "text-muted-foreground" : "text-primary"
+                    )} />
+                  </div>
+                  <h3 className="text-lg font-bold mb-1">{plan.name}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{plan.description}</p>
+                </div>
+
+                {/* Price Display */}
+                <div className="mb-5">
+                  {plan.isFree ? (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-bold font-mono">R$0</span>
+                      <span className="text-muted-foreground text-sm">/mês</span>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-bold font-mono">
+                          {formatBRL(displayPrice)}
+                        </span>
+                        <span className="text-muted-foreground text-sm">/mês</span>
+                      </div>
+                      {interval === "yearly" && savings > 0 && (
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className="text-xs text-muted-foreground line-through">
+                            {formatBRL(plan.priceMonthly)}/mês
+                          </span>
+                          <span className="text-xs text-emerald-400 font-mono font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                            -{savings}%
+                          </span>
+                        </div>
+                      )}
+                      {interval === "yearly" && (
+                        <p className="text-[11px] text-muted-foreground/70 mt-1 font-mono">
+                          {formatBRL(plan.priceYearly)} cobrado anualmente
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Features */}
+                <div className="flex-1 mb-5">
+                  <ul className="space-y-2.5">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2 text-sm">
+                        <Check className={cn(
+                          "w-4 h-4 shrink-0 mt-0.5",
+                          plan.isFree ? "text-muted-foreground" : "text-primary"
+                        )} />
+                        <span className="text-muted-foreground text-xs">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* CTA Button */}
+                <Button
+                  onClick={() => handleSubscribe(plan.id)}
+                  disabled={!!loadingPlan}
+                  className={cn(
+                    "w-full font-mono gap-2 text-sm",
+                    plan.highlight
+                      ? ""
+                      : plan.isFree
+                        ? "bg-muted text-foreground hover:bg-muted/80 border-0"
+                        : "bg-transparent border border-primary/30 text-primary hover:bg-primary/10"
+                  )}
+                  variant={plan.highlight ? "default" : "outline"}
+                >
+                  {loadingPlan === plan.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ArrowRight className="w-4 h-4" />
+                  )}
+                  {plan.cta}
+                </Button>
+              </motion.div>
+            );
+          })}
         </motion.div>
 
-        {/* FAQ / Trust */}
+        {/* Comparison Table */}
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={stagger}
-          className="mt-20 text-center"
+          className="mt-20 max-w-4xl mx-auto"
         >
-          <motion.p variants={fadeInUp} className="text-sm text-muted-foreground max-w-2xl mx-auto">
-            Pagamento seguro via Stripe. Aceitamos cartao de credito, PIX e boleto bancario.
-            Cancele a qualquer momento sem multa. Teste com o cartao 4242 4242 4242 4242 no modo sandbox.
+          <motion.h2 variants={fadeInUp} className="text-2xl font-bold text-center mb-8">
+            Compare os planos
+          </motion.h2>
+          <motion.div variants={fadeInUp} className="overflow-x-auto rounded-xl border border-border/50">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/50 bg-card/50">
+                  <th className="text-left p-4 font-mono text-muted-foreground">Recurso</th>
+                  <th className="text-center p-4 font-mono text-muted-foreground">Gratuito</th>
+                  <th className="text-center p-4 font-mono text-muted-foreground">Starter</th>
+                  <th className="text-center p-4 font-mono text-primary font-bold">Pro</th>
+                  <th className="text-center p-4 font-mono text-muted-foreground">Enterprise</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/30">
+                <tr>
+                  <td className="p-4 text-muted-foreground">Mensagens/dia</td>
+                  <td className="p-4 text-center font-mono">5</td>
+                  <td className="p-4 text-center font-mono">100</td>
+                  <td className="p-4 text-center font-mono text-primary">Ilimitado</td>
+                  <td className="p-4 text-center font-mono">Ilimitado</td>
+                </tr>
+                <tr>
+                  <td className="p-4 text-muted-foreground">Conversas/mês</td>
+                  <td className="p-4 text-center font-mono">3</td>
+                  <td className="p-4 text-center font-mono">30</td>
+                  <td className="p-4 text-center font-mono text-primary">Ilimitado</td>
+                  <td className="p-4 text-center font-mono">Ilimitado</td>
+                </tr>
+                <tr>
+                  <td className="p-4 text-muted-foreground">Análise de segurança</td>
+                  <td className="p-4 text-center">Básica</td>
+                  <td className="p-4 text-center">Básica</td>
+                  <td className="p-4 text-center text-primary">Avançada</td>
+                  <td className="p-4 text-center">Avançada</td>
+                </tr>
+                <tr>
+                  <td className="p-4 text-muted-foreground">Integrações (Zabbix, Wazuh...)</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
+                  <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="p-4 text-muted-foreground">Relatórios PDF</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
+                  <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="p-4 text-muted-foreground">API dedicada</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="p-4 text-muted-foreground">SSO / SAML</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="p-4 text-muted-foreground">Suporte</td>
+                  <td className="p-4 text-center">—</td>
+                  <td className="p-4 text-center">Email</td>
+                  <td className="p-4 text-center text-primary">Chat prioritário</td>
+                  <td className="p-4 text-center">Gerente dedicado</td>
+                </tr>
+              </tbody>
+            </table>
+          </motion.div>
+        </motion.div>
+
+        {/* Trust Section */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={stagger}
+          className="mt-16 text-center space-y-4"
+        >
+          <motion.div variants={fadeInUp} className="flex flex-wrap justify-center gap-6 text-xs text-muted-foreground/70 font-mono">
+            <span>Pagamento seguro via Stripe</span>
+            <span className="text-border">|</span>
+            <span>Cartão, PIX e Boleto</span>
+            <span className="text-border">|</span>
+            <span>Cancele quando quiser</span>
+            <span className="text-border">|</span>
+            <span>Dados protegidos</span>
+          </motion.div>
+          <motion.p variants={fadeInUp} className="text-[11px] text-muted-foreground/50 max-w-lg mx-auto">
+            Todos os valores em Reais (BRL). Planos anuais são cobrados em parcela única com desconto.
+            Para testar no modo sandbox, use o cartão 4242 4242 4242 4242.
           </motion.p>
         </motion.div>
       </div>

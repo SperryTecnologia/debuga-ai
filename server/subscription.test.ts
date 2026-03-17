@@ -66,17 +66,22 @@ describe("products configuration", () => {
   it("has valid plan definitions", async () => {
     const { PLANS, getPlanById } = await import("./products");
 
-    expect(PLANS).toHaveLength(3);
-    expect(PLANS.map((p) => p.id)).toEqual(["starter", "pro", "enterprise"]);
+    expect(PLANS).toHaveLength(4);
+    expect(PLANS.map((p) => p.id)).toEqual(["free", "starter", "pro", "enterprise"]);
 
     // Each plan should have required fields
     for (const plan of PLANS) {
       expect(plan.name).toBeTruthy();
       expect(plan.description).toBeTruthy();
       expect(plan.features.length).toBeGreaterThan(0);
+      expect(plan.stripe.currency).toBe("brl");
+    }
+
+    // Paid plans should have prices > 0
+    const paidPlans = PLANS.filter((p) => !p.isFree);
+    for (const plan of paidPlans) {
       expect(plan.stripe.priceMonthly).toBeGreaterThan(0);
       expect(plan.stripe.priceYearly).toBeGreaterThan(0);
-      expect(plan.stripe.currency).toBe("brl");
     }
   });
 
@@ -92,13 +97,23 @@ describe("products configuration", () => {
     expect(invalid).toBeUndefined();
   });
 
-  it("yearly prices are cheaper than 12x monthly", async () => {
+  it("yearly prices are cheaper than 12x monthly for paid plans", async () => {
     const { PLANS } = await import("./products");
 
-    for (const plan of PLANS) {
+    const paidPlans = PLANS.filter((p) => !p.isFree);
+    for (const plan of paidPlans) {
       const yearlyEquivalent = plan.stripe.priceMonthly * 12;
       expect(plan.stripe.priceYearly).toBeLessThan(yearlyEquivalent);
     }
+  });
+
+  it("free plan has zero prices", async () => {
+    const { getPlanById } = await import("./products");
+    const free = getPlanById("free");
+    expect(free).toBeDefined();
+    expect(free!.isFree).toBe(true);
+    expect(free!.stripe.priceMonthly).toBe(0);
+    expect(free!.stripe.priceYearly).toBe(0);
   });
 
   it("pro plan is marked as popular", async () => {

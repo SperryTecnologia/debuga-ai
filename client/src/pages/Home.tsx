@@ -87,7 +87,7 @@ export default function Home() {
     if (user) {
       setLocation("/chat");
     } else {
-      window.location.href = getLoginUrl("/pricing");
+      window.location.href = getLoginUrl("/chat");
     }
   };
 

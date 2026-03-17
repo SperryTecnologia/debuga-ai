@@ -1,7 +1,7 @@
 /**
  * Stripe Products & Pricing Configuration
- * Plans are created dynamically via Stripe API on first use.
- * Prices are NOT displayed on the website per business policy.
+ * Plans optimized for the Brazilian market (BRL).
+ * Prices are created dynamically via Stripe API on first checkout.
  */
 
 export interface Plan {
@@ -20,28 +20,52 @@ export interface Plan {
     currency: string;
   };
   popular?: boolean;
+  isFree?: boolean;
 }
 
 export const PLANS: Plan[] = [
   {
+    id: "free",
+    name: "Gratuito",
+    description: "Conheça o debuga.ai sem compromisso",
+    features: [
+      "5 mensagens por dia",
+      "3 conversas por mês",
+      "Análise básica de TI",
+      "Respostas com IA generativa",
+    ],
+    limits: {
+      messagesPerDay: 5,
+      conversationsPerMonth: 3,
+      maxTokensPerMessage: 2048,
+    },
+    stripe: {
+      priceMonthly: 0,
+      priceYearly: 0,
+      currency: "brl",
+    },
+    isFree: true,
+  },
+  {
     id: "starter",
     name: "Starter",
-    description: "Para profissionais de TI que querem começar a usar IA no dia a dia",
+    description: "Para profissionais de TI que usam IA no dia a dia",
     features: [
-      "50 mensagens por dia",
-      "10 conversas por mês",
+      "100 mensagens por dia",
+      "30 conversas por mês",
       "Análise de segurança básica",
       "Scripts de automação",
+      "Histórico de 30 dias",
       "Suporte por email",
     ],
     limits: {
-      messagesPerDay: 50,
-      conversationsPerMonth: 10,
+      messagesPerDay: 100,
+      conversationsPerMonth: 30,
       maxTokensPerMessage: 4096,
     },
     stripe: {
       priceMonthly: 4990, // R$49,90
-      priceYearly: 47900, // R$479,00 (2 meses grátis)
+      priceYearly: 47900, // R$479,00/ano (~R$39,92/mês — 2 meses grátis)
       currency: "brl",
     },
   },
@@ -53,9 +77,10 @@ export const PLANS: Plan[] = [
       "Mensagens ilimitadas",
       "Conversas ilimitadas",
       "Análise avançada de segurança",
-      "Integração com Zabbix, Wazuh, Prometheus",
-      "Geração de relatórios",
-      "Suporte prioritário",
+      "Integração Zabbix, Wazuh, Prometheus",
+      "Geração de relatórios PDF",
+      "Histórico completo",
+      "Suporte prioritário via chat",
     ],
     limits: {
       messagesPerDay: 999999,
@@ -64,7 +89,7 @@ export const PLANS: Plan[] = [
     },
     stripe: {
       priceMonthly: 14990, // R$149,90
-      priceYearly: 143900, // R$1.439,00 (2 meses grátis)
+      priceYearly: 143900, // R$1.439,00/ano (~R$119,92/mês — 2 meses grátis)
       currency: "brl",
     },
     popular: true,
@@ -72,15 +97,16 @@ export const PLANS: Plan[] = [
   {
     id: "enterprise",
     name: "Enterprise",
-    description: "Para empresas que precisam de controle total e personalização",
+    description: "Para empresas com necessidades avançadas de TI e compliance",
     features: [
-      "Tudo do Pro",
-      "API dedicada",
-      "Sandbox Docker para execução de scripts",
-      "Integração com NetBox e CMDB",
-      "SSO / SAML",
-      "SLA garantido",
+      "Tudo do Pro incluído",
+      "API dedicada com SLA",
+      "Sandbox Docker para scripts",
+      "Integração NetBox e CMDB",
+      "SSO / SAML / LDAP",
+      "Relatórios de compliance",
       "Gerente de conta dedicado",
+      "Treinamento da equipe",
     ],
     limits: {
       messagesPerDay: 999999,
@@ -89,7 +115,7 @@ export const PLANS: Plan[] = [
     },
     stripe: {
       priceMonthly: 49990, // R$499,90
-      priceYearly: 479900, // R$4.799,00
+      priceYearly: 479900, // R$4.799,00/ano (~R$399,92/mês)
       currency: "brl",
     },
   },

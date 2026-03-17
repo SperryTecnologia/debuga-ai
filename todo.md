@@ -35,3 +35,8 @@
 - [x] Ícones dinâmicos contextuais nas conversas da sidebar (baseados no tema/conteúdo)
 - [x] Detecção automática de tema por keywords no título da conversa
 - [x] Ícone exibido na sidebar e no header da conversa ativa
+- [x] Revisar planos com preços competitivos para o mercado brasileiro (4 planos: Free/Starter/Pro/Enterprise)
+- [x] Exibir valores de preço na PricingPage (mensal e anual com toggle e desconto -20%)
+- [x] Adicionar plano gratuito (trial/freemium) para atrair usuários
+- [x] Polir fluxo completo: landing -> login -> pricing -> checkout -> chat
+- [x] Garantir que login OAuth redireciona corretamente após autenticação
