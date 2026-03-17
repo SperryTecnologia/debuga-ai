@@ -11,6 +11,7 @@ import {
   deleteConversation,
   addMessage,
   getMessages,
+  getActiveSubscription,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import type { Message as LLMMessage } from "./_core/llm";
@@ -51,6 +52,17 @@ export const appRouter = router({
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
+    }),
+  }),
+
+  subscription: router({
+    status: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getActiveSubscription(ctx.user.id);
+      return {
+        hasActiveSubscription: !!sub,
+        subscription: sub,
+        isAdmin: ctx.user.role === "admin",
+      };
     }),
   }),
 

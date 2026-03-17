@@ -4,12 +4,16 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import Home from "./pages/Home";
 import ChatPage from "./pages/ChatPage";
+import PricingPage from "./pages/PricingPage";
 
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={ChatPage} />
+      <Route path={"/"} component={Home} />
+      <Route path={"/chat"} component={ChatPage} />
+      <Route path={"/pricing"} component={PricingPage} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Streamdown } from "streamdown";
+import { useLocation } from "wouter";
+import { toast } from "sonner";
 
 const LOGO_ICON =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga_logo_icon-cikoAtHz7LsHY3sccX7cHD.webp";
@@ -318,6 +320,56 @@ export default function ChatPage() {
             <Terminal className="w-4 h-4 mr-2" />
             Acessar Terminal
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Subscription check - admins bypass
+  const subQuery = trpc.subscription.status.useQuery(undefined, { enabled: !!user });
+  const hasAccess = subQuery.data?.isAdmin || subQuery.data?.hasActiveSubscription;
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "success") {
+      toast.success("Assinatura ativada com sucesso! Bem-vindo ao debuga.ai.");
+      window.history.replaceState({}, "", "/chat");
+      subQuery.refetch();
+    }
+  }, []);
+
+  // Show paywall if no subscription and not admin
+  if (!subQuery.isLoading && !hasAccess) {
+    return (
+      <div className="h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-8 max-w-md text-center px-6">
+          <img src={LOGO_ICON} alt="debuga.ai" className="w-20 h-20 rounded-2xl shadow-lg shadow-primary/20" />
+          <div className="space-y-3">
+            <h1 className="text-2xl font-bold font-mono">
+              Assinatura Necessaria
+            </h1>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Para acessar o agente autonomo de IA, voce precisa de uma assinatura ativa.
+              Escolha o plano ideal para sua equipe.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 w-full">
+            <Button
+              onClick={() => window.location.href = "/pricing"}
+              size="lg"
+              className="w-full font-mono"
+            >
+              Ver Planos
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => { logout(); window.location.href = "/"; }}
+              className="font-mono text-sm"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </Button>
+          </div>
         </div>
       </div>
     );

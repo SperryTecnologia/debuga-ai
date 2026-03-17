@@ -1,6 +1,6 @@
 import { eq, desc, and, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, conversations, messages, type InsertConversation, type InsertMessage } from "../drizzle/schema";
+import { InsertUser, users, conversations, messages, subscriptions, type InsertConversation, type InsertMessage, type InsertSubscription } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -172,4 +172,61 @@ export async function getMessages(conversationId: number) {
     .from(messages)
     .where(eq(messages.conversationId, conversationId))
     .orderBy(asc(messages.createdAt));
+}
+
+// ── Subscriptions ──
+
+export async function updateUserStripeCustomerId(userId: number, stripeCustomerId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ stripeCustomerId }).where(eq(users.id, userId));
+}
+
+export async function getUserByStripeCustomerId(stripeCustomerId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(users).where(eq(users.stripeCustomerId, stripeCustomerId)).limit(1);
+  return rows[0] || null;
+}
+
+export async function upsertSubscription(data: InsertSubscription) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(subscriptions).values(data).onDuplicateKeyUpdate({
+    set: {
+      stripePriceId: data.stripePriceId,
+      status: data.status,
+      currentPeriodEnd: data.currentPeriodEnd,
+      cancelAtPeriodEnd: data.cancelAtPeriodEnd,
+    },
+  });
+}
+
+export async function getActiveSubscription(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db
+    .select()
+    .from(subscriptions)
+    .where(and(eq(subscriptions.userId, userId), eq(subscriptions.status, "active")))
+    .orderBy(desc(subscriptions.createdAt))
+    .limit(1);
+  return rows[0] || null;
+}
+
+export async function getSubscriptionByStripeId(stripeSubscriptionId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId))
+    .limit(1);
+  return rows[0] || null;
+}
+
+export async function updateSubscriptionStatus(stripeSubscriptionId: string, status: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(subscriptions).set({ status }).where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId));
 }

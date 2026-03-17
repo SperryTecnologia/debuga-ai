@@ -23,3 +23,12 @@
 - [x] Generate new Hero 3D image for landing page
 - [x] Generate new OG Image for social media
 - [x] Upload all assets to CDN and update frontend URLs
+- [x] Landing page profissional com branding 3D, hero section, features, pricing CTA
+- [x] Stripe integration setup (webdev_add_feature)
+- [x] Database schema: subscriptions and plans tables
+- [x] Pricing page with subscription plans (Starter, Pro, Enterprise)
+- [x] Stripe checkout flow with PIX, cartão, boleto support
+- [x] Stripe webhook handler for subscription lifecycle
+- [x] Protect chat routes by active subscription
+- [x] Subscription management page (current plan, cancel, upgrade) - via Stripe Customer Portal
+- [x] Vitest tests for subscription and payment flows (24 tests passing)
