@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStreamRoute } from "../streamRoute";
 import { registerStripeRoutes } from "../stripeRoutes";
+import { registerUploadRoute } from "../uploadRoute";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -45,6 +46,9 @@ async function startServer() {
 
   // Stripe routes (webhook + checkout + portal)
   registerStripeRoutes(app);
+
+  // File upload endpoint
+  registerUploadRoute(app);
 
   // SSE streaming endpoint for chat
   registerStreamRoute(app);

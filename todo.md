@@ -40,3 +40,10 @@
 - [x] Adicionar plano gratuito (trial/freemium) para atrair usuários
 - [x] Polir fluxo completo: landing -> login -> pricing -> checkout -> chat
 - [x] Garantir que login OAuth redireciona corretamente após autenticação
+- [x] Geração de imagens via IA diretamente no chat (API integrada)
+- [x] Sandbox de código: execução segura de scripts Python/Bash no chat com output em tempo real
+- [x] Upload de arquivos: envio de logs, configs, screenshots para análise pelo agente
+- [x] Ferramentas de rede/segurança inline: DNS lookup, WHOIS, SSL check, HTTP check
+- [x] Renderização de resultados ricos no chat: imagens geradas, outputs de código, tabelas
+- [x] Tool-use framework: agente decide automaticamente qual ferramenta usar baseado no contexto
+- [x] Vitest tests para tools e upload (40 testes passando)
