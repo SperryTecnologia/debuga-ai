@@ -188,13 +188,40 @@ export function registerStreamRoute(app: Express) {
       // Get history
       const history = await getMessages(conversationId);
 
-      // Build messages for LLM
+      // Build messages for LLM with multimodal support
       const llmMessages: any[] = [
         { role: "system", content: SYSTEM_PROMPT },
-        ...history.map((m: { role: string; content: string }) => ({
-          role: m.role,
-          content: m.content,
-        })),
+        ...history.map((m: { role: string; content: string }) => {
+          // Detect image URLs in user messages and convert to multimodal format
+          if (m.role === "user") {
+            const imageUrlRegex = /\[Imagem anexada: [^\]]+\] URL: (https?:\/\/[^\s]+)/g;
+            const imageMatches = Array.from(m.content.matchAll(imageUrlRegex));
+            
+            if (imageMatches.length > 0) {
+              // Build multimodal content array
+              const contentParts: any[] = [];
+              
+              // Add text content (remove image URL lines for cleaner text)
+              const textContent = m.content.replace(/\[Imagem anexada: [^\]]+\] URL: https?:\/\/[^\s]+/g, "").trim();
+              if (textContent) {
+                contentParts.push({ type: "text", text: textContent });
+              } else {
+                contentParts.push({ type: "text", text: "Analise esta imagem:" });
+              }
+              
+              // Add each image as image_url
+              for (const match of imageMatches) {
+                contentParts.push({
+                  type: "image_url",
+                  image_url: { url: match[1], detail: "auto" },
+                });
+              }
+              
+              return { role: m.role, content: contentParts };
+            }
+          }
+          return { role: m.role, content: m.content };
+        }),
       ];
 
       // Set SSE headers

@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStreamRoute } from "../streamRoute";
 import { registerStripeRoutes } from "../stripeRoutes";
 import { registerUploadRoute } from "../uploadRoute";
+import { registerTranscribeRoute } from "../transcribeRoute";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -49,6 +50,9 @@ async function startServer() {
 
   // File upload endpoint
   registerUploadRoute(app);
+
+  // Audio transcription endpoint
+  registerTranscribeRoute(app);
 
   // SSE streaming endpoint for chat
   registerStreamRoute(app);

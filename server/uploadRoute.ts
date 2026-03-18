@@ -30,6 +30,12 @@ const ALLOWED_MIME_TYPES = [
   "image/gif",
   "image/webp",
   "image/svg+xml",
+  "audio/webm",
+  "audio/mpeg",
+  "audio/wav",
+  "audio/ogg",
+  "audio/mp4",
+  "audio/m4a",
   "application/octet-stream", // generic binary
 ];
 

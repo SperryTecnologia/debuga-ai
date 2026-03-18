@@ -52,6 +52,8 @@ import {
   Upload,
   FileText,
   XCircle,
+  Mic,
+  MicOff,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -414,10 +416,15 @@ export default function ChatPage() {
   const [activeSteps, setActiveSteps] = useState<StepEvent[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const chatAreaRef = useRef<HTMLDivElement>(null);
 
   // tRPC queries
   const conversationsQuery = trpc.chat.listConversations.useQuery(undefined, { enabled: !!user });
@@ -526,6 +533,159 @@ export default function ChatPage() {
     setUploadedFiles((prev) => [...prev, ...newFiles]);
     setIsUploading(false);
   }, []);
+
+  // ── Ctrl+V Paste handler ──
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (const item of Array.from(items)) {
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      }
+
+      if (files.length > 0) {
+        e.preventDefault();
+        const dt = new DataTransfer();
+        files.forEach((f) => dt.items.add(f));
+        handleFileUpload(dt.files);
+        toast.success(`${files.length} arquivo(s) colado(s) do clipboard`);
+      }
+    },
+    [handleFileUpload]
+  );
+
+  // ── Drag & Drop handlers ──
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set false if leaving the chat area entirely
+    const rect = chatAreaRef.current?.getBoundingClientRect();
+    if (rect) {
+      const { clientX, clientY } = e;
+      if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) {
+        setIsDragOver(false);
+      }
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(false);
+
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        handleFileUpload(files);
+        toast.success(`${files.length} arquivo(s) recebido(s)`);
+      }
+    },
+    [handleFileUpload]
+  );
+
+  // ── Audio Recording ──
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        if (audioBlob.size < 1000) {
+          toast.error("Gravacao muito curta, tente novamente");
+          return;
+        }
+
+        setIsUploading(true);
+        try {
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve((reader.result as string).split(",")[1]);
+            reader.readAsDataURL(audioBlob);
+          });
+
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              filename: `audio-${Date.now()}.webm`,
+              content: base64,
+              mimeType: "audio/webm",
+            }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            // Transcribe the audio
+            const transcribeRes = await fetch("/api/transcribe", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ audioUrl: data.file.url }),
+            });
+
+            if (transcribeRes.ok) {
+              const transcription = await transcribeRes.json();
+              if (transcription.text) {
+                setInput((prev) => prev + (prev ? " " : "") + transcription.text);
+                toast.success("Audio transcrito com sucesso!");
+              } else {
+                toast.error("Nao foi possivel transcrever o audio");
+              }
+            } else {
+              // Fallback: add as file attachment
+              setUploadedFiles((prev) => [...prev, data.file]);
+              toast.info("Audio anexado (transcricao indisponivel)");
+            }
+          } else {
+            toast.error("Falha ao enviar audio");
+          }
+        } catch {
+          toast.error("Erro ao processar audio");
+        } finally {
+          setIsUploading(false);
+        }
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+      toast.info("Gravando audio... Clique novamente para parar");
+    } catch {
+      toast.error("Nao foi possivel acessar o microfone");
+    }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  }, []);
+
+  const toggleRecording = useCallback(() => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }, [isRecording, startRecording, stopRecording]);
 
   const handleSendMessage = useCallback(
     async (content: string) => {
@@ -893,7 +1053,25 @@ export default function ChatPage() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-full">
+      <div
+        ref={chatAreaRef}
+        className={cn("flex-1 flex flex-col h-full relative", isDragOver && "ring-2 ring-primary ring-inset")}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {/* Drag & Drop Overlay */}
+        {isDragOver && (
+          <div className="absolute inset-0 z-50 bg-background/90 backdrop-blur-sm flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-dashed border-primary/50 bg-primary/5">
+              <Upload className="w-12 h-12 text-primary animate-bounce" />
+              <div className="text-center">
+                <p className="font-mono font-semibold text-primary">Solte seus arquivos aqui</p>
+                <p className="text-xs text-muted-foreground mt-1">Imagens, logs, configs, scripts, áudios...</p>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Top Bar */}
         <div className="h-14 flex items-center justify-between px-4 border-b border-border shrink-0 bg-background/80 backdrop-blur-sm">
           <div className="flex items-center gap-3">
@@ -920,7 +1098,7 @@ export default function ChatPage() {
             })()}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-muted-foreground/50">debuga.ai v2.0</span>
+            <span className="text-[10px] font-mono text-muted-foreground/50">debuga.ai v3.0</span>
           </div>
         </div>
 
@@ -1100,7 +1278,7 @@ export default function ChatPage() {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept=".txt,.csv,.json,.xml,.yaml,.yml,.log,.conf,.cfg,.ini,.sh,.py,.js,.ts,.html,.css,.md,.pdf,.png,.jpg,.jpeg,.gif,.webp,.svg"
+                accept=".txt,.csv,.json,.xml,.yaml,.yml,.log,.conf,.cfg,.ini,.sh,.py,.js,.ts,.html,.css,.md,.pdf,.png,.jpg,.jpeg,.gif,.webp,.svg,.mp3,.wav,.webm,.ogg,.m4a"
                 className="hidden"
                 onChange={(e) => handleFileUpload(e.target.files)}
               />
@@ -1109,8 +1287,9 @@ export default function ChatPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Descreva seu problema de TI, peça para executar código, verificar SSL, gerar imagens..."
-                className="w-full resize-none bg-card border-border rounded-xl pl-12 pr-14 min-h-[52px] max-h-40 font-mono text-sm placeholder:text-muted-foreground/50 focus-visible:ring-primary/50"
+                onPaste={handlePaste}
+                placeholder="Cole imagens (Ctrl+V), arraste arquivos, ou descreva seu problema..."
+                className="w-full resize-none bg-card border-border rounded-xl pl-12 pr-24 min-h-[52px] max-h-40 font-mono text-sm placeholder:text-muted-foreground/50 focus-visible:ring-primary/50"
                 rows={1}
                 disabled={isStreaming}
               />
@@ -1125,6 +1304,21 @@ export default function ChatPage() {
                 {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
               </Button>
               <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                disabled={isStreaming || isUploading}
+                onClick={toggleRecording}
+                className={cn(
+                  "absolute right-12 bottom-2 h-9 w-9 rounded-lg transition-all",
+                  isRecording
+                    ? "text-red-500 bg-red-500/10 hover:bg-red-500/20 animate-pulse"
+                    : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                )}
+              >
+                {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </Button>
+              <Button
                 type="submit"
                 size="icon"
                 disabled={(!input.trim() && uploadedFiles.length === 0) || isStreaming}
@@ -1135,19 +1329,19 @@ export default function ChatPage() {
             </form>
             <div className="flex items-center justify-center gap-3 mt-2">
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/40">
-                <Paperclip className="w-3 h-3" /> Arquivos
+                <Paperclip className="w-3 h-3" /> Ctrl+V / Drag
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/40">
+                <Mic className="w-3 h-3" /> Voz
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/40">
+                <ImageIcon className="w-3 h-3" /> Vision
               </div>
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/40">
                 <Code2 className="w-3 h-3" /> Código
               </div>
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/40">
-                <ImageIcon className="w-3 h-3" /> Imagens
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/40">
                 <ShieldCheck className="w-3 h-3" /> SSL/DNS
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/40">
-                <Globe className="w-3 h-3" /> WHOIS
               </div>
             </div>
           </div>

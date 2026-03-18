@@ -47,3 +47,10 @@
 - [x] Renderização de resultados ricos no chat: imagens geradas, outputs de código, tabelas
 - [x] Tool-use framework: agente decide automaticamente qual ferramenta usar baseado no contexto
 - [x] Vitest tests para tools e upload (40 testes passando)
+- [x] Ctrl+V paste de imagens direto no chat (clipboard)
+- [x] Drag & Drop de arquivos na área do chat com overlay visual animado
+- [x] Preview de imagens coladas/arrastadas antes de enviar
+- [x] Análise de imagens via LLM vision (multimodal) - agente "vê" a imagem
+- [x] Transcrição de áudio via Whisper API integrada (pt-BR)
+- [x] Suporte a envio de áudio (.mp3, .wav, .webm, .ogg, .m4a) + gravação pelo microfone
+- [x] Mensagens multimodais: imagem + texto na mesma mensagem para o LLM (image_url content)
