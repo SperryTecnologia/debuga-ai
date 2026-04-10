@@ -146,7 +146,13 @@ async function streamLLMResponse(
               };
             }
             if (tc.id) toolCalls[idx].id = tc.id;
-            if (tc.function?.name) toolCalls[idx].function.name += tc.function.name;
+            // Name comes in a single chunk, so assign directly (not append)
+            if (tc.function?.name) {
+              if (toolCalls[idx].function.name === "") {
+                toolCalls[idx].function.name = tc.function.name;
+              }
+              // Only append if it's a continuation (very rare)
+            }
             if (tc.function?.arguments) toolCalls[idx].function.arguments += tc.function.arguments;
           }
         }
@@ -236,6 +242,7 @@ export function registerStreamRoute(app: Express) {
       let maxIterations = 5; // Prevent infinite loops
       let iteration = 0;
       let finalContent = "";
+      console.log("[Stream] Starting agent loop for conversation:", conversationId);
 
       while (iteration < maxIterations) {
         iteration++;
@@ -244,11 +251,14 @@ export function registerStreamRoute(app: Express) {
           await streamLLMResponse(llmMessages, res, iteration <= 3);
 
         finalContent += responseContent;
+        console.log(`[Stream] Iteration ${iteration}: content=${responseContent.length}chars, toolCalls=${toolCalls.length}, finishReason=${finishReason}`);
 
-        // If no tool calls, we're done
-        if (toolCalls.length === 0 || finishReason !== "tool_calls") {
+        // If no tool calls, we're done (some models like Gemini return finish_reason=stop even with tool_calls)
+        if (toolCalls.length === 0) {
+          console.log("[Stream] No tool calls, breaking loop");
           break;
         }
+        console.log(`[Stream] Tool calls detected: ${toolCalls.map(tc => tc.function.name).join(', ')}`);
 
         // Process tool calls
         sendSSE(res, {
@@ -301,12 +311,16 @@ export function registerStreamRoute(app: Express) {
       }
 
       // Save assistant message with full content
+      console.log(`[Stream] Final content length: ${finalContent.length}`);
       if (finalContent) {
         await addMessage({
           conversationId,
           role: "assistant",
           content: finalContent,
         });
+        console.log("[Stream] Assistant message saved to DB");
+      } else {
+        console.log("[Stream] WARNING: No final content to save!");
       }
 
       // Auto-title on first exchange

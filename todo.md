@@ -54,3 +54,4 @@
 - [x] Transcrição de áudio via Whisper API integrada (pt-BR)
 - [x] Suporte a envio de áudio (.mp3, .wav, .webm, .ogg, .m4a) + gravação pelo microfone
 - [x] Mensagens multimodais: imagem + texto na mesma mensagem para o LLM (image_url content)
+- [x] Fix: tool_calls parsing (nomes concatenados) e finishReason para Gemini
