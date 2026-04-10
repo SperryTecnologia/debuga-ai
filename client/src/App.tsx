@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import ChatPage from "./pages/ChatPage";
 import PricingPage from "./pages/PricingPage";
+import AccountPage from "./pages/AccountPage";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 function Router() {
@@ -15,6 +16,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/chat"} component={ChatPage} />
       <Route path={"/pricing"} component={PricingPage} />
+      <Route path={"/account"} component={AccountPage} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

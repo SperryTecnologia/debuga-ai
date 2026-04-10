@@ -79,3 +79,11 @@
 - [x] Padronizar o novo logo em todas as páginas (Home nav, Home footer, ChatPage sidebar, ChatPage welcome, ChatPage avatar, PricingPage)
 - [x] Remover avatar de rosto robótico com fundo branco (AVATAR_AGENT) e substituir pelo novo logo
 - [x] Substituir logo antigo (LOGO_FULL com fundo escuro) pelo escudo 3D transparente na seção CTA do rodapé
+- [x] Painel de conta profissional: dashboard com créditos restantes, barra de progresso de uso
+- [x] Painel de conta: informações do plano atual com opção de upgrade/downgrade
+- [x] Painel de conta: histórico de uso (conversas, tokens consumidos por dia)
+- [x] Painel de conta: histórico de pagamentos via Stripe
+- [x] Menu do usuário melhorado: "Minha Conta", "Meus Planos", "Suporte WhatsApp", "Sair"
+- [x] Backend: tabelas credits e usage_log no banco de dados
+- [x] Backend: endpoints account.credits, account.usageStats, account.usageHistory, account.profile
+- [x] Rota /account com página AccountPage completa

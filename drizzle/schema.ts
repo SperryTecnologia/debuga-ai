@@ -56,3 +56,30 @@ export const subscriptions = mysqlTable("subscriptions", {
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+export const credits = mysqlTable("credits", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  totalCredits: int("totalCredits").notNull().default(0),
+  usedCredits: int("usedCredits").notNull().default(0),
+  planId: varchar("planId", { length: 50 }).notNull().default("free"),
+  resetAt: timestamp("resetAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Credits = typeof credits.$inferSelect;
+export type InsertCredits = typeof credits.$inferInsert;
+
+export const usageLog = mysqlTable("usage_log", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  conversationId: int("conversationId"),
+  tokensUsed: int("tokensUsed").notNull().default(0),
+  toolName: varchar("toolName", { length: 100 }),
+  description: varchar("description", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UsageLog = typeof usageLog.$inferSelect;
+export type InsertUsageLog = typeof usageLog.$inferInsert;

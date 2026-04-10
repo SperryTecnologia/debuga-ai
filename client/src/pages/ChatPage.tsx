@@ -65,6 +65,8 @@ import {
   Pin,
   PinOff,
   Archive,
+  User,
+  Crown,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -1334,10 +1336,18 @@ export default function ChatPage() {
                 </div>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem onClick={() => (window.location.href = "/account")} className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                Minha Conta
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => (window.location.href = "/pricing")} className="cursor-pointer">
-                <Cpu className="mr-2 h-4 w-4" />
+                <Crown className="mr-2 h-4 w-4" />
                 Meus Planos
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.open("https://wa.me/555137374357?text=Ol%C3%A1!%20Preciso%20de%20suporte%20com%20o%20debuga.ai", "_blank")} className="cursor-pointer">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Suporte WhatsApp
               </DropdownMenuItem>
               <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />

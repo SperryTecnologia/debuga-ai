@@ -1,6 +1,6 @@
-import { eq, desc, and, asc } from "drizzle-orm";
+import { eq, desc, and, asc, sql, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, conversations, messages, subscriptions, type InsertConversation, type InsertMessage, type InsertSubscription } from "../drizzle/schema";
+import { InsertUser, users, conversations, messages, subscriptions, credits, usageLog, type InsertConversation, type InsertMessage, type InsertSubscription, type InsertCredits, type InsertUsageLog } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -259,4 +259,127 @@ export async function updateSubscriptionStatus(stripeSubscriptionId: string, sta
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(subscriptions).set({ status }).where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId));
+}
+
+// ── Credits ──
+
+export async function getOrCreateCredits(userId: number, planId = "free") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const rows = await db.select().from(credits).where(eq(credits.userId, userId)).limit(1);
+  if (rows[0]) return rows[0];
+
+  // Create default credits based on plan
+  const planCredits: Record<string, number> = {
+    free: 50,
+    starter: 1000,
+    pro: 10000,
+    enterprise: 100000,
+  };
+
+  const totalCredits = planCredits[planId] || 50;
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  nextMonth.setDate(1);
+  nextMonth.setHours(0, 0, 0, 0);
+
+  await db.insert(credits).values({
+    userId,
+    totalCredits,
+    usedCredits: 0,
+    planId,
+    resetAt: nextMonth,
+  });
+
+  const newRows = await db.select().from(credits).where(eq(credits.userId, userId)).limit(1);
+  return newRows[0];
+}
+
+export async function updateCreditsUsage(userId: number, tokensUsed: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(credits)
+    .set({ usedCredits: sql`${credits.usedCredits} + ${tokensUsed}` })
+    .where(eq(credits.userId, userId));
+}
+
+export async function updateCreditsPlan(userId: number, planId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const planCredits: Record<string, number> = {
+    free: 50,
+    starter: 1000,
+    pro: 10000,
+    enterprise: 100000,
+  };
+
+  const totalCredits = planCredits[planId] || 50;
+  await db
+    .update(credits)
+    .set({ planId, totalCredits, usedCredits: 0 })
+    .where(eq(credits.userId, userId));
+}
+
+// ── Usage Log ──
+
+export async function addUsageLog(data: InsertUsageLog) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(usageLog).values(data);
+}
+
+export async function getUsageLogs(userId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return db
+    .select()
+    .from(usageLog)
+    .where(eq(usageLog.userId, userId))
+    .orderBy(desc(usageLog.createdAt))
+    .limit(limit);
+}
+
+export async function getUsageStats(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Total tokens used
+  const totalResult = await db
+    .select({ total: sql<number>`COALESCE(SUM(${usageLog.tokensUsed}), 0)` })
+    .from(usageLog)
+    .where(eq(usageLog.userId, userId));
+
+  // Today's tokens
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayResult = await db
+    .select({ total: sql<number>`COALESCE(SUM(${usageLog.tokensUsed}), 0)` })
+    .from(usageLog)
+    .where(and(eq(usageLog.userId, userId), gte(usageLog.createdAt, today)));
+
+  // Total conversations
+  const convResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(conversations)
+    .where(eq(conversations.userId, userId));
+
+  // Total messages
+  const msgResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(messages)
+    .where(
+      sql`${messages.conversationId} IN (SELECT id FROM conversations WHERE userId = ${userId})`
+    );
+
+  return {
+    totalTokens: Number(totalResult[0]?.total || 0),
+    todayTokens: Number(todayResult[0]?.total || 0),
+    totalConversations: Number(convResult[0]?.count || 0),
+    totalMessages: Number(msgResult[0]?.count || 0),
+  };
 }

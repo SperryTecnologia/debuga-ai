@@ -1,7 +1,8 @@
-# Screenshot Review Notes
+# Screenshot Review Notes - v3.6
 
-- Landing page hero: animação Canvas dinâmica com partículas verdes, linhas de conexão, anéis orbitais e escudo central
-- Logo no nav: escudo+bug transparente com fundo transparente
-- WhatsApp FAB: botão verde oficial (#25D366) no canto inferior direito com badge "1" e pulse animation
-- Card "Agente IA / Online 24/7" com ícone de escudo
-- Tudo funcionando corretamente
+- Landing page hero: animação Canvas dinâmica com partículas verdes, badge "IA + Suporte Humano"
+- Logo no nav: escudo+bug transparente
+- WhatsApp FAB: botão verde oficial no canto inferior direito
+- Menu do usuário: Minha Conta, Meus Planos, Suporte WhatsApp, Sair
+- Página /account com dashboard de créditos, uso e plano
+- TypeScript: zero erros, 50 testes passando

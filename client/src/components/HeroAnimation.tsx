@@ -241,7 +241,7 @@ export default function HeroAnimation() {
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="text-center">
           <p className="text-[10px] font-mono text-primary/60 tracking-[0.3em] uppercase">
-            Agente Autonomo
+            IA + Suporte Humano
           </p>
         </div>
       </div>

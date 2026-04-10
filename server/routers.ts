@@ -14,7 +14,11 @@ import {
   addMessage,
   getMessages,
   getActiveSubscription,
+  getOrCreateCredits,
+  getUsageStats,
+  getUsageLogs,
 } from "./db";
+import { PLANS } from "./products";
 import { invokeLLM } from "./_core/llm";
 import type { Message as LLMMessage } from "./_core/llm";
 import { ENV } from "./_core/env";
@@ -64,6 +68,55 @@ export const appRouter = router({
         hasActiveSubscription: !!sub,
         subscription: sub,
         isAdmin: ctx.user.role === "admin",
+      };
+    }),
+  }),
+
+  account: router({
+    // Get credits info
+    credits: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getActiveSubscription(ctx.user.id);
+      const planId = sub ? PLANS.find(p => p.stripe.priceMonthly > 0 && p.id !== "free")?.id || "free" : "free";
+      const creds = await getOrCreateCredits(ctx.user.id, planId);
+      const plan = PLANS.find(p => p.id === (creds?.planId || "free")) || PLANS[0];
+      return {
+        credits: creds,
+        plan: {
+          id: plan.id,
+          name: plan.name,
+          description: plan.description,
+          features: plan.features,
+          limits: plan.limits,
+        },
+        hasSubscription: !!sub,
+        subscription: sub ? {
+          status: sub.status,
+          currentPeriodEnd: sub.currentPeriodEnd,
+          cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+        } : null,
+      };
+    }),
+
+    // Get usage statistics
+    usageStats: protectedProcedure.query(async ({ ctx }) => {
+      return getUsageStats(ctx.user.id);
+    }),
+
+    // Get usage history
+    usageHistory: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(100).optional() }))
+      .query(async ({ ctx, input }) => {
+        return getUsageLogs(ctx.user.id, input.limit || 50);
+      }),
+
+    // Get user profile info
+    profile: protectedProcedure.query(async ({ ctx }) => {
+      return {
+        id: ctx.user.id,
+        name: ctx.user.name,
+        email: ctx.user.email,
+        role: ctx.user.role,
+        createdAt: ctx.user.createdAt,
       };
     }),
   }),
