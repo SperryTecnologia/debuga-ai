@@ -29,9 +29,8 @@ const LOGO_FULL =
 const HERO_3D =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga_hero_3d-fhFhio2TpgpshMBLNXCSmE.webp";
 const LOGO_ICON =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga-logo-icon-transparent-gDhqaztyFNJVC8Hsm9r7jG.webp";
-const AVATAR_AGENT =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga_agent_avatar-e4oaGrQpDrrqx9i9uqspLn.webp";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga-logo-v2-A2P25ZnkFwTU2RkRjz85nk.webp";
+const AVATAR_AGENT = LOGO_ICON;
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
@@ -244,8 +243,8 @@ export default function Home() {
                   <Shield className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Agente IA</p>
-                  <p className="text-sm font-mono text-primary font-semibold">Online 24/7</p>
+                  <p className="text-xs text-muted-foreground">debuga.ai</p>
+                  <p className="text-sm font-mono text-primary font-semibold">IA + Suporte Humano</p>
                 </div>
               </div>
             </motion.div>

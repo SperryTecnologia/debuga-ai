@@ -72,9 +72,8 @@ import { Streamdown } from "streamdown";
 import { toast } from "sonner";
 
 const LOGO_ICON =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga-logo-icon-transparent-gDhqaztyFNJVC8Hsm9r7jG.webp";
-const AVATAR_AGENT =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga_agent_avatar-e4oaGrQpDrrqx9i9uqspLn.webp";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga-logo-v2-A2P25ZnkFwTU2RkRjz85nk.webp";
+const AVATAR_AGENT = LOGO_ICON;
 
 type ChatMessage = {
   id: number;
