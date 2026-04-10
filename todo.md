@@ -78,3 +78,4 @@
 - [x] Gerar novo logo profissional (escudo cybersecurity neon verde, fundo transparente, sem bordas brancas)
 - [x] Padronizar o novo logo em todas as páginas (Home nav, Home footer, ChatPage sidebar, ChatPage welcome, ChatPage avatar, PricingPage)
 - [x] Remover avatar de rosto robótico com fundo branco (AVATAR_AGENT) e substituir pelo novo logo
+- [x] Substituir logo antigo (LOGO_FULL com fundo escuro) pelo escudo 3D transparente na seção CTA do rodapé

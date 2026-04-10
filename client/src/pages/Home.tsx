@@ -365,9 +365,9 @@ export default function Home() {
           >
             <motion.img
               variants={fadeInUp}
-              src={LOGO_FULL}
+              src={LOGO_ICON}
               alt="debuga.ai"
-              className="w-48 mx-auto mb-8"
+              className="w-24 mx-auto mb-8 drop-shadow-[0_0_20px_rgba(0,255,65,0.3)]"
             />
             <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">
               Pronto para transformar sua TI?
