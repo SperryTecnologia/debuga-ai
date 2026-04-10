@@ -4,8 +4,8 @@ import type { ToolCall } from "./_core/llm";
 
 describe("Agent Tools", () => {
   describe("AGENT_TOOLS definitions", () => {
-    it("should define 6 tools", () => {
-      expect(AGENT_TOOLS).toHaveLength(6);
+    it("should define 8 tools", () => {
+      expect(AGENT_TOOLS).toHaveLength(8);
     });
 
     it("should have correct tool names", () => {
@@ -16,6 +16,8 @@ describe("Agent Tools", () => {
       expect(names).toContain("ssl_check");
       expect(names).toContain("http_check");
       expect(names).toContain("whois_lookup");
+      expect(names).toContain("web_fetch");
+      expect(names).toContain("port_scan");
     });
 
     it("each tool should have required parameters", () => {
@@ -58,6 +60,16 @@ describe("Agent Tools", () => {
     it("whois_lookup should require domain", () => {
       const tool = AGENT_TOOLS.find((t) => t.function.name === "whois_lookup");
       expect(tool?.function.parameters.required).toContain("domain");
+    });
+
+    it("web_fetch should require url", () => {
+      const tool = AGENT_TOOLS.find((t) => t.function.name === "web_fetch");
+      expect(tool?.function.parameters.required).toContain("url");
+    });
+
+    it("port_scan should require host", () => {
+      const tool = AGENT_TOOLS.find((t) => t.function.name === "port_scan");
+      expect(tool?.function.parameters.required).toContain("host");
     });
   });
 
@@ -143,6 +155,53 @@ describe("Agent Tools", () => {
       expect(result.result.domain).toBe("google.com");
       expect(result.result.records).toBeDefined();
       expect(result.result.records.A).toBeDefined();
+    });
+
+    it("should perform web fetch", async () => {
+      const toolCall: ToolCall = {
+        id: "call_test_web",
+        type: "function",
+        function: {
+          name: "web_fetch",
+          arguments: JSON.stringify({ url: "https://example.com", extract: "meta" }),
+        },
+      };
+      const result = await executeToolCall(toolCall);
+      expect(result.result.type).toBe("web_fetch");
+      expect(result.result.url).toBe("https://example.com");
+      expect(result.result.result).toBeDefined();
+      expect(result.result.result.title).toBeDefined();
+    });
+
+    it("should perform port scan", async () => {
+      const toolCall: ToolCall = {
+        id: "call_test_port",
+        type: "function",
+        function: {
+          name: "port_scan",
+          arguments: JSON.stringify({ host: "localhost", ports: "80,443" }),
+        },
+      };
+      const result = await executeToolCall(toolCall);
+      expect(result.result.type).toBe("port_scan");
+      expect(result.result.host).toBe("localhost");
+      expect(result.result.result).toBeDefined();
+      expect(result.result.result.totalScanned).toBe(2);
+      expect(result.result.result.summary).toBeDefined();
+    });
+
+    it("should handle web_fetch with invalid URL", async () => {
+      const toolCall: ToolCall = {
+        id: "call_test_web_err",
+        type: "function",
+        function: {
+          name: "web_fetch",
+          arguments: JSON.stringify({ url: "not-a-valid-url" }),
+        },
+      };
+      const result = await executeToolCall(toolCall);
+      expect(result.result.type).toBe("web_fetch");
+      expect(result.result.result.error).toBeDefined();
     });
   });
 });

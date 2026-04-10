@@ -144,6 +144,53 @@ export const AGENT_TOOLS: Tool[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "web_fetch",
+      description:
+        "Acessa uma URL e extrai o conteúdo da página web. Retorna título, meta tags, headers HTTP, texto principal e links encontrados. Use para analisar sites, verificar conteúdo de páginas, extrair informações de URLs, auditar SEO, verificar se um site está online e acessível, ou investigar páginas suspeitas. Funciona como um navegador autônomo que 'lê' o site.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "URL completa da página a ser acessada (ex: https://example.com/pagina)",
+          },
+          extract: {
+            type: "string",
+            enum: ["full", "text", "links", "meta", "headers"],
+            description: "Tipo de extração: full (tudo), text (apenas texto), links (URLs encontradas), meta (meta tags e SEO), headers (headers HTTP). Default: full.",
+          },
+        },
+        required: ["url"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "port_scan",
+      description:
+        "Verifica portas abertas em um host. Escaneia as portas mais comuns (HTTP, HTTPS, SSH, FTP, SMTP, DNS, MySQL, PostgreSQL, RDP, etc.) e retorna quais estão abertas ou fechadas. Use para auditoria de segurança, diagnóstico de firewall e verificação de serviços expostos.",
+      parameters: {
+        type: "object",
+        properties: {
+          host: {
+            type: "string",
+            description: "Hostname ou IP para escanear (ex: example.com ou 192.168.1.1)",
+          },
+          ports: {
+            type: "string",
+            description: "Lista de portas separadas por vírgula ou range (ex: '80,443,8080' ou '20-25,80,443'). Default: portas comuns.",
+          },
+        },
+        required: ["host"],
+        additionalProperties: false,
+      },
+    },
+  },
 ];
 
 // ─── Tool Execution Functions ───
@@ -434,6 +481,215 @@ async function executeWhoisLookup(args: {
   });
 }
 
+async function executeWebFetch(args: {
+  url: string;
+  extract?: string;
+}): Promise<{ type: "web_fetch"; url: string; result: Record<string, any> }> {
+  const extractMode = args.extract || "full";
+  const startTime = Date.now();
+
+  try {
+    const urlObj = new URL(args.url);
+    const client = urlObj.protocol === "https:" ? https : http;
+
+    const htmlContent = await new Promise<string>((resolve, reject) => {
+      const req = client.request(
+        args.url,
+        {
+          method: "GET",
+          timeout: 15000,
+          headers: {
+            "User-Agent": "debuga.ai/1.0 (Autonomous IT Agent; +https://debuga.ai)",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+          },
+          rejectUnauthorized: false,
+        },
+        (res) => {
+          // Follow redirects (up to 3)
+          if (res.statusCode && [301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
+            const redirectUrl = new URL(res.headers.location, args.url).toString();
+            const redirectClient = redirectUrl.startsWith("https:") ? https : http;
+            redirectClient.get(redirectUrl, { headers: { "User-Agent": "debuga.ai/1.0" }, rejectUnauthorized: false }, (rRes) => {
+              let body = "";
+              rRes.on("data", (chunk: Buffer) => { body += chunk.toString(); if (body.length > 200000) rRes.destroy(); });
+              rRes.on("end", () => resolve(body.slice(0, 200000)));
+            }).on("error", reject);
+            return;
+          }
+
+          let body = "";
+          res.on("data", (chunk: Buffer) => {
+            body += chunk.toString();
+            if (body.length > 200000) res.destroy();
+          });
+          res.on("end", () => resolve(body.slice(0, 200000)));
+        }
+      );
+
+      req.on("error", reject);
+      req.on("timeout", () => { req.destroy(); reject(new Error("Timeout (15s)")); });
+      req.end();
+    });
+
+    const elapsed = Date.now() - startTime;
+
+    // Parse HTML content
+    const titleMatch = htmlContent.match(/<title[^>]*>([^<]*)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].trim() : "Sem título";
+
+    // Extract meta tags
+    const metaTags: Record<string, string> = {};
+    const metaRegex = /<meta\s+(?:[^>]*?(?:name|property)=["']([^"']*)["'][^>]*?content=["']([^"']*)["']|[^>]*?content=["']([^"']*)["'][^>]*?(?:name|property)=["']([^"']*)["'])[^>]*>/gi;
+    let metaMatch;
+    while ((metaMatch = metaRegex.exec(htmlContent)) !== null) {
+      const key = metaMatch[1] || metaMatch[4];
+      const value = metaMatch[2] || metaMatch[3];
+      if (key && value) metaTags[key] = value.slice(0, 500);
+    }
+
+    // Extract text content (remove scripts, styles, tags)
+    const textContent = htmlContent
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .trim()
+      .slice(0, 10000);
+
+    // Extract links
+    const links: string[] = [];
+    const linkRegex = /<a[^>]+href=["']([^"'#][^"']*)["']/gi;
+    let linkMatch;
+    while ((linkMatch = linkRegex.exec(htmlContent)) !== null && links.length < 50) {
+      try {
+        const href = new URL(linkMatch[1], args.url).toString();
+        if (!links.includes(href)) links.push(href);
+      } catch { /* skip invalid URLs */ }
+    }
+
+    // Extract headings
+    const headings: string[] = [];
+    const headingRegex = /<h[1-6][^>]*>([^<]*(?:<[^>]+>[^<]*)*)<\/h[1-6]>/gi;
+    let headingMatch;
+    while ((headingMatch = headingRegex.exec(htmlContent)) !== null && headings.length < 20) {
+      const text = headingMatch[1].replace(/<[^>]+>/g, "").trim();
+      if (text) headings.push(text);
+    }
+
+    const result: Record<string, any> = { responseTimeMs: elapsed };
+
+    if (extractMode === "full" || extractMode === "meta") {
+      result.title = title;
+      result.metaTags = metaTags;
+    }
+    if (extractMode === "full" || extractMode === "text") {
+      result.headings = headings;
+      result.textContent = textContent;
+    }
+    if (extractMode === "full" || extractMode === "links") {
+      result.links = links;
+      result.totalLinks = links.length;
+    }
+    if (extractMode === "headers") {
+      // Re-fetch with HEAD to get headers
+      result.title = title;
+      result.note = "Use http_check para headers HTTP detalhados";
+    }
+
+    return { type: "web_fetch", url: args.url, result };
+  } catch (error: any) {
+    return {
+      type: "web_fetch",
+      url: args.url,
+      result: { error: `Falha ao acessar: ${error.message}` },
+    };
+  }
+}
+
+async function executePortScan(args: {
+  host: string;
+  ports?: string;
+}): Promise<{ type: "port_scan"; host: string; result: Record<string, any> }> {
+  const net = await import("net");
+  const host = args.host.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/:.*$/, "");
+
+  // Default common ports
+  const defaultPorts = [21, 22, 23, 25, 53, 80, 110, 143, 443, 465, 587, 993, 995, 1433, 1521, 3306, 3389, 5432, 5900, 6379, 8080, 8443, 9090, 27017];
+
+  let portsToScan: number[] = defaultPorts;
+  if (args.ports) {
+    portsToScan = [];
+    for (const part of args.ports.split(",")) {
+      const trimmed = part.trim();
+      if (trimmed.includes("-")) {
+        const [start, end] = trimmed.split("-").map(Number);
+        for (let p = start; p <= Math.min(end, start + 100); p++) portsToScan.push(p);
+      } else {
+        const p = parseInt(trimmed);
+        if (!isNaN(p) && p > 0 && p <= 65535) portsToScan.push(p);
+      }
+    }
+  }
+
+  // Limit to 50 ports max
+  portsToScan = portsToScan.slice(0, 50);
+
+  const portNames: Record<number, string> = {
+    21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP", 53: "DNS",
+    80: "HTTP", 110: "POP3", 143: "IMAP", 443: "HTTPS", 465: "SMTPS",
+    587: "Submission", 993: "IMAPS", 995: "POP3S", 1433: "MSSQL",
+    1521: "Oracle", 3306: "MySQL", 3389: "RDP", 5432: "PostgreSQL",
+    5900: "VNC", 6379: "Redis", 8080: "HTTP-Alt", 8443: "HTTPS-Alt",
+    9090: "Prometheus", 27017: "MongoDB",
+  };
+
+  const scanPort = (port: number): Promise<{ port: number; status: string; service: string }> => {
+    return new Promise((resolve) => {
+      const socket = new net.Socket();
+      socket.setTimeout(3000);
+
+      socket.on("connect", () => {
+        socket.destroy();
+        resolve({ port, status: "open", service: portNames[port] || "unknown" });
+      });
+
+      socket.on("timeout", () => {
+        socket.destroy();
+        resolve({ port, status: "filtered", service: portNames[port] || "unknown" });
+      });
+
+      socket.on("error", () => {
+        resolve({ port, status: "closed", service: portNames[port] || "unknown" });
+      });
+
+      socket.connect(port, host);
+    });
+  };
+
+  const results = await Promise.all(portsToScan.map(scanPort));
+  const openPorts = results.filter((r) => r.status === "open");
+  const filteredPorts = results.filter((r) => r.status === "filtered");
+  const closedPorts = results.filter((r) => r.status === "closed");
+
+  return {
+    type: "port_scan",
+    host,
+    result: {
+      totalScanned: portsToScan.length,
+      openPorts,
+      filteredPorts: filteredPorts.length > 10 ? { count: filteredPorts.length, note: "Muitas portas filtradas - possível firewall" } : filteredPorts,
+      closedCount: closedPorts.length,
+      summary: `${openPorts.length} abertas, ${filteredPorts.length} filtradas, ${closedPorts.length} fechadas de ${portsToScan.length} escaneadas`,
+    },
+  };
+}
+
 // ─── Tool Dispatcher ───
 
 export type ToolResult = {
@@ -477,6 +733,12 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
         break;
       case "whois_lookup":
         result = await executeWhoisLookup(args);
+        break;
+      case "web_fetch":
+        result = await executeWebFetch(args);
+        break;
+      case "port_scan":
+        result = await executePortScan(args);
         break;
       default:
         result = { error: `Ferramenta desconhecida: ${name}` };

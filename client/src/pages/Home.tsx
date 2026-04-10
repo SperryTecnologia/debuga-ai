@@ -16,8 +16,12 @@ import {
   Globe,
   Cpu,
   Network,
+  Scan,
+  Code2,
+  Eye,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const LOGO_FULL =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga_logo_full-Sz8NVLnwpPYSyjyTTd3PJT.webp";
@@ -39,9 +43,32 @@ const stagger = {
 
 const FEATURES = [
   {
+    icon: Bot,
+    title: "Agente Autonomo com Sandbox",
+    desc: "Diferente de chatbots comuns, o debuga.ai executa tarefas de forma autonoma em um ambiente isolado: navega em sites, roda scripts e analisa resultados em tempo real.",
+    highlight: true,
+  },
+  {
+    icon: Globe,
+    title: "Navegacao Web Autonoma",
+    desc: "O agente acessa URLs, extrai conteudo de paginas, analisa meta tags, SEO e links. Peca para ele 'ler' qualquer site e reportar o que encontrou.",
+    highlight: true,
+  },
+  {
+    icon: Code2,
+    title: "Sandbox de Codigo",
+    desc: "Execute scripts Python e Bash em ambiente seguro e isolado. Ideal para automacao, analise de dados, calculos e validacao de configuracoes.",
+    highlight: true,
+  },
+  {
+    icon: Scan,
+    title: "Port Scan & Auditoria",
+    desc: "Escaneie portas abertas, verifique certificados SSL, analise headers HTTP e consulte WHOIS — tudo automaticamente pelo agente.",
+  },
+  {
     icon: Shield,
     title: "Seguranca da Informacao",
-    desc: "Analise de vulnerabilidades, hardening de servidores, resposta a incidentes e compliance com frameworks como ISO 27001 e NIST.",
+    desc: "Analise de vulnerabilidades, hardening de servidores, resposta a incidentes e compliance com ISO 27001 e NIST.",
   },
   {
     icon: Server,
@@ -57,11 +84,6 @@ const FEATURES = [
     icon: Wifi,
     title: "Redes & Telecom",
     desc: "Troubleshooting de rede, analise de trafego, configuracao de firewalls, VPNs e infraestrutura de telecomunicacoes.",
-  },
-  {
-    icon: Bot,
-    title: "Agente Autonomo",
-    desc: "IA que executa tarefas complexas de forma autonoma: analisa, planeja, executa e reporta resultados em tempo real.",
   },
   {
     icon: Lock,
@@ -175,9 +197,9 @@ export default function Home() {
                 variants={fadeInUp}
                 className="text-lg text-muted-foreground leading-relaxed max-w-lg"
               >
-                Diagnostique problemas, automatize tarefas e proteja sua infraestrutura
-                com inteligencia artificial de ponta. O debuga.ai entende, planeja e executa
-                — como um especialista de TI disponivel 24/7.
+                O primeiro agente de IA com sandbox que navega em sites, executa codigo,
+                escaneia portas e audita sua infraestrutura de forma autonoma.
+                Nao e um chatbot — e um especialista de TI que age.
               </motion.p>
 
               <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
@@ -250,11 +272,11 @@ export default function Home() {
               {"// RECURSOS"}
             </motion.p>
             <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">
-              Tudo que sua equipe de TI precisa
+              Mais que um chatbot. Um agente que age.
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-muted-foreground max-w-2xl mx-auto">
-              Uma plataforma completa que combina inteligencia artificial com expertise
-              em infraestrutura, seguranca e automacao.
+              Sandbox isolada, navegacao web autonoma, execucao de codigo e ferramentas
+              de seguranca integradas. Tudo o que sua equipe de TI precisa em um unico agente.
             </motion.p>
           </motion.div>
 
@@ -265,13 +287,24 @@ export default function Home() {
             variants={stagger}
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            {FEATURES.map((f) => (
+            {FEATURES.map((f: any) => (
               <motion.div
                 key={f.title}
                 variants={fadeInUp}
-                className="group p-6 rounded-xl border border-border/50 bg-card/50 hover:border-primary/30 hover:bg-card transition-all duration-300"
+                className={cn(
+                  "group p-6 rounded-xl border transition-all duration-300",
+                  f.highlight
+                    ? "border-primary/30 bg-primary/5 hover:border-primary/50 hover:bg-primary/10 ring-1 ring-primary/10"
+                    : "border-border/50 bg-card/50 hover:border-primary/30 hover:bg-card"
+                )}
               >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                {f.highlight && (
+                  <span className="inline-block text-[10px] font-mono font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full mb-3 uppercase tracking-wider">Diferencial</span>
+                )}
+                <div className={cn(
+                  "w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors",
+                  f.highlight ? "bg-primary/20 group-hover:bg-primary/30" : "bg-primary/10 group-hover:bg-primary/20"
+                )}>
                   <f.icon className="w-6 h-6 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{f.title}</h3>

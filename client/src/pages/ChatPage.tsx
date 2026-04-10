@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -157,6 +158,8 @@ const TOOL_DISPLAY: Record<string, { icon: LucideIcon; label: string; color: str
   ssl_check: { icon: ShieldCheck, label: "Verificação SSL", color: "text-yellow-400" },
   http_check: { icon: Activity, label: "Verificação HTTP", color: "text-cyan-400" },
   whois_lookup: { icon: Globe, label: "Consulta WHOIS", color: "text-indigo-400" },
+  web_fetch: { icon: Globe, label: "Navegando em Site", color: "text-emerald-400" },
+  port_scan: { icon: Network, label: "Scan de Portas", color: "text-orange-400" },
 };
 
 // ── Tool Result Renderers ──
@@ -356,6 +359,129 @@ function ToolResultCard({ name, result }: { name: string; result: any }) {
     );
   }
 
+  // Web Fetch result
+  if (result?.type === "web_fetch") {
+    const r = result.result || {};
+    return (
+      <div className="my-3 rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Icon className={cn("w-4 h-4", display.color)} />
+          <span className="font-mono text-xs font-medium">{display.label}</span>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate max-w-[250px]">{result.url}</span>
+          {r.responseTimeMs && (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+              {r.responseTimeMs}ms
+            </span>
+          )}
+        </div>
+        {r.error ? (
+          <p className="text-xs text-destructive/80 font-mono">{r.error}</p>
+        ) : (
+          <div className="space-y-3">
+            {r.title && (
+              <div className="text-xs font-mono">
+                <span className="text-muted-foreground">Título:</span>{" "}
+                <span className="text-foreground/90 font-medium">{r.title}</span>
+              </div>
+            )}
+            {r.metaTags && Object.keys(r.metaTags).length > 0 && (
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-medium text-muted-foreground">Meta Tags:</span>
+                <div className="grid grid-cols-1 gap-0.5">
+                  {Object.entries(r.metaTags).slice(0, 8).map(([key, value]: [string, any]) => (
+                    <div key={key} className="text-[10px] font-mono">
+                      <span className="text-muted-foreground">{key}:</span>{" "}
+                      <span className="text-foreground/70 truncate">{String(value).slice(0, 100)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {r.headings && r.headings.length > 0 && (
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-medium text-muted-foreground">Títulos da Página:</span>
+                <div className="space-y-0.5">
+                  {r.headings.slice(0, 10).map((h: string, i: number) => (
+                    <div key={i} className="text-[10px] font-mono text-foreground/70">• {h}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {r.textContent && (
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-medium text-muted-foreground">Conteúdo ({r.textContent.length} chars):</span>
+                <pre className="text-[10px] font-mono text-foreground/60 overflow-x-auto max-h-32 whitespace-pre-wrap">
+                  {r.textContent.slice(0, 2000)}{r.textContent.length > 2000 ? "..." : ""}
+                </pre>
+              </div>
+            )}
+            {r.totalLinks !== undefined && (
+              <div className="text-[10px] font-mono text-muted-foreground">
+                {r.totalLinks} links encontrados na página
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Port Scan result
+  if (result?.type === "port_scan") {
+    const r = result.result || {};
+    return (
+      <div className="my-3 rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Icon className={cn("w-4 h-4", display.color)} />
+          <span className="font-mono text-xs font-medium">{display.label}</span>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{result.host}</span>
+          {r.summary && (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+              {r.summary}
+            </span>
+          )}
+        </div>
+        {r.openPorts && r.openPorts.length > 0 && (
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono font-medium text-primary">Portas Abertas:</span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+              {r.openPorts.map((p: any, i: number) => (
+                <div key={i} className="flex items-center gap-1.5 text-[10px] font-mono bg-primary/5 rounded px-2 py-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                  <span className="text-foreground/90">{p.port}</span>
+                  <span className="text-muted-foreground">({p.service})</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {r.filteredPorts && (Array.isArray(r.filteredPorts) ? r.filteredPorts.length > 0 : r.filteredPorts.count > 0) && (
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono font-medium text-yellow-400">Portas Filtradas:</span>
+            {Array.isArray(r.filteredPorts) ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                {r.filteredPorts.map((p: any, i: number) => (
+                  <div key={i} className="flex items-center gap-1.5 text-[10px] font-mono bg-yellow-500/5 rounded px-2 py-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0" />
+                    <span className="text-foreground/90">{p.port}</span>
+                    <span className="text-muted-foreground">({p.service})</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] font-mono text-yellow-400/70">{r.filteredPorts.count} portas filtradas - {r.filteredPorts.note}</p>
+            )}
+          </div>
+        )}
+        {r.closedCount !== undefined && (
+          <div className="text-[10px] font-mono text-muted-foreground">
+            {r.closedCount} portas fechadas de {r.totalScanned} escaneadas
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // WHOIS result
   if (result?.type === "whois") {
     return (
@@ -406,9 +532,11 @@ function StepIndicator({ step }: { step: StepEvent }) {
 }
 
 const SUGGESTED_PROMPTS = [
-  { icon: Shield, title: "Análise de Segurança", prompt: "Verifique o certificado SSL e os headers de segurança do site google.com" },
-  { icon: Server, title: "Diagnóstico de Infra", prompt: "Faça uma consulta DNS completa do domínio github.com e analise os resultados" },
-  { icon: Terminal, title: "Script de Automação", prompt: "Crie e execute um script Python que calcule o espaço em disco e uso de memória do sistema" },
+  { icon: Globe, title: "Navegar em Site", prompt: "Acesse o site https://www.gov.br/anatel e me diga quais são as últimas notícias e regulamentações publicadas" },
+  { icon: Shield, title: "Auditoria de Segurança", prompt: "Faça uma auditoria completa do domínio google.com: verifique SSL, DNS, headers HTTP e portas abertas" },
+  { icon: Terminal, title: "Sandbox de Código", prompt: "Execute um script Python que faça port scan nas portas 80, 443 e 8080 do host github.com e analise os resultados" },
+  { icon: Network, title: "Scan de Portas", prompt: "Escaneie as portas do servidor cloudflare.com e identifique quais serviços estão expostos" },
+  { icon: Server, title: "Diagnóstico DNS", prompt: "Faça uma consulta DNS completa do domínio github.com e analise os registros MX, TXT e NS" },
   { icon: ImageIcon, title: "Gerar Diagrama", prompt: "Gere uma imagem de um diagrama de arquitetura de rede corporativa com firewall, DMZ e segmentação" },
 ];
 
@@ -979,12 +1107,12 @@ export default function ChatPage() {
         sidebarOpen ? "w-72" : "w-0 overflow-hidden"
       )}>
         <div className="h-14 flex items-center justify-between px-3 border-b border-sidebar-border shrink-0">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
             <img src={LOGO_ICON} alt="debuga.ai" className="w-7 h-7 rounded-lg" />
             <span className="font-mono font-semibold text-sm text-sidebar-foreground">
               debuga<span className="text-primary">.ai</span>
             </span>
-          </div>
+          </Link>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent" onClick={() => setSidebarOpen(false)}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -1285,11 +1413,11 @@ export default function ChatPage() {
                       Olá! Sou o <span className="terminal-glow text-primary">debuga.ai</span>
                     </h2>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Seu agente autônomo de TI, Segurança e DevOps. Posso executar código, gerar imagens, verificar SSL, DNS e muito mais.
+                      Seu agente autônomo de TI, Segurança e DevOps. Navego em sites, executo código em sandbox, escaneio portas, verifico SSL/DNS e muito mais.
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {SUGGESTED_PROMPTS.map((item, i) => (
                     <button
                       key={i}

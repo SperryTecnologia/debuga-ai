@@ -64,3 +64,9 @@
 - [x] Conversas fixadas aparecem no topo da sidebar com indicador visual
 - [x] Seções visuais na sidebar: "Fixadas" e "Recentes" com labels
 - [x] Vitest tests para togglePin e archive (45 testes passando)
+- [x] Logo "debuga.ai" no header do chat clicável — volta para a landing page
+- [x] Ferramenta de Web Scraping/Fetch: agente acessa URLs, extrai conteúdo e analisa páginas web
+- [x] Ferramenta de Port Scan: escaneia portas abertas em hosts para auditoria de segurança
+- [x] Atualizar cards de exemplo no chat com exemplos de sandbox e web scraping (6 cards: Navegar, Auditoria, Sandbox, Port Scan, DNS, Diagrama)
+- [x] Atualizar landing page destacando diferencial de agente autônomo com sandbox
+- [x] Renderizadores visuais para web_fetch e port_scan no chat (cards ricos)
