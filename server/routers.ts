@@ -9,6 +9,8 @@ import {
   getConversation,
   updateConversationTitle,
   deleteConversation,
+  togglePinConversation,
+  archiveConversation,
   addMessage,
   getMessages,
   getActiveSubscription,
@@ -99,6 +101,22 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await deleteConversation(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    // Toggle pin a conversation
+    togglePin: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const isPinned = await togglePinConversation(input.id, ctx.user.id);
+        return { success: true, isPinned };
+      }),
+
+    // Archive a conversation
+    archive: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await archiveConversation(input.id, ctx.user.id);
         return { success: true };
       }),
 

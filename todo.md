@@ -55,3 +55,12 @@
 - [x] Suporte a envio de áudio (.mp3, .wav, .webm, .ogg, .m4a) + gravação pelo microfone
 - [x] Mensagens multimodais: imagem + texto na mesma mensagem para o LLM (image_url content)
 - [x] Fix: tool_calls parsing (nomes concatenados) e finishReason para Gemini
+- [x] Menu de contexto (botão direito) nas conversas da sidebar
+- [x] Opção: Fixar conversa no topo da sidebar
+- [x] Opção: Renomear conversa
+- [x] Opção: Excluir conversa com confirmação
+- [x] Opção: Arquivar conversa
+- [x] Backend: rotas de pin, rename, delete, archive para conversas
+- [x] Conversas fixadas aparecem no topo da sidebar com indicador visual
+- [x] Seções visuais na sidebar: "Fixadas" e "Recentes" com labels
+- [x] Vitest tests para togglePin e archive (45 testes passando)

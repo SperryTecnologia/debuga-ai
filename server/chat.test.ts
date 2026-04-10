@@ -39,6 +39,20 @@ vi.mock("./db", () => {
       const idx = conversations.findIndex((c) => c.id === id && c.userId === userId);
       if (idx >= 0) conversations.splice(idx, 1);
     }),
+    togglePinConversation: vi.fn(async (id: number, userId: number) => {
+      const conv = conversations.find((c) => c.id === id && c.userId === userId);
+      if (!conv) throw new Error("Conversation not found");
+      conv.isPinned = !conv.isPinned;
+      return conv.isPinned;
+    }),
+    archiveConversation: vi.fn(async (id: number, userId: number) => {
+      const conv = conversations.find((c) => c.id === id && c.userId === userId);
+      if (conv) {
+        conv.isArchived = true;
+        conv.isPinned = false;
+      }
+    }),
+    getActiveSubscription: vi.fn(async () => null),
     addMessage: vi.fn(async (data: any) => {
       const msg = {
         id: messageIdCounter++,
@@ -55,6 +69,11 @@ vi.mock("./db", () => {
     }),
     upsertUser: vi.fn(),
     getUserByOpenId: vi.fn(),
+    updateUserStripeCustomerId: vi.fn(),
+    getUserByStripeCustomerId: vi.fn(),
+    upsertSubscription: vi.fn(),
+    getSubscriptionByStripeId: vi.fn(),
+    updateSubscriptionStatus: vi.fn(),
   };
 });
 
@@ -253,6 +272,55 @@ describe("chat.getMessages", () => {
     await expect(
       caller.chat.getMessages({ conversationId: 1 })
     ).rejects.toThrow();
+  });
+});
+
+describe("chat.togglePin", () => {
+  it("toggles pin status of a conversation", async () => {
+    const ctx = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const conv = await caller.chat.createConversation({ title: "Pin Test" });
+    const result = await caller.chat.togglePin({ id: conv.id });
+
+    expect(result).toEqual({ success: true, isPinned: true });
+  });
+
+  it("unpins a pinned conversation", async () => {
+    const ctx = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const conv = await caller.chat.createConversation({ title: "Unpin Test" });
+    await caller.chat.togglePin({ id: conv.id });
+    const result = await caller.chat.togglePin({ id: conv.id });
+
+    expect(result).toEqual({ success: true, isPinned: false });
+  });
+
+  it("rejects unauthenticated users", async () => {
+    const ctx = createUnauthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.chat.togglePin({ id: 1 })).rejects.toThrow();
+  });
+});
+
+describe("chat.archive", () => {
+  it("archives a conversation", async () => {
+    const ctx = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const conv = await caller.chat.createConversation({ title: "Archive Test" });
+    const result = await caller.chat.archive({ id: conv.id });
+
+    expect(result).toEqual({ success: true });
+  });
+
+  it("rejects unauthenticated users", async () => {
+    const ctx = createUnauthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.chat.archive({ id: 1 })).rejects.toThrow();
   });
 });
 

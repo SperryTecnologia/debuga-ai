@@ -102,15 +102,20 @@ export async function createConversation(userId: number, title?: string) {
   return rows[0];
 }
 
-export async function listConversations(userId: number) {
+export async function listConversations(userId: number, includeArchived = false) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  const conditions = [eq(conversations.userId, userId)];
+  if (!includeArchived) {
+    conditions.push(eq(conversations.isArchived, false));
+  }
 
   return db
     .select()
     .from(conversations)
-    .where(eq(conversations.userId, userId))
-    .orderBy(desc(conversations.updatedAt));
+    .where(and(...conditions))
+    .orderBy(desc(conversations.isPinned), desc(conversations.updatedAt));
 }
 
 export async function getConversation(id: number, userId: number) {
@@ -142,6 +147,31 @@ export async function deleteConversation(id: number, userId: number) {
 
   await db.delete(messages).where(eq(messages.conversationId, id));
   await db.delete(conversations).where(and(eq(conversations.id, id), eq(conversations.userId, userId)));
+}
+
+export async function togglePinConversation(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const conv = await getConversation(id, userId);
+  if (!conv) throw new Error("Conversation not found");
+
+  const newPinned = !conv.isPinned;
+  await db
+    .update(conversations)
+    .set({ isPinned: newPinned })
+    .where(and(eq(conversations.id, id), eq(conversations.userId, userId)));
+  return newPinned;
+}
+
+export async function archiveConversation(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(conversations)
+    .set({ isArchived: true, isPinned: false })
+    .where(and(eq(conversations.id, id), eq(conversations.userId, userId)));
 }
 
 // ── Messages ──

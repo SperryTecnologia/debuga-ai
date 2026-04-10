@@ -11,6 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
 import {
   Send,
@@ -54,6 +61,9 @@ import {
   XCircle,
   Mic,
   MicOff,
+  Pin,
+  PinOff,
+  Archive,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -430,6 +440,8 @@ export default function ChatPage() {
   const conversationsQuery = trpc.chat.listConversations.useQuery(undefined, { enabled: !!user });
   const createConversation = trpc.chat.createConversation.useMutation();
   const deleteConversation = trpc.chat.deleteConversation.useMutation();
+  const togglePin = trpc.chat.togglePin.useMutation();
+  const archiveConv = trpc.chat.archive.useMutation();
   const updateTitle = trpc.chat.updateTitle.useMutation();
   const messagesQuery = trpc.chat.getMessages.useQuery(
     { conversationId: activeConversationId! },
@@ -861,6 +873,32 @@ export default function ChatPage() {
     setEditingTitle(null);
   };
 
+  const handleTogglePin = useCallback(async (id: number) => {
+    try {
+      const result = await togglePin.mutateAsync({ id });
+      utils.chat.listConversations.invalidate();
+      toast.success(result.isPinned ? "Conversa fixada" : "Conversa desafixada");
+    } catch (err) {
+      console.error("Failed to toggle pin:", err);
+      toast.error("Erro ao fixar conversa");
+    }
+  }, [togglePin, utils]);
+
+  const handleArchive = useCallback(async (id: number) => {
+    try {
+      await archiveConv.mutateAsync({ id });
+      if (activeConversationId === id) {
+        setActiveConversationId(null);
+        setMessages([]);
+      }
+      utils.chat.listConversations.invalidate();
+      toast.success("Conversa arquivada");
+    } catch (err) {
+      console.error("Failed to archive:", err);
+      toast.error("Erro ao arquivar conversa");
+    }
+  }, [archiveConv, activeConversationId, utils]);
+
   // Auth loading
   if (authLoading) {
     return (
@@ -966,59 +1004,192 @@ export default function ChatPage() {
 
         <ScrollArea className="flex-1 px-2">
           <div className="space-y-0.5 py-1">
-            {conversations.map((conv: any) => (
-              <div
-                key={conv.id}
-                className={cn(
-                  "group flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors",
-                  activeConversationId === conv.id
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                )}
-                onClick={() => { setActiveConversationId(conv.id); setStreamingContent(""); setToolResults([]); setActiveSteps([]); }}
-              >
-                <ConversationIcon title={conv.title || ""} />
-                {editingTitle === conv.id ? (
-                  <div className="flex-1 flex items-center gap-1">
-                    <input
-                      type="text"
-                      value={editTitleValue}
-                      onChange={(e) => setEditTitleValue(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") handleRenameConversation(conv.id); if (e.key === "Escape") setEditingTitle(null); }}
-                      className="flex-1 bg-transparent border-b border-primary/50 outline-none text-sm font-mono"
-                      autoFocus
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <button onClick={(e) => { e.stopPropagation(); handleRenameConversation(conv.id); }} className="p-0.5 hover:text-primary">
-                      <Check className="w-3 h-3" />
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); setEditingTitle(null); }} className="p-0.5 hover:text-destructive">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <span className="flex-1 truncate font-mono text-xs">{conv.title}</span>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-primary transition-opacity" onClick={(e) => e.stopPropagation()}>
-                          <MoreHorizontal className="w-3.5 h-3.5" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-36">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingTitle(conv.id); setEditTitleValue(conv.title); }}>
-                          <Pencil className="w-3 h-3 mr-2" />
-                          Renomear
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteConversation(conv.id); }}>
-                          <Trash2 className="w-3 h-3 mr-2" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </>
-                )}
+            {/* Pinned section label */}
+            {conversations.some((c: any) => c.isPinned) && (
+              <div className="px-3 pt-2 pb-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-sidebar-foreground/40 flex items-center gap-1.5">
+                  <Pin className="w-2.5 h-2.5" />
+                  Fixadas
+                </span>
               </div>
+            )}
+            {conversations.filter((c: any) => c.isPinned).map((conv: any) => (
+              <ContextMenu key={conv.id}>
+                <ContextMenuTrigger asChild>
+                  <div
+                    className={cn(
+                      "group flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors",
+                      activeConversationId === conv.id
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    )}
+                    onClick={() => { setActiveConversationId(conv.id); setStreamingContent(""); setToolResults([]); setActiveSteps([]); }}
+                  >
+                    {conv.isPinned && <Pin className="w-3 h-3 shrink-0 text-primary/60" />}
+                    <ConversationIcon title={conv.title || ""} />
+                    {editingTitle === conv.id ? (
+                      <div className="flex-1 flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={editTitleValue}
+                          onChange={(e) => setEditTitleValue(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") handleRenameConversation(conv.id); if (e.key === "Escape") setEditingTitle(null); }}
+                          className="flex-1 bg-transparent border-b border-primary/50 outline-none text-sm font-mono"
+                          autoFocus
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <button onClick={(e) => { e.stopPropagation(); handleRenameConversation(conv.id); }} className="p-0.5 hover:text-primary">
+                          <Check className="w-3 h-3" />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setEditingTitle(null); }} className="p-0.5 hover:text-destructive">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="flex-1 truncate font-mono text-xs">{conv.title}</span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-primary transition-opacity" onClick={(e) => e.stopPropagation()}>
+                              <MoreHorizontal className="w-3.5 h-3.5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleTogglePin(conv.id); }}>
+                              {conv.isPinned ? <PinOff className="w-3 h-3 mr-2" /> : <Pin className="w-3 h-3 mr-2" />}
+                              {conv.isPinned ? "Desafixar" : "Fixar"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingTitle(conv.id); setEditTitleValue(conv.title); }}>
+                              <Pencil className="w-3 h-3 mr-2" />
+                              Renomear
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(conv.id); }}>
+                              <Archive className="w-3 h-3 mr-2" />
+                              Arquivar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteConversation(conv.id); }}>
+                              <Trash2 className="w-3 h-3 mr-2" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </>
+                    )}
+                  </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent className="w-48">
+                  <ContextMenuItem onClick={() => handleTogglePin(conv.id)}>
+                    {conv.isPinned ? <PinOff className="w-4 h-4 mr-2" /> : <Pin className="w-4 h-4 mr-2" />}
+                    {conv.isPinned ? "Desafixar conversa" : "Fixar conversa"}
+                  </ContextMenuItem>
+                  <ContextMenuItem onClick={() => { setEditingTitle(conv.id); setEditTitleValue(conv.title); }}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Renomear
+                  </ContextMenuItem>
+                  <ContextMenuSeparator />
+                  <ContextMenuItem onClick={() => handleArchive(conv.id)}>
+                    <Archive className="w-4 h-4 mr-2" />
+                    Arquivar
+                  </ContextMenuItem>
+                  <ContextMenuItem variant="destructive" onClick={() => handleDeleteConversation(conv.id)}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Excluir
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
+            ))}
+            {/* Recent conversations section */}
+            {conversations.some((c: any) => c.isPinned) && conversations.some((c: any) => !c.isPinned) && (
+              <div className="px-3 pt-3 pb-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-sidebar-foreground/40 flex items-center gap-1.5">
+                  <MessageSquare className="w-2.5 h-2.5" />
+                  Recentes
+                </span>
+              </div>
+            )}
+            {conversations.filter((c: any) => !c.isPinned).map((conv: any) => (
+              <ContextMenu key={conv.id}>
+                <ContextMenuTrigger asChild>
+                  <div
+                    className={cn(
+                      "group flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors",
+                      activeConversationId === conv.id
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    )}
+                    onClick={() => { setActiveConversationId(conv.id); setStreamingContent(""); setToolResults([]); setActiveSteps([]); }}
+                  >
+                    <ConversationIcon title={conv.title || ""} />
+                    {editingTitle === conv.id ? (
+                      <div className="flex-1 flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={editTitleValue}
+                          onChange={(e) => setEditTitleValue(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") handleRenameConversation(conv.id); if (e.key === "Escape") setEditingTitle(null); }}
+                          className="flex-1 bg-transparent border-b border-primary/50 outline-none text-sm font-mono"
+                          autoFocus
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <button onClick={(e) => { e.stopPropagation(); handleRenameConversation(conv.id); }} className="p-0.5 hover:text-primary">
+                          <Check className="w-3 h-3" />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setEditingTitle(null); }} className="p-0.5 hover:text-destructive">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="flex-1 truncate font-mono text-xs">{conv.title}</span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-primary transition-opacity" onClick={(e) => e.stopPropagation()}>
+                              <MoreHorizontal className="w-3.5 h-3.5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleTogglePin(conv.id); }}>
+                              <Pin className="w-3 h-3 mr-2" />
+                              Fixar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingTitle(conv.id); setEditTitleValue(conv.title); }}>
+                              <Pencil className="w-3 h-3 mr-2" />
+                              Renomear
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(conv.id); }}>
+                              <Archive className="w-3 h-3 mr-2" />
+                              Arquivar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteConversation(conv.id); }}>
+                              <Trash2 className="w-3 h-3 mr-2" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </>
+                    )}
+                  </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent className="w-48">
+                  <ContextMenuItem onClick={() => handleTogglePin(conv.id)}>
+                    <Pin className="w-4 h-4 mr-2" />
+                    Fixar conversa
+                  </ContextMenuItem>
+                  <ContextMenuItem onClick={() => { setEditingTitle(conv.id); setEditTitleValue(conv.title); }}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Renomear
+                  </ContextMenuItem>
+                  <ContextMenuSeparator />
+                  <ContextMenuItem onClick={() => handleArchive(conv.id)}>
+                    <Archive className="w-4 h-4 mr-2" />
+                    Arquivar
+                  </ContextMenuItem>
+                  <ContextMenuItem variant="destructive" onClick={() => handleDeleteConversation(conv.id)}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Excluir
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             ))}
           </div>
         </ScrollArea>
