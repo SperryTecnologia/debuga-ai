@@ -70,3 +70,7 @@
 - [x] Atualizar cards de exemplo no chat com exemplos de sandbox e web scraping (6 cards: Navegar, Auditoria, Sandbox, Port Scan, DNS, Diagrama)
 - [x] Atualizar landing page destacando diferencial de agente autônomo com sandbox
 - [x] Renderizadores visuais para web_fetch e port_scan no chat (cards ricos)
+- [x] Esconder prompt no card de imagem gerada (não mostrar o texto do prompt ao usuário)
+- [x] Botão flutuante de WhatsApp profissional (número 5137374357) na landing page e no chat
+- [x] Substituir imagem hero da landing por animação CSS dinâmica (partículas/glow)
+- [x] Gerar logos com fundo transparente (ícone escudo+bug atualizado em todas as páginas)

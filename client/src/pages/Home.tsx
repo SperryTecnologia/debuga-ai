@@ -22,13 +22,14 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import HeroAnimation from "@/components/HeroAnimation";
 
 const LOGO_FULL =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga_logo_full-Sz8NVLnwpPYSyjyTTd3PJT.webp";
 const HERO_3D =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga_hero_3d-fhFhio2TpgpshMBLNXCSmE.webp";
 const LOGO_ICON =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga_logo_icon-cikoAtHz7LsHY3sccX7cHD.webp";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga-logo-icon-transparent-gDhqaztyFNJVC8Hsm9r7jG.webp";
 const AVATAR_AGENT =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga_agent_avatar-e4oaGrQpDrrqx9i9uqspLn.webp";
 
@@ -237,16 +238,11 @@ export default function Home() {
               variants={fadeInUp}
               className="relative hidden lg:block"
             >
-              <div className="relative rounded-2xl overflow-hidden border border-primary/10 shadow-2xl shadow-primary/5">
-                <img
-                  src={HERO_3D}
-                  alt="debuga.ai Command Center"
-                  className="w-full h-auto"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
-              </div>
-              <div className="absolute -bottom-4 -left-4 bg-card border border-border rounded-xl px-4 py-3 shadow-lg flex items-center gap-3">
-                <img src={AVATAR_AGENT} alt="AI Agent" className="w-10 h-10 rounded-lg" />
+              <HeroAnimation />
+              <div className="absolute bottom-4 left-4 bg-card/80 backdrop-blur-sm border border-border rounded-xl px-4 py-3 shadow-lg flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-primary" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Agente IA</p>
                   <p className="text-sm font-mono text-primary font-semibold">Online 24/7</p>

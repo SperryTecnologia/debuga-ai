@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import ChatPage from "./pages/ChatPage";
 import PricingPage from "./pages/PricingPage";
+import WhatsAppButton from "./components/WhatsAppButton";
 
 function Router() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <WhatsAppButton />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
