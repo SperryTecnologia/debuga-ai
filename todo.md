@@ -99,3 +99,7 @@
 - [x] Testes de créditos e limites (60 testes passando)
 - [ ] Avaliar e adicionar APIs extras para agregar valor ao produto
 - [ ] Sistema de cupons/códigos para alunos do curso Open Infra Pro
+- [x] Whitepaper bilíngue (PT-BR + EN) do projeto debuga.ai
+- [x] README.md profissional para repositório Git
+- [x] Guia de migração para hosting próprio com Google OAuth
+- [x] Documentação de arquitetura com diagramas (4 diagramas: arquitetura, agent flow, data model, billing flow)

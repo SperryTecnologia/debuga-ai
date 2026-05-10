@@ -1,0 +1,67 @@
+erDiagram
+    users ||--o{ conversations : "has"
+    users ||--o| subscriptions : "has"
+    users ||--o| credits : "has"
+    users ||--o{ usage_log : "generates"
+    conversations ||--o{ messages : "contains"
+
+    users {
+        int id PK
+        string openId UK
+        string email
+        string name
+        string loginMethod
+        string role
+        string stripeCustomerId
+        datetime createdAt
+        datetime lastSignedIn
+    }
+
+    conversations {
+        int id PK
+        int userId FK
+        string title
+        boolean isPinned
+        boolean isArchived
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    messages {
+        int id PK
+        int conversationId FK
+        string role
+        text content
+        json toolCalls
+        int tokenCount
+        datetime createdAt
+    }
+
+    subscriptions {
+        int id PK
+        int userId FK
+        string stripeSubscriptionId UK
+        string stripePriceId
+        string status
+        datetime currentPeriodEnd
+        boolean cancelAtPeriodEnd
+    }
+
+    credits {
+        int id PK
+        int userId FK
+        string planId
+        int totalCredits
+        int usedCredits
+        datetime lastReset
+    }
+
+    usage_log {
+        int id PK
+        int userId FK
+        string action
+        int tokensUsed
+        int creditsUsed
+        string conversationId
+        datetime createdAt
+    }

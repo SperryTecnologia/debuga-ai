@@ -1,0 +1,20 @@
+flowchart TD
+    A["Usuário envia mensagem"] --> B{"Rate Limit OK?"}
+    B -->|Não| B1["Erro: Limite de taxa"]
+    B -->|Sim| C{"Créditos disponíveis?"}
+    C -->|Não| C1["Erro: Sem créditos"]
+    C -->|Sim| D{"Limite diário OK?"}
+    D -->|Não| D1["Erro: Limite diário"]
+    D -->|Sim| E["Salva mensagem no DB"]
+    E --> F["Envia contexto ao LLM"]
+    F --> G{"LLM quer usar tool?"}
+    G -->|Sim| H["Executa ferramenta"]
+    H --> I["Retorna resultado ao LLM"]
+    I --> J{"Iteração < 5?"}
+    J -->|Sim| G
+    J -->|Não| K["Gera resposta final"]
+    G -->|Não| K
+    K --> L["Salva resposta no DB"]
+    L --> M["Debita créditos"]
+    M --> N["Registra uso no log"]
+    N --> O["Stream resposta via SSE"]
