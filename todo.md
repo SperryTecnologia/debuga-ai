@@ -88,3 +88,14 @@
 - [x] Backend: endpoints account.credits, account.usageStats, account.usageHistory, account.profile
 - [x] Rota /account com página AccountPage completa
 - [x] Corrigir número do WhatsApp: usar 555137374357 (sem 9 extra) no WhatsAppButton
+- [x] Auditoria completa: fluxo de pagamento Stripe (checkout → webhook → créditos)
+- [x] Auditoria: consumo de créditos coerente com os planos
+- [x] Implementar consumo real de tokens por mensagem (debitar créditos)
+- [x] Rate limiting por usuário para proteger consumo (20 msgs/min)
+- [x] Verificar se webhook Stripe credita créditos corretamente ao assinar plano
+- [x] Enforcement de limites de plano (mensagens/dia, conversas/mês, créditos)
+- [x] Downgrade automático para free ao cancelar/expirar assinatura
+- [x] Fix mapeamento de plano no endpoint account.credits
+- [x] Testes de créditos e limites (60 testes passando)
+- [ ] Avaliar e adicionar APIs extras para agregar valor ao produto
+- [ ] Sistema de cupons/códigos para alunos do curso Open Infra Pro

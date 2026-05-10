@@ -8,6 +8,8 @@ import {
   upsertSubscription,
   updateSubscriptionStatus,
   getActiveSubscription,
+  updateCreditsPlan,
+  getOrCreateCredits,
 } from "./db";
 
 let _stripe: Stripe | null = null;
@@ -59,25 +61,34 @@ export function registerStripeRoutes(app: Express) {
           case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;
             const userId = session.metadata?.user_id;
+            const planId = session.metadata?.plan_id;
             const customerId = session.customer as string;
 
             if (userId && customerId) {
               await updateUserStripeCustomerId(parseInt(userId), customerId);
             }
 
-            // If it's a subscription checkout, the subscription events will handle the rest
+            // If it's a subscription checkout, upsert subscription and update credits
             if (session.mode === "subscription" && session.subscription) {
               const stripe = getStripe();
               const sub = await stripe.subscriptions.retrieve(session.subscription as string);
               if (userId) {
+                const uid = parseInt(userId);
                 await upsertSubscription({
-                  userId: parseInt(userId),
+                  userId: uid,
                   stripeSubscriptionId: sub.id,
                   stripePriceId: sub.items.data[0]?.price.id || "",
                   status: sub.status,
                   currentPeriodEnd: new Date(((sub as any).current_period_end || 0) * 1000),
                   cancelAtPeriodEnd: (sub as any).cancel_at_period_end ? 1 : 0,
                 });
+
+                // Update user's credits based on the purchased plan
+                if (planId) {
+                  await getOrCreateCredits(uid, planId);
+                  await updateCreditsPlan(uid, planId);
+                  console.log(`[Stripe Webhook] Credits updated for user ${uid} to plan: ${planId}`);
+                }
               }
             }
             break;
@@ -97,6 +108,12 @@ export function registerStripeRoutes(app: Express) {
                 currentPeriodEnd: new Date((sub.current_period_end || 0) * 1000),
                 cancelAtPeriodEnd: sub.cancel_at_period_end ? 1 : 0,
               });
+
+              // If subscription was canceled/expired, downgrade to free
+              if (sub.status === "canceled" || sub.status === "unpaid") {
+                await updateCreditsPlan(user.id, "free");
+                console.log(`[Stripe Webhook] User ${user.id} downgraded to free (status: ${sub.status})`);
+              }
             }
             break;
           }
@@ -104,6 +121,13 @@ export function registerStripeRoutes(app: Express) {
           case "customer.subscription.deleted": {
             const sub = event.data.object as Stripe.Subscription;
             await updateSubscriptionStatus(sub.id, "canceled");
+            // Downgrade user to free plan
+            const deletedCustomerId = sub.customer as string;
+            const deletedUser = await getUserByStripeCustomerId(deletedCustomerId);
+            if (deletedUser) {
+              await updateCreditsPlan(deletedUser.id, "free");
+              console.log(`[Stripe Webhook] User ${deletedUser.id} downgraded to free (subscription deleted)`);
+            }
             break;
           }
 

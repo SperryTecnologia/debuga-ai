@@ -324,6 +324,50 @@ export async function updateCreditsPlan(userId: number, planId: string) {
     .where(eq(credits.userId, userId));
 }
 
+// ── Usage Counters ──
+
+export async function getTodayMessageCount(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const result = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(messages)
+    .where(
+      and(
+        eq(messages.role, "user"),
+        gte(messages.createdAt, today),
+        sql`${messages.conversationId} IN (SELECT id FROM conversations WHERE userId = ${userId})`
+      )
+    );
+
+  return Number(result[0]?.count || 0);
+}
+
+export async function getMonthConversationCount(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const firstOfMonth = new Date();
+  firstOfMonth.setDate(1);
+  firstOfMonth.setHours(0, 0, 0, 0);
+
+  const result = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(conversations)
+    .where(
+      and(
+        eq(conversations.userId, userId),
+        gte(conversations.createdAt, firstOfMonth)
+      )
+    );
+
+  return Number(result[0]?.count || 0);
+}
+
 // ── Usage Log ──
 
 export async function addUsageLog(data: InsertUsageLog) {

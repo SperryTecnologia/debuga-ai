@@ -6,8 +6,15 @@ import {
   getMessages,
   addMessage,
   updateConversationTitle,
+  getOrCreateCredits,
+  updateCreditsUsage,
+  addUsageLog,
+  getActiveSubscription,
+  getTodayMessageCount,
+  getMonthConversationCount,
 } from "./db";
 import { AGENT_TOOLS, executeToolCall } from "./agentTools";
+import { PLANS } from "./products";
 import type { ToolCall } from "./_core/llm";
 
 const SYSTEM_PROMPT = `Você é o **debuga.ai**, um agente autônomo especializado em Infraestrutura de TI, Segurança da Informação, DevOps e Telecomunicações. Você foi desenvolvido pela Sperry Tecnologia.
@@ -54,6 +61,57 @@ const resolveApiUrl = () =>
   ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
     : "https://forge.manus.im/v1/chat/completions";
+
+// ── In-memory rate limiter ──
+const rateLimitMap = new Map<number, { count: number; windowStart: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 20; // max 20 messages per minute per user
+
+function checkRateLimit(userId: number): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(userId);
+
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(userId, { count: 1, windowStart: now });
+    return true;
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+
+  entry.count++;
+  return true;
+}
+
+// Clean up old rate limit entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  const entries = Array.from(rateLimitMap.entries());
+  for (const [userId, entry] of entries) {
+    if (now - entry.windowStart > RATE_LIMIT_WINDOW_MS * 2) {
+      rateLimitMap.delete(userId);
+    }
+  }
+}, 5 * 60_000);
+
+// Helper: resolve user's plan from subscription
+async function getUserPlan(userId: number) {
+  const sub = await getActiveSubscription(userId);
+  if (!sub || !sub.stripePriceId) {
+    return PLANS.find((p) => p.id === "free")!;
+  }
+
+  // Check the credits table for planId (set by webhook on subscription)
+  const creds = await getOrCreateCredits(userId, "free");
+  if (creds && creds.planId !== "free") {
+    const plan = PLANS.find((p) => p.id === creds.planId);
+    if (plan) return plan;
+  }
+
+  // Fallback: if subscription is active, at least give starter
+  return PLANS.find((p) => p.id === "starter")!;
+}
 
 // Helper: send SSE event
 function sendSSE(res: Response, data: any) {
@@ -183,6 +241,58 @@ export function registerStreamRoute(app: Express) {
         return;
       }
 
+      // ── Rate limiting ──
+      if (!checkRateLimit(user.id)) {
+        res.status(429).json({
+          error: "Limite de requisições excedido. Aguarde um momento antes de enviar outra mensagem.",
+          code: "RATE_LIMITED",
+        });
+        return;
+      }
+
+      // ── Plan limits enforcement ──
+      const plan = await getUserPlan(user.id);
+      const isAdmin = user.role === "admin";
+
+      if (!isAdmin) {
+        // Check daily message limit
+        const todayMessages = await getTodayMessageCount(user.id);
+        if (todayMessages >= plan.limits.messagesPerDay) {
+          res.status(402).json({
+            error: `Você atingiu o limite de ${plan.limits.messagesPerDay} mensagens por dia do plano ${plan.name}. Faça upgrade para continuar.`,
+            code: "DAILY_LIMIT_REACHED",
+            limit: plan.limits.messagesPerDay,
+            used: todayMessages,
+            planId: plan.id,
+          });
+          return;
+        }
+
+        // Check monthly conversation limit
+        const monthConversations = await getMonthConversationCount(user.id);
+        if (monthConversations > plan.limits.conversationsPerMonth) {
+          res.status(402).json({
+            error: `Você atingiu o limite de ${plan.limits.conversationsPerMonth} conversas por mês do plano ${plan.name}. Faça upgrade para continuar.`,
+            code: "MONTHLY_CONV_LIMIT_REACHED",
+            limit: plan.limits.conversationsPerMonth,
+            used: monthConversations,
+            planId: plan.id,
+          });
+          return;
+        }
+
+        // Check credits
+        const creds = await getOrCreateCredits(user.id, plan.id);
+        if (creds && creds.usedCredits >= creds.totalCredits && plan.id === "free") {
+          res.status(402).json({
+            error: "Seus créditos gratuitos acabaram. Assine um plano para continuar usando o debuga.ai.",
+            code: "CREDITS_EXHAUSTED",
+            planId: plan.id,
+          });
+          return;
+        }
+      }
+
       // Verify conversation ownership
       const conv = await getConversation(conversationId, user.id);
       if (!conv) {
@@ -244,6 +354,7 @@ export function registerStreamRoute(app: Express) {
       let maxIterations = 5; // Prevent infinite loops
       let iteration = 0;
       let finalContent = "";
+      let totalTokensEstimate = 0;
       console.log("[Stream] Starting agent loop for conversation:", conversationId);
 
       while (iteration < maxIterations) {
@@ -253,6 +364,8 @@ export function registerStreamRoute(app: Express) {
           await streamLLMResponse(llmMessages, res, iteration <= 3);
 
         finalContent += responseContent;
+        // Estimate tokens: ~4 chars per token (rough estimate for billing)
+        totalTokensEstimate += Math.ceil((responseContent.length + content.length) / 4);
         console.log(`[Stream] Iteration ${iteration}: content=${responseContent.length}chars, toolCalls=${toolCalls.length}, finishReason=${finishReason}`);
 
         // If no tool calls, we're done (some models like Gemini return finish_reason=stop even with tool_calls)
@@ -302,6 +415,9 @@ export function registerStreamRoute(app: Express) {
             tool_call_id: toolCall.id,
             content: JSON.stringify(result.result),
           });
+
+          // Add extra tokens for tool usage
+          totalTokensEstimate += 50;
         }
 
         // Send step update
@@ -319,10 +435,32 @@ export function registerStreamRoute(app: Express) {
           conversationId,
           role: "assistant",
           content: finalContent,
+          tokenCount: totalTokensEstimate,
         });
         console.log("[Stream] Assistant message saved to DB");
       } else {
         console.log("[Stream] WARNING: No final content to save!");
+      }
+
+      // ── Credit consumption ──
+      if (!isAdmin && totalTokensEstimate > 0) {
+        try {
+          // Ensure credits row exists
+          await getOrCreateCredits(user.id, plan.id);
+          // Debit usage
+          await updateCreditsUsage(user.id, totalTokensEstimate);
+          // Log usage
+          await addUsageLog({
+            userId: user.id,
+            conversationId,
+            tokensUsed: totalTokensEstimate,
+            description: `Chat message (${iteration} iteration${iteration > 1 ? "s" : ""})`,
+          });
+          console.log(`[Stream] Credits debited: ${totalTokensEstimate} tokens for user ${user.id}`);
+        } catch (err) {
+          console.error("[Stream] Failed to update credits:", err);
+          // Non-blocking: don't fail the response if credits update fails
+        }
       }
 
       // Auto-title on first exchange

@@ -76,9 +76,10 @@ export const appRouter = router({
     // Get credits info
     credits: protectedProcedure.query(async ({ ctx }) => {
       const sub = await getActiveSubscription(ctx.user.id);
-      const planId = sub ? PLANS.find(p => p.stripe.priceMonthly > 0 && p.id !== "free")?.id || "free" : "free";
-      const creds = await getOrCreateCredits(ctx.user.id, planId);
-      const plan = PLANS.find(p => p.id === (creds?.planId || "free")) || PLANS[0];
+      // Use the credits table planId as source of truth (set by webhook on subscription)
+      const creds = await getOrCreateCredits(ctx.user.id, "free");
+      const effectivePlanId = creds?.planId || "free";
+      const plan = PLANS.find(p => p.id === effectivePlanId) || PLANS[0];
       return {
         credits: creds,
         plan: {
