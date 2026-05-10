@@ -87,3 +87,4 @@
 - [x] Backend: tabelas credits e usage_log no banco de dados
 - [x] Backend: endpoints account.credits, account.usageStats, account.usageHistory, account.profile
 - [x] Rota /account com página AccountPage completa
+- [x] Corrigir número do WhatsApp: usar 555137374357 (sem 9 extra) no WhatsAppButton

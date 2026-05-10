@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const WHATSAPP_NUMBER = "5551937374357";
+const WHATSAPP_NUMBER = "555137374357";
 const WHATSAPP_MESSAGE = encodeURIComponent(
   "Olá! Gostaria de saber mais sobre o debuga.ai"
 );
