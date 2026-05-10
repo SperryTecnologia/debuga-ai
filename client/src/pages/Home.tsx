@@ -19,6 +19,9 @@ import {
   Scan,
   Code2,
   Eye,
+  Github,
+  FileText,
+  ExternalLink,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -390,17 +393,89 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 py-8">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img src={LOGO_ICON} alt="debuga.ai" className="w-6 h-6 rounded" />
-            <span className="font-mono text-sm text-muted-foreground">
-              debuga.ai — Sperry Tecnologia
-            </span>
+      <footer className="border-t border-border/40 py-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Brand */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <img src={LOGO_ICON} alt="debuga.ai" className="w-6 h-6 rounded" />
+                <span className="font-mono text-sm font-semibold">
+                  debuga<span className="text-primary">.ai</span>
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Agente autonomo de IA para infraestrutura de TI, seguranca da informacao e telecomunicacoes.
+              </p>
+              <a
+                href="https://www.sperrytecnologia.com.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary/70 hover:text-primary transition-colors inline-flex items-center gap-1"
+              >
+                Desenvolvido por Sperry Tecnologia <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            {/* Links */}
+            <div className="space-y-3">
+              <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Links</p>
+              <div className="flex flex-col gap-2">
+                <a href="#features" className="text-sm text-muted-foreground hover:text-primary transition-colors">Recursos</a>
+                <a href="#integrations" className="text-sm text-muted-foreground hover:text-primary transition-colors">Integracoes</a>
+                <a href="/pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">Planos</a>
+              </div>
+            </div>
+
+            {/* Open Source & Docs */}
+            <div className="space-y-3">
+              <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Documentacao</p>
+              <div className="flex flex-col gap-2">
+                <a
+                  href="https://github.com/SperryTecnologia/debuga-ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+                >
+                  <Github className="w-4 h-4" /> GitHub
+                </a>
+                <a
+                  href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITEPAPER_PT-BR.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" /> Whitepaper (PT-BR)
+                </a>
+                <a
+                  href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITEPAPER_EN.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" /> Whitepaper (EN)
+                </a>
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Sperry Tecnologia. Todos os direitos reservados.
-          </p>
+
+          {/* Bottom bar */}
+          <div className="border-t border-border/30 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              &copy; {new Date().getFullYear()} Sperry Tecnologia. Todos os direitos reservados.
+            </p>
+            <div className="flex items-center gap-4">
+              <a
+                href="https://github.com/SperryTecnologia/debuga-ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors"
+                title="GitHub"
+              >
+                <Github className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

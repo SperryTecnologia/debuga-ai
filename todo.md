@@ -110,3 +110,5 @@
 - [x] Guia passo a passo: configurar Stripe para produção
 - [x] Guia passo a passo: publicar no domínio próprio via Cloudflare
 - [x] Avaliação de riscos: repositório público vs privado (APROVADO para público)
+- [x] Verificar se webhook Stripe processou pagamento de teste corretamente (webhook não chega no Preview, funciona após publicar)
+- [x] Adicionar links sutis dos whitepapers no footer da landing page (apontando para GitHub)

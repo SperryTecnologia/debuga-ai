@@ -1,0 +1,19 @@
+{
+  "query": "SELECT u.id, u.name, u.email, u.stripeCustomerId FROM users u; SELECT * FROM subscriptions; SELECT * FROM credits;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user pNiV3hkTGADEQu8.7c5e28ef3035 --database JiyqPBx8bCsA9W2jSDpwkK --execute SELECT u.id, u.name, u.email, u.stripeCustomerId FROM users u; SELECT * FROM subscriptions; SELECT * FROM credits;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Iluy Sperry",
+      "email": "iluy.sperry@gmail.com",
+      "stripeCustomerId": "NULL"
+    }
+  ],
+  "messages": [
+    "id\tuserId\ttotalCredits\tusedCredits\tplanId\tresetAt\tcreatedAt\tupdatedAt",
+    "1\t1\t50\t0\tfree\t2026-05-01 04:00:00\t2026-04-10 05:11:15\t2026-04-10 05:11:15"
+  ],
+  "stdout": "id\tname\temail\tstripeCustomerId\n1\tIluy Sperry\tiluy.sperry@gmail.com\tNULL\nid\tuserId\ttotalCredits\tusedCredits\tplanId\tresetAt\tcreatedAt\tupdatedAt\n1\t1\t50\t0\tfree\t2026-05-01 04:00:00\t2026-04-10 05:11:15\t2026-04-10 05:11:15\n",
+  "stderr": "",
+  "execution_time_ms": 388
+}
