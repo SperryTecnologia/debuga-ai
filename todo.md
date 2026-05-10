@@ -103,3 +103,10 @@
 - [x] README.md profissional para repositório Git
 - [x] Guia de migração para hosting próprio com Google OAuth
 - [x] Documentação de arquitetura com diagramas (4 diagramas: arquitetura, agent flow, data model, billing flow)
+- [x] Auditoria de segurança completa: verificar exposição de API keys, secrets, dados sensíveis (APROVADO)
+- [x] Revisão do fluxo de pagamento: assinatura, créditos, limites, upgrade de plano
+- [x] Atualizar whitepapers com LLM própria (16 GPUs 3090, 3 servidores rack 4U)
+- [x] Atualizar whitepapers com análise profunda TCP/IP
+- [x] Guia passo a passo: configurar Stripe para produção
+- [x] Guia passo a passo: publicar no domínio próprio via Cloudflare
+- [x] Avaliação de riscos: repositório público vs privado (APROVADO para público)
