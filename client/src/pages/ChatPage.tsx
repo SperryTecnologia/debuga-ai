@@ -574,6 +574,7 @@ type SuggestedPrompt = {
   icon: LucideIcon;
   title: string;
   prompt: string;
+  displayMessage: string; // Clean message shown in chat as user message
   description: string;
   visible?: boolean; // false = hidden from cards but kept for future use
 };
@@ -582,52 +583,60 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: Server,
     title: "Diagnóstico DNS",
+    displayMessage: "Faça um diagnóstico DNS completo do domínio github.com.",
     prompt: "Faça um diagnóstico DNS completo do domínio github.com. Consulte registros A, MX, TXT e NS separadamente se necessário. Organize os resultados em seções, explique a função de cada tipo de registro e apresente uma conclusão profissional.",
     description: "Consulta DNS completa com registros A, MX, TXT e NS",
   },
   {
     icon: Shield,
     title: "Auditoria de Segurança",
+    displayMessage: "Faça uma auditoria de segurança passiva de example.com.",
     prompt: "Faça uma auditoria passiva e segura de https://example.com. Verifique HTTPS/SSL quando aplicável, headers HTTP básicos, DNS público e pontos de atenção visíveis externamente. Não execute scan invasivo. Apresente um checklist profissional com pontos positivos, pontos de atenção e conclusão.",
     description: "Checklist de segurança passiva com SSL, headers e DNS",
   },
   {
     icon: Network,
     title: "Scan de Portas",
+    displayMessage: "Verifique as portas 80 e 443 de example.com.",
     prompt: "Faça uma verificação segura e limitada apenas das portas 80 e 443 de example.com. Explique se as portas estão abertas, fechadas ou filtradas, e apresente uma interpretação profissional. Não realizar varredura agressiva.",
     description: "Verificação segura de portas com interpretação técnica",
   },
   {
     icon: Monitor,
     title: "Monitor de Servidor",
-    prompt: "Faça uma verificação pública do domínio debuga.ai como se fosse um monitoramento técnico. Valide DNS, resolução de IP, disponibilidade HTTP/HTTPS, status code, SSL/TLS, headers principais quando disponíveis, tempo de resposta se possível e apresente uma conclusão com status OK, Atenção ou Crítico. Entregue também um JSON técnico resumido no formato: {\"target\": \"debuga.ai\", \"category\": \"server_monitoring\", \"status\": \"ok|attention|critical\", \"checks\": {\"dns\": \"...\", \"https\": \"...\", \"ssl\": \"...\", \"http_status\": ...}, \"summary\": \"...\"}. Use somente verificações públicas e seguras. Timeout máximo: 15s. Se alguma ferramenta falhar, entregue fallback baseado nos dados disponíveis. Nunca mostre erro técnico cru.",
-    description: "Verifica DNS, HTTPS, SSL, IP e status público",
+    displayMessage: "Faça uma verificação defensiva do servidor 161.97.132.110.",
+    prompt: "Faça uma verificação defensiva e não invasiva do servidor 161.97.132.110 considerando que ele pode hospedar um serviço VPN OpenVPN em UDP/1194. Verifique disponibilidade básica, IP, reverse DNS se disponível, portas esperadas quando a ferramenta permitir, status público e riscos defensivos. Não execute exploração, brute force, enumeração agressiva ou ataque. Entregue um relatório com status geral, achados, interpretação, riscos defensivos e recomendações de hardening. Entregue também um JSON técnico resumido no formato: {\"target\": \"161.97.132.110\", \"type\": \"server_ip\", \"expected_service\": \"OpenVPN UDP/1194\", \"status\": \"ok|attention|critical\", \"checks\": {\"availability\": \"...\", \"reverse_dns\": \"...\", \"expected_ports\": [\"1194/udp\"], \"risk_level\": \"low|medium|high\"}, \"defensive_summary\": \"...\"}. Se alguma ferramenta falhar, continue com os dados disponíveis.",
+    description: "Verifica IP, portas esperadas e saúde pública",
   },
   {
     icon: SearchCheck,
     title: "Auditor de Domínio",
-    prompt: "Faça uma auditoria externa e passiva do domínio debuga.ai. Analise registros DNS A/AAAA, MX, TXT, SPF, DMARC, NS, SSL/TLS e headers HTTP quando disponíveis. Organize os achados em pontos positivos, pontos de atenção e recomendações práticas. Não execute scan invasivo. Timeout máximo: 15s. Se uma consulta falhar, continue com as demais. Nunca trave o chat inteiro. Nunca mostre erro técnico cru.",
+    displayMessage: "Faça uma auditoria externa do domínio debuga.ai.",
+    prompt: "Faça uma auditoria externa e passiva do domínio debuga.ai. Analise DNS público, registros A/AAAA, MX, TXT, SPF, DMARC, NS, SSL/TLS e headers HTTP quando disponíveis. Organize em pontos positivos, pontos de atenção, recomendações e conclusão executiva. Não execute varredura invasiva. Se alguma consulta falhar, continue com os dados disponíveis e trate como ponto de atenção.",
     description: "Analisa DNS, e-mail, SSL e postura externa",
   },
   {
     icon: ImageIcon,
     title: "Gerar Diagrama",
-    prompt: "Crie um diagrama profissional de arquitetura segura para uma aplicação web moderna, incluindo usuário, DNS, CDN/WAF, firewall, load balancer, servidores de aplicação, banco de dados, backup, monitoramento, logs/SIEM e alertas. O resultado deve ser limpo, técnico, executivo e adequado para apresentação. Primeiro, tente gerar uma imagem usando a ferramenta de geração de imagem. Se a geração de imagem falhar ou não estiver disponível, gere IMEDIATAMENTE o diagrama em formato Mermaid premium com o seguinte código:\n\n```mermaid\nflowchart LR\n    U[Usuário] --> DNS[DNS]\n    DNS --> CDN[CDN / WAF]\n    CDN --> FW[Firewall]\n    FW --> LB[Load Balancer]\n    LB --> APP1[App Server 01]\n    LB --> APP2[App Server 02]\n    APP1 --> DB[(Banco de Dados)]\n    APP2 --> DB\n    DB --> BKP[Backup Seguro]\n    APP1 --> LOGS[Logs / SIEM]\n    APP2 --> LOGS\n    MON[Monitoramento] --> APP1\n    MON --> APP2\n    MON --> DB\n    ALERT[Alertas] --> NOC[NOC / Equipe Técnica]\n    MON --> ALERT\n```\n\nExplique cada componente e sua função na arquitetura. Nunca mostre erro de geração de imagem ao usuário. Nunca deixe sem resposta.",
+    displayMessage: "Gere um diagrama de arquitetura segura para uma aplicação web.",
+    prompt: "Crie um diagrama profissional de arquitetura segura para uma aplicação web moderna, incluindo usuário, DNS, CDN/WAF, firewall, load balancer, servidores de aplicação, banco de dados, backup, monitoramento, logs/SIEM e alertas. O resultado deve ser limpo, técnico, executivo e adequado para apresentação. Tente gerar uma imagem visual. Se não for possível, gere o diagrama em formato Mermaid. Explique cada componente e sua função na arquitetura.",
     description: "Cria uma arquitetura segura em formato profissional",
   },
   // --- Cards ocultos (manter para reabilitação futura) ---
   {
     icon: Globe,
     title: "Navegar em Site",
-    visible: false, // Instável: depende de web_fetch externo
-    prompt: "Analise a página https://debuga.ai/demo/web-analysis. Tente acessar a URL com a ferramenta web_fetch. Se conseguir, apresente os dados reais extraídos. Se a ferramenta falhar ou demorar, apresente uma análise profissional baseada no que você sabe sobre a página demo do debuga.ai. Nunca deixe o usuário sem resposta.",
+    visible: false,
+    displayMessage: "Analise a página debuga.ai/demo/web-analysis.",
+    prompt: "Analise a página https://debuga.ai/demo/web-analysis. Tente acessar a URL com a ferramenta web_fetch. Se conseguir, apresente os dados reais extraídos. Se a ferramenta falhar, apresente uma análise baseada no que você sabe sobre a página.",
     description: "Análise completa de página web com status e resumo",
   },
   {
     icon: Terminal,
     title: "Sandbox de Código",
-    visible: false, // Instável: python3 ENOENT em produção
-    prompt: "Execute um script Python seguro usando apenas biblioteca padrão para validar se 192.168.0.1 é um endereço IPv4 válido com ipaddress. Se a execução de código falhar ou não estiver disponível, apresente o código Python que seria executado, simule a saída esperada e explique o resultado detalhadamente. Nunca deixe o usuário sem resposta.",
+    visible: false,
+    displayMessage: "Valide se 192.168.0.1 é um IPv4 válido com Python.",
+    prompt: "Execute um script Python seguro usando apenas biblioteca padrão para validar se 192.168.0.1 é um endereço IPv4 válido com ipaddress. Se a execução de código falhar, apresente o código Python, simule a saída esperada e explique o resultado.",
     description: "Execução segura de código Python com explicação",
   },
 ];
@@ -1048,7 +1057,7 @@ export default function ChatPage() {
   }, [isRecording, startRecording, stopRecording]);
 
   const handleSendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, displayOverride?: string) => {
       if ((!content.trim() && uploadedFiles.length === 0) || isStreaming) return;
 
       let convId = activeConversationId;
@@ -1087,7 +1096,7 @@ export default function ChatPage() {
       const userMsg: ChatMessage = {
         id: Date.now(),
         role: "user",
-        content: content.trim() || `Enviou ${currentFiles.length} arquivo(s) para análise`,
+        content: displayOverride || content.trim() || `Enviou ${currentFiles.length} arquivo(s) para análise`,
         createdAt: new Date(),
         attachments: currentFiles.length > 0 ? currentFiles : undefined,
       };
@@ -1970,7 +1979,7 @@ export default function ChatPage() {
                               lastRequestBlockedRef.current = false;
                               if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
                               setExamplesOpen(false);
-                              handleSendMessage(item.prompt);
+                              handleSendMessage(item.prompt, item.displayMessage);
                               if (!isPaidPlan) {
                                 ctaTimeoutRef.current = setTimeout(() => {
                                   ctaTimeoutRef.current = null;
@@ -2007,7 +2016,7 @@ export default function ChatPage() {
                               lastRequestBlockedRef.current = false;
                               if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
                               setExamplesOpen(false);
-                              handleSendMessage(item.prompt);
+                              handleSendMessage(item.prompt, item.displayMessage);
                               if (!isPaidPlan) {
                                 ctaTimeoutRef.current = setTimeout(() => {
                                   ctaTimeoutRef.current = null;
@@ -2018,7 +2027,7 @@ export default function ChatPage() {
                               }
                             }}
                             disabled={isStreaming}
-                            className="group flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left"
+                            className="group flex flex-col items-start gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left"
                           >
                             <div className="p-2 rounded-lg shrink-0 transition-colors bg-primary/10 text-primary group-hover:bg-primary/20">
                               <item.icon className="w-4 h-4" />

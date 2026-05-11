@@ -66,12 +66,12 @@ describe("Simplified Card Structure", () => {
       expect(dnsSection).toContain("github.com");
     });
 
-    it("Monitor de Servidor uses debuga.ai", () => {
+    it("Monitor de Servidor uses 161.97.132.110", () => {
       const monitorSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Monitor de Servidor"'),
-        chatPageContent.indexOf('title: "Monitor de Servidor"') + 800
+        chatPageContent.indexOf('title: "Monitor de Servidor"') + 1200
       );
-      expect(monitorSection).toContain("debuga.ai");
+      expect(monitorSection).toContain("161.97.132.110");
     });
 
     it("Auditor de Domínio uses debuga.ai", () => {
@@ -133,12 +133,12 @@ describe("Simplified Card Structure", () => {
       expect(cardSection).not.toContain("isDemoMode");
     });
 
-    it("cards call handleSendMessage with item.prompt", () => {
+    it("cards call handleSendMessage with item.prompt and item.displayMessage", () => {
       const cardSection = chatPageContent.substring(
         chatPageContent.indexOf("SUGGESTED_PROMPTS.filter"),
         chatPageContent.indexOf("SUGGESTED_PROMPTS.filter") + 2000
       );
-      expect(cardSection).toContain("handleSendMessage(item.prompt)");
+      expect(cardSection).toContain("handleSendMessage(item.prompt, item.displayMessage)");
     });
   });
 
@@ -197,14 +197,14 @@ describe("Simplified Card Structure", () => {
       expect(dnsSection).toContain("conclusão profissional");
     });
 
-    it("Monitor de Servidor prompt asks for status OK/Atenção/Crítico", () => {
+    it("Monitor de Servidor prompt asks for defensive verification with JSON", () => {
       const monitorSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Monitor de Servidor"'),
         chatPageContent.indexOf('title: "Monitor de Servidor"') + 1200
       );
-      expect(monitorSection).toContain("OK");
-      expect(monitorSection).toContain("Atenção");
-      expect(monitorSection).toContain("Crítico");
+      expect(monitorSection).toContain("161.97.132.110");
+      expect(monitorSection).toContain("defensiva");
+      expect(monitorSection).toContain("hardening");
       expect(monitorSection).toContain("JSON técnico resumido");
     });
 
@@ -226,7 +226,6 @@ describe("Simplified Card Structure", () => {
       );
       expect(diagramSection).toContain("profissional");
       expect(diagramSection).toContain("Mermaid");
-      expect(diagramSection).toContain("Nunca deixe sem resposta");
     });
 
     it("Auditoria prompt asks for checklist with positives and concerns", () => {
