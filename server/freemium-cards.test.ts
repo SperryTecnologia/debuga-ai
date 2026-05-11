@@ -45,9 +45,9 @@ describe("Simplified Card Structure", () => {
     it("Navegar em Site uses example.com (not cloudflare.com)", () => {
       const navSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Navegar em Site"'),
-        chatPageContent.indexOf('title: "Navegar em Site"') + 500
+        chatPageContent.indexOf('title: "Navegar em Site"') + 1200
       );
-      expect(navSection).toContain("example.com");
+      expect(navSection).toContain("debuga.ai/demo/web-analysis");
       expect(navSection).not.toContain("cloudflare.com");
     });
 
@@ -176,11 +176,12 @@ describe("Simplified Card Structure", () => {
     it("Navegar prompt asks for title, description, sections", () => {
       const navSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Navegar em Site"'),
-        chatPageContent.indexOf('title: "Navegar em Site"') + 600
+        chatPageContent.indexOf('title: "Navegar em Site"') + 1200
       );
       expect(navSection).toContain("título");
       expect(navSection).toContain("descrição");
-      expect(navSection).toContain("resumo profissional");
+      expect(navSection).toContain("análise profissional");
+      expect(navSection).toContain("Nunca deixe o usuário sem resposta");
       expect(navSection).toContain("debuga.ai/demo/web-analysis");
     });
 
@@ -197,10 +198,11 @@ describe("Simplified Card Structure", () => {
     it("Diagrama prompt asks for professional high-quality output", () => {
       const diagramSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Gerar Diagrama"'),
-        chatPageContent.indexOf('title: "Gerar Diagrama"') + 600
+        chatPageContent.indexOf('title: "Gerar Diagrama"') + 1200
       );
       expect(diagramSection).toContain("profissional");
-      expect(diagramSection).toContain("alta qualidade");
+      expect(diagramSection).toContain("Mermaid");
+      expect(diagramSection).toContain("Nunca deixe o usuário sem resultado");
     });
 
     it("Scan prompt asks for professional interpretation", () => {

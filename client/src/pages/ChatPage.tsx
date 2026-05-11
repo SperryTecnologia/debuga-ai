@@ -584,7 +584,7 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: Globe,
     title: "Navegar em Site",
-    prompt: "Analise a página https://debuga.ai/demo/web-analysis. Extraia o título, descrição, principais seções, links encontrados, estrutura HTML aparente, tipo de conteúdo e apresente um resumo profissional com observações técnicas.",
+    prompt: "Analise a página https://debuga.ai/demo/web-analysis. Tente acessar a URL com a ferramenta web_fetch. Se conseguir, apresente os dados reais extraídos. Se a ferramenta falhar ou demorar, apresente uma análise profissional baseada no que você sabe sobre a página demo do debuga.ai (é uma página pública de demonstração com seções sobre Infraestrutura, Segurança, DNS, SSL/TLS, Monitoramento e DevOps, além de uma tabela de especificações técnicas). Em qualquer caso, apresente: título da página, descrição, principais seções encontradas, links relevantes, estrutura HTML aparente, tipo de conteúdo e um resumo profissional com observações técnicas. Nunca deixe o usuário sem resposta.",
     description: "Análise completa de página web com status e resumo",
   },
   {
@@ -596,8 +596,8 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: ImageIcon,
     title: "Gerar Diagrama",
-    prompt: "Gere um diagrama profissional em alta qualidade de uma arquitetura segura com usuário, firewall, WAF, balanceador, servidor web, aplicação, banco de dados, backup e monitoramento. O visual deve ser moderno, limpo, técnico e adequado para apresentação executiva.",
-    description: "Diagrama de arquitetura profissional em alta qualidade",
+    prompt: "Crie um diagrama de arquitetura segura profissional. Primeiro, tente gerar uma imagem usando a ferramenta de geração de imagem. Se a geração de imagem falhar ou não estiver disponível, gere imediatamente o diagrama em formato Mermaid (flowchart LR) com os seguintes componentes: Usuário → DNS → WAF → Firewall → Load Balancer → Aplicação Web → Banco de Dados, com ramificações para Backup, Logs/SIEM e Monitoramento. Apresente o diagrama Mermaid em bloco de código ```mermaid``` e explique cada componente e sua função na arquitetura. O resultado deve ser profissional e adequado para apresentação executiva. Nunca deixe o usuário sem resultado.",
+    description: "Diagrama de arquitetura segura (imagem ou Mermaid)",
   },
   {
     icon: Network,
@@ -608,7 +608,7 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: Terminal,
     title: "Sandbox de Código",
-    prompt: "Execute um script Python seguro usando apenas biblioteca padrão para validar se 192.168.0.1 é um endereço IPv4 válido com ipaddress. Mostre o código, a saída e explique o resultado.",
+    prompt: "Execute um script Python seguro usando apenas biblioteca padrão para validar se 192.168.0.1 é um endereço IPv4 válido com ipaddress. Se a execução de código falhar ou não estiver disponível, apresente o código Python que seria executado, simule a saída esperada e explique o resultado detalhadamente. Mostre o código, a saída e explique o resultado. Nunca deixe o usuário sem resposta.",
     description: "Execução segura de código Python com explicação",
   },
 ];

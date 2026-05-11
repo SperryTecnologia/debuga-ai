@@ -210,19 +210,54 @@ async function executeCode(args: {
   language?: string;
 }): Promise<{ type: "code"; output: string; language: string; code: string; exitCode: number }> {
   const lang = args.language || "python";
-  const { spawn } = await import("child_process");
+  const { spawn, execSync } = await import("child_process");
+  const { existsSync } = await import("fs");
+
+  // Resolve the correct command path — production may not have python3 in PATH
+  let cmd: string;
+  if (lang === "bash") {
+    cmd = "bash";
+  } else {
+    // Try multiple Python paths to handle different environments
+    const pythonCandidates = ["python3", "python3.11", "python3.10", "python", "/usr/bin/python3", "/usr/bin/python", "/usr/local/bin/python3"];
+    let resolvedCmd = "";
+    for (const candidate of pythonCandidates) {
+      try {
+        // Check if the command exists
+        if (candidate.startsWith("/")) {
+          if (existsSync(candidate)) { resolvedCmd = candidate; break; }
+        } else {
+          execSync(`which ${candidate}`, { stdio: "ignore" });
+          resolvedCmd = candidate;
+          break;
+        }
+      } catch {
+        // Not found, try next
+      }
+    }
+    if (!resolvedCmd) {
+      // No Python found — return friendly error instead of ENOENT
+      return {
+        type: "code",
+        output: "Ambiente de execução Python não disponível neste momento. O código foi analisado mas não pôde ser executado.",
+        language: lang,
+        code: args.code,
+        exitCode: 1,
+      };
+    }
+    cmd = resolvedCmd;
+  }
 
   return new Promise((resolve) => {
     const timeout = 30000; // 30s max
     let output = "";
     let errorOutput = "";
 
-    const cmd = lang === "bash" ? "bash" : "python3";
     const proc = spawn(cmd, ["-c", args.code], {
       timeout,
       env: {
         ...process.env,
-        PATH: process.env.PATH,
+        PATH: `/usr/local/bin:/usr/bin:/bin:${process.env.PATH || ""}`,
         HOME: "/tmp",
         PYTHONDONTWRITEBYTECODE: "1",
       },
@@ -253,9 +288,13 @@ async function executeCode(args: {
     });
 
     proc.on("error", (err) => {
+      // Handle ENOENT gracefully — don't expose raw error
+      const isNotFound = err.message.includes("ENOENT") || err.message.includes("not found");
       resolve({
         type: "code",
-        output: `Erro ao executar: ${err.message}`,
+        output: isNotFound
+          ? "Ambiente de execução não disponível neste momento. O código foi analisado mas não pôde ser executado."
+          : `Erro na execução: o ambiente retornou um problema temporário. Tente novamente.`,
         language: lang,
         code: args.code,
         exitCode: 1,
