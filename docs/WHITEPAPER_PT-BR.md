@@ -141,10 +141,10 @@ A estratégia de modelos especializados prevê fine-tuning com datasets de:
 │                    SERVIDOR (Node.js)                       │
 │  Express 4 + tRPC 11 + SSE Stream + Stripe Webhooks         │
 ├─────────────────────────────────────────────────────────────┤
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐  │
-│  │ Auth     │  │ Chat     │  │ Credits  │  │ Stripe     │  │
-│  │ Module   │  │ Stream   │  │ System   │  │ Routes     │  │
-│  └──────────┘  └──────────┘  └──────────┘  └────────────┘  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐   │
+│  │ Auth     │  │ Chat     │  │ Credits  │  │ Stripe     │   │
+│  │ Module   │  │ Stream   │  │ System   │  │ Routes     │   │
+│  └──────────┘  └──────────┘  └──────────┘  └────────────┘   │
 │                     │                                       │
 │  ┌──────────────────▼───────────────────────────────────┐   │
 │  │           AGENT LOOP (max 5 iterações)               │   │
