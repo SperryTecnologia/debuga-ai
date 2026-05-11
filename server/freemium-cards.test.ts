@@ -109,8 +109,8 @@ describe("Simplified Card Structure", () => {
 
     it("cards call handleSendMessage with item.prompt", () => {
       const cardSection = chatPageContent.substring(
-        chatPageContent.indexOf("SUGGESTED_PROMPTS.map"),
-        chatPageContent.indexOf("SUGGESTED_PROMPTS.map") + 2000
+        chatPageContent.indexOf("SUGGESTED_PROMPTS.filter"),
+        chatPageContent.indexOf("SUGGESTED_PROMPTS.filter") + 2000
       );
       expect(cardSection).toContain("handleSendMessage(item.prompt)");
     });
@@ -147,19 +147,23 @@ describe("Simplified Card Structure", () => {
     });
   });
 
-  describe("Introductory text and mobile accordion", () => {
-    it("should have mobile accordion toggle for examples", () => {
-      expect(chatPageContent).toContain("mobileExamplesOpen");
+  describe("Introductory text and unified accordion", () => {
+    it("should have unified accordion toggle for examples", () => {
+      expect(chatPageContent).toContain("examplesOpen");
     });
 
-    it("mobile accordion has toggle text", () => {
+    it("accordion has toggle text", () => {
       expect(chatPageContent).toContain("Ver exemplos guiados");
       expect(chatPageContent).toContain("Ocultar exemplos");
     });
 
-    it("desktop grid is hidden on mobile, accordion is hidden on desktop", () => {
+    it("desktop grid is hidden on mobile, compact list is hidden on desktop", () => {
       expect(chatPageContent).toContain("hidden md:grid");
       expect(chatPageContent).toContain("md:hidden");
+    });
+
+    it("cards are filtered by visible property", () => {
+      expect(chatPageContent).toContain("filter(p => p.visible !== false)");
     });
   });
 

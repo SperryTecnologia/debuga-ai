@@ -91,6 +91,7 @@ import {
   Crown,
   BarChart3,
   ArrowUpCircle,
+  Square,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -572,6 +573,7 @@ type SuggestedPrompt = {
   title: string;
   prompt: string;
   description: string;
+  visible?: boolean; // false = hidden from cards but kept for future use
 };
 
 const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
@@ -584,6 +586,7 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: Globe,
     title: "Navegar em Site",
+    visible: false, // Instável: depende de web_fetch externo
     prompt: "Analise a página https://debuga.ai/demo/web-analysis. Tente acessar a URL com a ferramenta web_fetch. Se conseguir, apresente os dados reais extraídos. Se a ferramenta falhar ou demorar, apresente uma análise profissional baseada no que você sabe sobre a página demo do debuga.ai (é uma página pública de demonstração com seções sobre Infraestrutura, Segurança, DNS, SSL/TLS, Monitoramento e DevOps, além de uma tabela de especificações técnicas). Em qualquer caso, apresente: título da página, descrição, principais seções encontradas, links relevantes, estrutura HTML aparente, tipo de conteúdo e um resumo profissional com observações técnicas. Nunca deixe o usuário sem resposta.",
     description: "Análise completa de página web com status e resumo",
   },
@@ -596,6 +599,7 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: ImageIcon,
     title: "Gerar Diagrama",
+    visible: false, // Instável: depende de geração de imagem
     prompt: "Crie um diagrama de arquitetura segura profissional. Primeiro, tente gerar uma imagem usando a ferramenta de geração de imagem. Se a geração de imagem falhar ou não estiver disponível, gere imediatamente o diagrama em formato Mermaid (flowchart LR) com os seguintes componentes: Usuário → DNS → WAF → Firewall → Load Balancer → Aplicação Web → Banco de Dados, com ramificações para Backup, Logs/SIEM e Monitoramento. Apresente o diagrama Mermaid em bloco de código ```mermaid``` e explique cada componente e sua função na arquitetura. O resultado deve ser profissional e adequado para apresentação executiva. Nunca deixe o usuário sem resultado.",
     description: "Diagrama de arquitetura segura (imagem ou Mermaid)",
   },
@@ -608,6 +612,7 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: Terminal,
     title: "Sandbox de Código",
+    visible: false, // Instável: python3 ENOENT em produção
     prompt: "Execute um script Python seguro usando apenas biblioteca padrão para validar se 192.168.0.1 é um endereço IPv4 válido com ipaddress. Se a execução de código falhar ou não estiver disponível, apresente o código Python que seria executado, simule a saída esperada e explique o resultado detalhadamente. Mostre o código, a saída e explique o resultado. Nunca deixe o usuário sem resposta.",
     description: "Execução segura de código Python com explicação",
   },
@@ -618,7 +623,8 @@ export default function ChatPage() {
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingConversationId, setStreamingConversationId] = useState<number | null>(null);
+  const isStreaming = streamingConversationId !== null;
   const [streamingContent, setStreamingContent] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const [editingTitle, setEditingTitle] = useState<number | null>(null);
@@ -647,7 +653,7 @@ export default function ChatPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const chatAreaRef = useRef<HTMLDivElement>(null);
-  const [mobileExamplesOpen, setMobileExamplesOpen] = useState(false);
+  const [examplesOpen, setExamplesOpen] = useState(false);
   const streamTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [streamTimedOut, setStreamTimedOut] = useState(false);
 
@@ -986,7 +992,7 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, userMsg]);
       setInput("");
       setUploadedFiles([]);
-      setIsStreaming(true);
+      setStreamingConversationId(convId!);
       setStreamingContent("");
       setToolResults([]);
       setActiveSteps([]);
@@ -996,12 +1002,12 @@ export default function ChatPage() {
         abortControllerRef.current = controller;
         setStreamTimedOut(false);
 
-        // Stream timeout: 90s max without any data
-        const STREAM_TIMEOUT_MS = 90_000;
+        // Stream timeout: 30s max without any data
+        const STREAM_TIMEOUT_MS = 30_000;
         let lastDataAt = Date.now();
         streamTimeoutRef.current = setInterval(() => {
           if (Date.now() - lastDataAt > STREAM_TIMEOUT_MS) {
-            console.warn("[Stream] Timeout: no data received for 90s, aborting");
+            console.warn("[Stream] Timeout: no data received for 30s, aborting");
             setStreamTimedOut(true);
             controller.abort();
             if (streamTimeoutRef.current) { clearInterval(streamTimeoutRef.current); streamTimeoutRef.current = null; }
@@ -1131,7 +1137,7 @@ export default function ChatPage() {
           const timeoutMsg: ChatMessage = {
             id: Date.now() + 1,
             role: "assistant",
-            content: "A análise demorou mais do que o esperado e foi interrompida. Isso pode ocorrer com alvos lentos ou instáveis. Tente novamente ou informe outro endereço.",
+            content: "A análise demorou mais do que o esperado e foi interrompida automaticamente. Isso pode acontecer quando o alvo está lento ou indisponível. Tente novamente ou descreva outro problema.",
             createdAt: new Date(),
           };
           setMessages((prev) => [...prev, timeoutMsg]);
@@ -1148,7 +1154,7 @@ export default function ChatPage() {
         }
       } finally {
         if (streamTimeoutRef.current) { clearInterval(streamTimeoutRef.current); streamTimeoutRef.current = null; }
-        setIsStreaming(false);
+        setStreamingConversationId(null);
         setStreamingContent("");
         setActiveSteps([]);
         abortControllerRef.current = null;
@@ -1830,104 +1836,101 @@ export default function ChatPage() {
                     <h2 className="text-lg md:text-xl font-bold font-mono">
                       Olá! Sou o <span className="terminal-glow text-primary">debuga.ai</span>
                     </h2>
-                    {/* Mobile: cleaner subtitle encouraging typing */}
-                    <p className="text-sm text-muted-foreground mt-2 md:hidden">
-                      Descreva seu problema ou escolha um exemplo guiado.
-                    </p>
-                    {/* Desktop: original subtitle */}
-                    <p className="text-sm text-muted-foreground mt-2 hidden md:block">
-                      Escolha um exemplo abaixo para ver o debuga.ai em ação com consultas reais.
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Descreva seu problema abaixo ou use um exemplo guiado.
                     </p>
                   </div>
                 </div>
 
-                {/* Mobile: accordion toggle for examples */}
-                <div className="md:hidden px-1">
+                {/* Unified accordion toggle for examples (desktop + mobile) */}
+                <div className="px-1">
                   <button
-                    onClick={() => setMobileExamplesOpen(!mobileExamplesOpen)}
+                    onClick={() => setExamplesOpen(!examplesOpen)}
                     className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-border bg-card hover:bg-accent transition-all font-mono text-sm text-muted-foreground hover:text-foreground"
                   >
-                    <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", mobileExamplesOpen && "rotate-180")} />
-                    {mobileExamplesOpen ? "Ocultar exemplos" : "Ver exemplos guiados"}
+                    <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", examplesOpen && "rotate-180")} />
+                    {examplesOpen ? "Ocultar exemplos" : "Ver exemplos guiados"}
                   </button>
                 </div>
 
-                {/* Mobile: collapsible compact list */}
-                {mobileExamplesOpen && (
-                  <div className="flex flex-col gap-2 px-1 md:hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    {SUGGESTED_PROMPTS.map((item, i) => {
-                      const userPlan = usageQuery.data?.planId || "free";
-                      const isPaidPlan = userPlan !== "free";
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => {
-                            lastRequestBlockedRef.current = false;
-                            if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
-                            setMobileExamplesOpen(false);
-                            handleSendMessage(item.prompt);
-                            if (!isPaidPlan) {
-                              ctaTimeoutRef.current = setTimeout(() => {
-                                ctaTimeoutRef.current = null;
-                                if (!lastRequestBlockedRef.current && !upgradeModal?.open) {
-                                  setShowCardUpgradeCTA(true);
-                                }
-                              }, 5000);
-                            }
-                          }}
-                          disabled={isStreaming}
-                          className="group flex items-center gap-3 py-3 px-3 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left"
-                        >
-                          <div className="p-1.5 rounded-md shrink-0 transition-colors bg-primary/10 text-primary group-hover:bg-primary/20">
-                            <item.icon className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium font-mono text-foreground leading-tight">{item.title}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
-                          </div>
-                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
-                        </button>
-                      );
-                    })}
+                {/* Collapsible examples list (unified desktop + mobile) */}
+                {examplesOpen && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-200 px-1">
+                    {/* Mobile: compact list */}
+                    <div className="flex flex-col gap-2 md:hidden">
+                      {SUGGESTED_PROMPTS.filter(p => p.visible !== false).map((item, i) => {
+                        const userPlan = usageQuery.data?.planId || "free";
+                        const isPaidPlan = userPlan !== "free";
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              lastRequestBlockedRef.current = false;
+                              if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
+                              setExamplesOpen(false);
+                              handleSendMessage(item.prompt);
+                              if (!isPaidPlan) {
+                                ctaTimeoutRef.current = setTimeout(() => {
+                                  ctaTimeoutRef.current = null;
+                                  if (!lastRequestBlockedRef.current && !upgradeModal?.open) {
+                                    setShowCardUpgradeCTA(true);
+                                  }
+                                }, 5000);
+                              }
+                            }}
+                            disabled={isStreaming}
+                            className="group flex items-center gap-3 py-3 px-3 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left"
+                          >
+                            <div className="p-1.5 rounded-md shrink-0 transition-colors bg-primary/10 text-primary group-hover:bg-primary/20">
+                              <item.icon className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium font-mono text-foreground leading-tight">{item.title}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
+                            </div>
+                            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {/* Desktop: grid layout */}
+                    <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-3">
+                      {SUGGESTED_PROMPTS.filter(p => p.visible !== false).map((item, i) => {
+                        const userPlan = usageQuery.data?.planId || "free";
+                        const isPaidPlan = userPlan !== "free";
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              lastRequestBlockedRef.current = false;
+                              if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
+                              setExamplesOpen(false);
+                              handleSendMessage(item.prompt);
+                              if (!isPaidPlan) {
+                                ctaTimeoutRef.current = setTimeout(() => {
+                                  ctaTimeoutRef.current = null;
+                                  if (!lastRequestBlockedRef.current && !upgradeModal?.open) {
+                                    setShowCardUpgradeCTA(true);
+                                  }
+                                }, 5000);
+                              }
+                            }}
+                            disabled={isStreaming}
+                            className="group flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left"
+                          >
+                            <div className="p-2 rounded-lg shrink-0 transition-colors bg-primary/10 text-primary group-hover:bg-primary/20">
+                              <item.icon className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium font-mono text-foreground">{item.title}</p>
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
-
-                {/* Desktop: original grid layout (unchanged) */}
-                <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-3 px-1">
-                  {SUGGESTED_PROMPTS.map((item, i) => {
-                    const userPlan = usageQuery.data?.planId || "free";
-                    const isPaidPlan = userPlan !== "free";
-
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          lastRequestBlockedRef.current = false;
-                          if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
-                          handleSendMessage(item.prompt);
-                          if (!isPaidPlan) {
-                            ctaTimeoutRef.current = setTimeout(() => {
-                              ctaTimeoutRef.current = null;
-                              if (!lastRequestBlockedRef.current && !upgradeModal?.open) {
-                                setShowCardUpgradeCTA(true);
-                              }
-                            }, 5000);
-                          }
-                        }}
-                        disabled={isStreaming}
-                        className="group flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left"
-                      >
-                        <div className="p-2 rounded-lg shrink-0 transition-colors bg-primary/10 text-primary group-hover:bg-primary/20">
-                          <item.icon className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium font-mono text-foreground">{item.title}</p>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
             </div>
           ) : (
@@ -2109,14 +2112,30 @@ export default function ChatPage() {
               >
                 {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </Button>
-              <Button
-                type="submit"
-                size="icon"
-                disabled={(!input.trim() && uploadedFiles.length === 0) || isStreaming}
-                className="absolute right-2 bottom-2 h-9 w-9 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 disabled:opacity-30 disabled:shadow-none"
-              >
-                {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </Button>
+              {isStreaming ? (
+                <Button
+                  type="button"
+                  size="icon"
+                  onClick={() => {
+                    if (abortControllerRef.current) {
+                      abortControllerRef.current.abort();
+                    }
+                  }}
+                  className="absolute right-2 bottom-2 h-9 w-9 rounded-lg bg-destructive/80 hover:bg-destructive text-destructive-foreground shadow-lg shadow-destructive/20 transition-colors"
+                  title="Cancelar resposta"
+                >
+                  <Square className="w-3.5 h-3.5" />
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={(!input.trim() && uploadedFiles.length === 0)}
+                  className="absolute right-2 bottom-2 h-9 w-9 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 disabled:opacity-30 disabled:shadow-none"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              )}
             </form>
             {/* Usage Indicator */}
             {usageQuery.data && !usageQuery.data.isAdmin && (
