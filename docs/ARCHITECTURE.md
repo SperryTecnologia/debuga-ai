@@ -41,47 +41,47 @@ The debuga.ai inference layer is designed as a **hybrid architecture** that comb
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                        AGENT LOOP                                  │
-│  server/streamRoute.ts → assembles context + tool defs              │
-│  Sends {messages, tools, stream:true} to LLM Wrapper                │
+│                        AGENT LOOP                                       │
+│  server/streamRoute.ts → assembles context + tool defs                  │
+│  Sends {messages, tools, stream:true} to LLM Wrapper                    │
 └───────────────────────────────────┬─────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                  LLM WRAPPER (server/_core/llm.ts)                   │
-│  Provider-agnostic interface: invokeLLM({messages, tools, ...})      │
-│  Handles: streaming, tool_call parsing, error normalization          │
+│                  LLM WRAPPER (server/_core/llm.ts)                      │
+│  Provider-agnostic interface: invokeLLM({messages, tools, ...})         │
+│  Handles: streaming, tool_call parsing, error normalization             │
 └─────────────────┬─────────────────────────────────────┬─────────────────┘
                   │                                     │
     ┌─────────────▼───────────────┐     ┌─────────▼─────────────────┐
-    │  CLOUD PROVIDER (Prod)     │     │  LOCAL INFERENCE (Lab)      │
-    │  ────────────────────── │     │  ─────────────────────── │
-    │  Manus Forge API           │     │  debuga-llm-gateway         │
-    │  (Gemini 2.5 Flash)        │     │  (OpenAI-compatible API)    │
-    │                            │     │           │                  │
-    │  • Reasoning + tool call   │     │           ▼                  │
-    │  • Streaming completions   │     │  ┌──────────────────┐  │
-    │  • Production SLA          │     │  │ debuga-vllm-     │  │
-    │                            │     │  │ engine           │  │
-    └────────────────────────────┘     │  │ (vLLM + CUDA 12) │  │
-                                       │  └─────────┬────────┘  │
-                                       │            │              │
-                                       │            ▼              │
-                                       │  ┌──────────────────┐  │
-                                       │  │ debuga-qwen-     │  │
-                                       │  │ coder-lab        │  │
-                                       │  │                  │  │
-                                       │  │ Models:          │  │
-                                       │  │ • Qwen-Coder 7B  │  │
-                                       │  │ • Qwen-Coder 14B │  │
-                                       │  │ • Qwen-Coder 32B │  │
-                                       │  │                  │  │
-                                       │  │ Benchmarks:      │  │
-                                       │  │ • DevOps         │  │
-                                       │  │ • Security       │  │
-                                       │  │ • Network        │  │
-                                       │  └──────────────────┘  │
-                                       └───────────────────────────┘
+    │  CLOUD PROVIDER (Prod)     │     │  LOCAL INFERENCE (Lab)     │
+    │  ────────────────────── │     │  ───────────────────────      │
+    │  Manus Forge API           │     │  debuga-llm-gateway        │
+    │  (Gemini 2.5 Flash)        │     │  (OpenAI-compatible API)   │
+    │                            │     │           │                │
+    │  • Reasoning + tool call   │     │           ▼                │
+    │  • Streaming completions   │     │  ┌──────────────────┐      │
+    │  • Production SLA          │     │  │ debuga-vllm-     │      │
+    │                            │     │  │ engine           │      │
+    └────────────────────────────┘     │  │ (vLLM + CUDA 12) │      │
+                                       │  └─────────┬────────┘      │
+                                       │            │               │
+                                       │            ▼               │
+                                       │  ┌──────────────────┐      │
+                                       │  │ debuga-qwen-     │      │
+                                       │  │ coder-lab        │      │
+                                       │  │                  │      │
+                                       │  │ Models:          │      │
+                                       │  │ • Qwen-Coder 7B  │      │
+                                       │  │ • Qwen-Coder 14B │      │
+                                       │  │ • Qwen-Coder 32B │      │
+                                       │  │                  │      │
+                                       │  │ Benchmarks:      │      │
+                                       │  │ • DevOps         │      │
+                                       │  │ • Security       │      │
+                                       │  │ • Network        │      │
+                                       │  └──────────────────┘      │
+                                       └────────────────────────────┘
 ```
 
 #### Component Responsibilities
@@ -110,7 +110,7 @@ Agent Loop → invokeLLM() → Manus Forge API → Gemini 2.5 Flash
 Agent Loop → invokeLLM() → debuga-llm-gateway (Router)
                                    │
                           ┌───────┼───────────────┐
-                          ▼        ▼                ▼
+                          ▼        ▼              ▼
                      Cloud API   vLLM Local     Fallback
                      (speed)     (sovereignty)  (resilience)
 ```
