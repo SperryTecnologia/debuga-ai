@@ -45,6 +45,7 @@ import {
   MessageSquare,
   Trash2,
   LogOut,
+  LogIn,
   Terminal,
   Shield,
   Server,
@@ -1230,23 +1231,33 @@ export default function ChatPage() {
         <div className="flex flex-col items-center gap-8 max-w-md text-center px-6">
           <img src={LOGO_ICON} alt="debuga.ai" className="w-20 h-20 rounded-2xl shadow-lg shadow-primary/20" />
           <div className="space-y-3">
-            <h1 className="text-3xl font-bold terminal-glow font-mono">
-              debuga<span className="text-primary">.ai</span>
+            <h1 className="text-2xl font-bold font-mono text-foreground">
+              Entre para acessar o chat
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Agente autônomo de IA para Infraestrutura, DevOps e Segurança da Informação.
-              <br />
-              <span className="text-xs opacity-60">Powered by Sperry Tecnologia</span>
+              Faça login para usar o agente autônomo de IA do debuga.ai.
             </p>
           </div>
-          <Button
-            onClick={() => (window.location.href = getLoginUrl())}
-            size="lg"
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-mono shadow-lg shadow-primary/20"
-          >
-            <Terminal className="w-4 h-4 mr-2" />
-            Acessar Terminal
-          </Button>
+          <div className="flex flex-col gap-3 w-full">
+            <Button
+              onClick={() => (window.location.href = getLoginUrl("/chat"))}
+              size="lg"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-mono shadow-lg shadow-primary/20"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Entrar
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => (window.location.href = "/")}
+              className="w-full font-mono text-sm text-muted-foreground hover:text-foreground"
+            >
+              Voltar para o site
+            </Button>
+          </div>
+          <p className="text-[10px] font-mono text-muted-foreground/40">
+            Powered by Sperry Tecnologia
+          </p>
         </div>
       </div>
     );
@@ -1268,7 +1279,7 @@ export default function ChatPage() {
             <Button onClick={() => (window.location.href = "/pricing")} size="lg" className="w-full font-mono">
               Ver Planos
             </Button>
-            <Button variant="ghost" onClick={() => { logout(); window.location.href = "/"; }} className="font-mono text-sm">
+            <Button variant="ghost" onClick={() => { logout(); }} className="font-mono text-sm">
               <LogOut className="w-4 h-4 mr-2" />
               Sair
             </Button>
