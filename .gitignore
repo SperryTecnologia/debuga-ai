@@ -115,3 +115,6 @@ todo.md
 screenshot-notes.md
 logo-urls.md
 patches/
+docs/SECURITY_AUDIT.md
+migrate-pin.mjs
+AUDIT_REPORT_PARCIAL.md

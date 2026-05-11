@@ -7,8 +7,7 @@
   <a href="https://debuga.ai">Demo ao Vivo</a> · 
   <a href="docs/WHITEPAPER_PT-BR.md">Whitepaper PT-BR</a> · 
   <a href="docs/WHITEPAPER_EN.md">Whitepaper EN</a> · 
-  <a href="docs/ARCHITECTURE.md">Arquitetura</a> · 
-  <a href="docs/SECURITY_AUDIT.md">Auditoria de Segurança</a>
+  <a href="docs/ARCHITECTURE.md">Arquitetura</a>
 </p>
 
 ---
@@ -145,7 +144,6 @@ debuga-ai/
 │   ├── WHITEPAPER_PT-BR.md        # Whitepaper técnico (Português)
 │   ├── WHITEPAPER_EN.md           # Whitepaper técnico (Inglês)
 │   ├── ARCHITECTURE.md            # Arquitetura do sistema com diagramas
-│   └── SECURITY_AUDIT.md          # Relatório de auditoria de segurança
 ├── patches/                       # Patches de dependências (wouter)
 └── todo.md                        # Rastreamento de features e bugs
 ```
@@ -193,7 +191,7 @@ Esses conectores fazem parte da estratégia de evolução do produto para se tor
 
 ## Segurança
 
-O código passou por uma auditoria de segurança para produção (veja [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md)):
+O código passou por uma auditoria de segurança para produção:
 
 - **Zero secrets hardcoded** — Todos os valores sensíveis (chaves Stripe, JWT secret, URL do banco, chaves de API do LLM) são injetados via variáveis de ambiente em runtime.
 - **Isolamento do frontend** — Apenas variáveis com prefixo `VITE_` (chaves públicas) são acessíveis no bundle do navegador. Secrets do servidor nunca chegam ao cliente.
@@ -329,7 +327,6 @@ A versão atual do debuga.ai possui as seguintes limitações que estão sendo e
 | [Whitepaper](docs/WHITEPAPER_PT-BR.md) | PT-BR | Whitepaper técnico com análise de mercado, arquitetura e modelo de negócio |
 | [Whitepaper](docs/WHITEPAPER_EN.md) | EN | Versão em inglês do whitepaper técnico |
 | [Arquitetura](docs/ARCHITECTURE.md) | PT-BR | Arquitetura detalhada com diagramas |
-| [Auditoria de Segurança](docs/SECURITY_AUDIT.md) | PT-BR | Relatório de auditoria de segurança para produção |
 
 > **Nota:** Alguns documentos técnicos podem conter referências a funcionalidades planejadas (roadmap) que ainda não estão implementadas na versão atual. Consulte a seção "Estado Atual" deste README para a lista precisa de capacidades em produção.
 
