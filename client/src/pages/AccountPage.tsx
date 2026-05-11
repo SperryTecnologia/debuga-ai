@@ -339,6 +339,29 @@ export default function AccountPage() {
                       <ArrowUpRight className="w-4 h-4" />
                       {plan?.id === "free" ? "Fazer Upgrade" : "Trocar Plano"}
                     </Button>
+                    {sub && (
+                      <Button
+                        onClick={async () => {
+                          try {
+                            const res = await fetch("/api/stripe/portal", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                            });
+                            const data = await res.json();
+                            if (data.url) {
+                              window.open(data.url, "_blank");
+                            }
+                          } catch (err) {
+                            console.error("Portal error:", err);
+                          }
+                        }}
+                        className="w-full gap-2 font-mono text-xs"
+                        variant="ghost"
+                      >
+                        <Shield className="w-4 h-4" />
+                        Gerenciar Assinatura
+                      </Button>
+                    )}
                   </div>
                 </div>
 

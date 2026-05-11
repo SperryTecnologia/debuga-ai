@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
 import { useLocation, useSearch } from "wouter";
@@ -144,6 +145,12 @@ export default function PricingPage() {
   const [interval, setInterval] = useState<"monthly" | "yearly">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
+  // Get user's current plan
+  const { data: usageData } = trpc.account.usage.useQuery(undefined, {
+    enabled: !!user,
+  });
+  const currentPlanId = usageData?.planId || "free";
+
   useEffect(() => {
     if (search.includes("checkout=canceled")) {
       toast.error("Checkout cancelado. Você pode tentar novamente quando quiser.");
@@ -285,6 +292,7 @@ export default function PricingPage() {
               ? plan.priceMonthly
               : getMonthlyFromYearly(plan.priceYearly);
             const savings = getSavingsPercent(plan.priceMonthly, plan.priceYearly);
+            const isCurrentPlan = user && plan.id === currentPlanId;
 
             return (
               <motion.div
@@ -297,11 +305,15 @@ export default function PricingPage() {
                     : "border-border/50 bg-card/50 hover:border-primary/30"
                 )}
               >
-                {plan.badge && (
+                {isCurrentPlan ? (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-emerald-500 text-white text-xs font-mono font-bold whitespace-nowrap">
+                    PLANO ATUAL
+                  </div>
+                ) : plan.badge ? (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-mono font-bold whitespace-nowrap">
                     {plan.badge}
                   </div>
-                )}
+                ) : null}
 
                 <div className="mb-5">
                   <div className={cn(
@@ -369,23 +381,27 @@ export default function PricingPage() {
                 {/* CTA Button */}
                 <Button
                   onClick={() => handleSubscribe(plan.id)}
-                  disabled={!!loadingPlan}
+                  disabled={!!loadingPlan || !!isCurrentPlan}
                   className={cn(
                     "w-full font-mono gap-2 text-sm",
-                    plan.highlight
-                      ? ""
-                      : plan.isFree
-                        ? "bg-muted text-foreground hover:bg-muted/80 border-0"
-                        : "bg-transparent border border-primary/30 text-primary hover:bg-primary/10"
+                    isCurrentPlan
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 cursor-default"
+                      : plan.highlight
+                        ? ""
+                        : plan.isFree
+                          ? "bg-muted text-foreground hover:bg-muted/80 border-0"
+                          : "bg-transparent border border-primary/30 text-primary hover:bg-primary/10"
                   )}
-                  variant={plan.highlight ? "default" : "outline"}
+                  variant={plan.highlight && !isCurrentPlan ? "default" : "outline"}
                 >
                   {loadingPlan === plan.id ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : isCurrentPlan ? (
+                    <Check className="w-4 h-4" />
                   ) : (
                     <ArrowRight className="w-4 h-4" />
                   )}
-                  {plan.cta}
+                  {isCurrentPlan ? "Plano Atual" : plan.cta}
                 </Button>
               </motion.div>
             );

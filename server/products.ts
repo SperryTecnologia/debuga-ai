@@ -124,7 +124,29 @@ export function getPlanById(id: string): Plan | undefined {
   return PLANS.find((p) => p.id === id);
 }
 
+// Cache of stripePriceId → planId mappings (populated by webhooks)
+const priceIdCache = new Map<string, string>();
+
 export function getPlanByPriceId(stripePriceId: string): Plan | undefined {
-  // This will be matched after Stripe prices are created
+  const cachedPlanId = priceIdCache.get(stripePriceId);
+  if (cachedPlanId) return PLANS.find(p => p.id === cachedPlanId);
+  return undefined;
+}
+
+export function cachePriceIdToPlan(stripePriceId: string, planId: string): void {
+  priceIdCache.set(stripePriceId, planId);
+}
+
+/**
+ * Resolve plan from Stripe price amount + interval.
+ * Used when we don't have a cached priceId mapping (e.g., after upgrade via Stripe Portal).
+ */
+export function getPlanByPriceAmount(amountInCents: number, interval: string, currency: string): Plan | undefined {
+  const curr = currency.toLowerCase();
+  for (const plan of PLANS) {
+    if (plan.stripe.currency !== curr) continue;
+    if (interval === "month" && plan.stripe.priceMonthly === amountInCents) return plan;
+    if (interval === "year" && plan.stripe.priceYearly === amountInCents) return plan;
+  }
   return undefined;
 }

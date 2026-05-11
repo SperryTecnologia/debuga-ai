@@ -1,4 +1,4 @@
-import { eq, desc, and, asc, sql, gte, lte } from "drizzle-orm";
+import { eq, desc, and, asc, sql, gte, lte, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, conversations, messages, subscriptions, credits, usageLog, usageEvents, type InsertConversation, type InsertMessage, type InsertSubscription, type InsertCredits, type InsertUsageLog, type InsertUsageEvent } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -256,10 +256,16 @@ export async function upsertSubscription(data: InsertSubscription) {
 export async function getActiveSubscription(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  // Return subscription if active, trialing, or past_due (still has access)
   const rows = await db
     .select()
     .from(subscriptions)
-    .where(and(eq(subscriptions.userId, userId), eq(subscriptions.status, "active")))
+    .where(
+      and(
+        eq(subscriptions.userId, userId),
+        inArray(subscriptions.status, ["active", "trialing", "past_due"])
+      )
+    )
     .orderBy(desc(subscriptions.createdAt))
     .limit(1);
   return rows[0] || null;
