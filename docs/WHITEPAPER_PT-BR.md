@@ -129,6 +129,31 @@ A estratégia de modelos especializados prevê fine-tuning com datasets de:
 - CVEs e advisories de segurança (NVD, MITRE ATT&CK)
 - Normas e frameworks de segurança (ISO 27001, NIST CSF, CIS Controls)
 
+### 3.2.1 Estratégia Híbrida de LLM (Hybrid LLM Strategy)
+
+O SaaS atual do debuga.ai utiliza provedores cloud/API compatível para toda a inferência LLM em produção. Paralelamente, a Sperry Tecnologia mantém uma stack pública de pesquisa e documentação técnica — a **debuga.ai LLM Stack** — que documenta o caminho para inferência local/on-premise.
+
+Os pilares da estratégia híbrida são:
+
+| Pilar | Status | Descrição |
+|---|---|---|
+| Provedores cloud/API | **Em produção** | Manus Forge API como gateway gerenciado (Gemini 2.5 Flash) |
+| Motor de inferência local | Em laboratório | vLLM como motor de inferência para modelos open-source |
+| Família de modelos avaliada | Em laboratório | Qwen-Coder (7B, 14B, 32B) com benchmarks para DevOps/segurança |
+| Gateway OpenAI-compatible | Em laboratório | Skeleton community de roteamento cloud/local com fallback |
+| Deploy Enterprise/on-premise | Roadmap | Versão self-hosted sob projeto para clientes com requisitos de compliance |
+
+A stack pública está organizada nos seguintes repositórios:
+
+| Repositório | Função |
+|---|---|
+| [debuga-llm-stack](https://github.com/SperryTecnologia/debuga-llm-stack) | Documentação central, arquitetura e visão de laboratório |
+| [debuga-qwen-coder-lab](https://github.com/SperryTecnologia/debuga-qwen-coder-lab) | Avaliação de Qwen-Coder para DevOps, infraestrutura e segurança |
+| [debuga-vllm-engine](https://github.com/SperryTecnologia/debuga-vllm-engine) | Configurações genéricas para servir modelos com vLLM |
+| [debuga-llm-gateway](https://github.com/SperryTecnologia/debuga-llm-gateway) | Skeleton community de gateway OpenAI-compatible |
+
+> **Nota:** A stack LLM pública é uma iniciativa de documentação, laboratório e pesquisa técnica. Não representa código de produção do SaaS, não contém prompts internos, dados de clientes ou regras comerciais. A produção do debuga.ai pode conter integrações e políticas adicionais não publicadas.
+
 ### 3.3 Arquitetura de Alto Nível
 
 ```
@@ -325,7 +350,7 @@ O debuga.ai utiliza um modelo **freemium** com 4 tiers de assinatura recorrente 
 - Expertise em desenvolvimento de interfaces modernas com React e JSX
 - Programa educacional "Open Infra Pro" com base de alunos ativa
 - Suporte humano + IA como modelo híbrido de atendimento
-- Estratégia de evolução para infraestrutura de inferência própria
+- Estratégia de evolução para infraestrutura de inferência híbrida (cloud + local), documentada na debuga.ai LLM Stack
 
 ---
 
@@ -333,7 +358,7 @@ O debuga.ai utiliza um modelo **freemium** com 4 tiers de assinatura recorrente 
 
 O debuga.ai representa uma nova categoria de ferramenta para profissionais de TI: o **agente autônomo especializado**. Ao combinar a capacidade de raciocínio de LLMs de última geração com ferramentas de execução real (execução de código, network scanning, web scraping, geração de imagens), a plataforma oferece um assistente que não apenas sugere, mas **executa e diagnostica**.
 
-A versão atual opera com 8 ferramentas de diagnóstico em produção, sistema de billing completo e mais de 236 testes automatizados. A estratégia de evolução inclui a implantação de modelos especializados em infraestrutura GPU dedicada, integração com plataformas de monitoramento (Zabbix, Wazuh, Prometheus) e expansão para o mercado enterprise com versão self-hosted.
+A versão atual opera com 8 ferramentas de diagnóstico em produção, sistema de billing completo e mais de 236 testes automatizados. A estratégia de evolução inclui a implantação de modelos especializados em infraestrutura GPU — atualmente em fase de laboratório e pesquisa na debuga.ai LLM Stack —, integração com plataformas de monitoramento (Zabbix, Wazuh, Prometheus) e expansão para o mercado enterprise com versão self-hosted.
 
 Com o mercado brasileiro de TI em forte expansão e a crescente adoção de IA em cibersegurança, o debuga.ai está posicionado para capturar uma fatia significativa do mercado de ferramentas de produtividade para profissionais de infraestrutura e segurança.
 

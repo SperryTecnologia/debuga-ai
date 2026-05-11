@@ -129,6 +129,31 @@ The specialized model strategy envisions fine-tuning with datasets from:
 - CVEs and security advisories (NVD, MITRE ATT&CK)
 - Security standards and frameworks (ISO 27001, NIST CSF, CIS Controls)
 
+### 3.2.1 Hybrid LLM Strategy
+
+The debuga.ai SaaS currently uses cloud/API-compatible providers for all LLM inference in production. In parallel, Sperry Tecnologia maintains a public research and documentation stack — the **debuga.ai LLM Stack** — that documents the path toward local/on-premise inference.
+
+The pillars of the hybrid strategy are:
+
+| Pillar | Status | Description |
+|---|---|---|
+| Cloud/API providers | **In production** | Manus Forge API as managed gateway (Gemini 2.5 Flash) |
+| Local inference engine | In lab | vLLM as inference engine for open-source models |
+| Evaluated model family | In lab | Qwen-Coder (7B, 14B, 32B) with benchmarks for DevOps/security |
+| OpenAI-compatible gateway | In lab | Community skeleton for cloud/local routing with fallback |
+| Enterprise/on-premise deploy | Roadmap | Self-hosted version under project for compliance-sensitive customers |
+
+The public stack is organized in the following repositories:
+
+| Repository | Function |
+|---|---|
+| [debuga-llm-stack](https://github.com/SperryTecnologia/debuga-llm-stack) | Central documentation, architecture, and lab vision |
+| [debuga-qwen-coder-lab](https://github.com/SperryTecnologia/debuga-qwen-coder-lab) | Qwen-Coder evaluation for DevOps, infrastructure, and security |
+| [debuga-vllm-engine](https://github.com/SperryTecnologia/debuga-vllm-engine) | Generic configurations for serving models with vLLM |
+| [debuga-llm-gateway](https://github.com/SperryTecnologia/debuga-llm-gateway) | Community skeleton for OpenAI-compatible gateway |
+
+> **Note:** The public LLM stack is a documentation, lab, and technical research initiative. It does not represent production SaaS code, does not contain internal prompts, customer data, or business rules. The debuga.ai production may include additional integrations and policies not published.
+
 ### 3.3 High-Level Architecture
 
 ```
@@ -325,7 +350,7 @@ debuga.ai uses a **freemium** model with 4 recurring subscription tiers in BRL (
 - Expertise in modern interface development with React and JSX
 - "Open Infra Pro" educational program with active student base
 - Human + AI hybrid support model
-- Evolution strategy toward proprietary inference infrastructure
+- Evolution strategy toward hybrid inference infrastructure (cloud + local), documented in the debuga.ai LLM Stack
 
 ---
 
@@ -333,7 +358,7 @@ debuga.ai uses a **freemium** model with 4 recurring subscription tiers in BRL (
 
 debuga.ai represents a new category of tool for IT professionals: the **specialized autonomous agent**. By combining the reasoning capability of state-of-the-art LLMs with real execution tools (code execution, network scanning, web scraping, image generation), the platform offers an assistant that doesn't just suggest — it **executes and diagnoses**.
 
-The current version operates with 8 diagnostic tools in production, a complete billing system, and over 236 automated tests. The evolution strategy includes deploying specialized models on dedicated GPU infrastructure, integrating with monitoring platforms (Zabbix, Wazuh, Prometheus), and expanding to the enterprise market with a self-hosted version.
+The current version operates with 8 diagnostic tools in production, a complete billing system, and over 236 automated tests. The evolution strategy includes deploying specialized models on GPU infrastructure — currently in lab and research phase within the debuga.ai LLM Stack —, integrating with monitoring platforms (Zabbix, Wazuh, Prometheus), and expanding to the enterprise market with a self-hosted version.
 
 With the Brazilian IT market in strong expansion and the growing adoption of AI in cybersecurity, debuga.ai is positioned to capture a significant share of the productivity tools market for infrastructure and security professionals.
 

@@ -46,9 +46,9 @@ A arquitetura do debuga.ai foi projetada para evoluir em camadas de inferência.
 |---|---|---|
 | **LLM via API Cloud** | **Em produção** | Manus Forge API como gateway de inferência. Atualmente utiliza Gemini 2.5 Flash para raciocínio, tool calling e streaming. |
 | **Roteamento multi-modelo** | Planejado | Camada de roteamento inteligente para direcionar consultas entre diferentes provedores e modelos com base em complexidade, domínio e latência. |
-| **Inferência on-premise** | Planejado | Infraestrutura GPU dedicada para modelos especializados em TI/segurança (Qwen, Mistral, Llama), reduzindo dependência de APIs externas e permitindo análises profundas com dados sensíveis. |
+| **Inferência on-premise** | Em laboratório | Infraestrutura GPU para modelos especializados em TI/segurança (Qwen-Coder, Mistral, Llama) via vLLM, documentada na stack pública de pesquisa. Roadmap para reduzir dependência de APIs externas e permitir análises com dados sensíveis. |
 
-A estratégia de longo prazo prevê a adoção de modelos open-source fine-tuned para o domínio de infraestrutura de TI, servidos via vLLM ou TGI em hardware dedicado. Essa camada permitirá análises que exigem contexto especializado (correlação de logs, análise de tráfego, raciocínio sobre topologias de rede) sem enviar dados sensíveis para APIs externas.
+A estratégia de longo prazo prevê a adoção de modelos open-source fine-tuned para o domínio de infraestrutura de TI, servidos via vLLM em hardware dedicado. Essa camada, atualmente em fase de laboratório e pesquisa (documentada na debuga.ai LLM Stack), permitirá análises que exigem contexto especializado (correlação de logs, análise de tráfego, raciocínio sobre topologias de rede) sem enviar dados sensíveis para APIs externas.
 
 ---
 
@@ -288,12 +288,13 @@ As seguintes variáveis devem ser configuradas no ambiente de execução. Em pro
 
 A versão atual do debuga.ai possui as seguintes limitações que estão sendo endereçadas progressivamente:
 
-- **Inferência exclusivamente via API cloud** — Toda a inferência LLM depende do Manus Forge API. Não há, no momento, inferência on-premise ou modelos proprietários em produção. A camada de roteamento multi-modelo está planejada para versões futuras.
+- **Inferência exclusivamente via API cloud** — Toda a inferência LLM depende do Manus Forge API. Não há, no momento, inferência on-premise em produção. A camada de roteamento multi-modelo e a inferência local estão em fase de laboratório e pesquisa, documentadas na debuga.ai LLM Stack.
 - **Conectores de observabilidade em desenvolvimento** — Os conectores para Zabbix, Wazuh, Prometheus e Grafana existem como scaffold preparatório no código, mas não estão ativos nos fluxos de produção. A integração real com essas plataformas faz parte do roadmap.
 - **Rate limiter in-memory** — O rate limiting é armazenado em memória do processo. Em caso de restart do servidor, os contadores são resetados. Uma solução persistente (Redis ou banco) está planejada.
 - **Execução de código sem sandbox dedicado** — A ferramenta `execute_code` roda no mesmo ambiente do servidor, com isolamento fornecido pela plataforma de deploy. Um sandbox dedicado (Docker/seccomp) está no roadmap de segurança.
 - **Método de pagamento** — Atualmente apenas cartão de crédito e débito via Stripe. Suporte a métodos de pagamento locais (PIX, Boleto) depende da disponibilidade do Stripe no Brasil.
 - **Documentação em alinhamento** — Alguns documentos técnicos (whitepaper, arquitetura) contêm referências a funcionalidades planejadas que ainda não estão implementadas. Estamos alinhando progressivamente a documentação ao estado real do código.
+- **Stack LLM pública é pesquisa** — Os repositórios da debuga.ai LLM Stack são iniciativas de documentação, laboratório e pesquisa técnica. Não representam código de produção do SaaS e não contêm prompts internos, dados de clientes ou regras comerciais.
 
 ---
 
@@ -308,7 +309,7 @@ A versão atual do debuga.ai possui as seguintes limitações que estão sendo e
 
 ### Detalhamento do roadmap técnico
 
-**Inferência local (v6.0)** — Implantação de cluster GPU dedicado para servir modelos open-source fine-tuned para o domínio de TI/segurança via vLLM ou TGI. Objetivo: reduzir dependência de APIs externas, permitir análises com dados sensíveis sem envio para cloud, e habilitar modelos especializados (Qwen2.5, Mistral, Llama) otimizados para correlação de logs, análise de tráfego e raciocínio sobre topologias de rede.
+**Inferência local (v6.0)** — Implantação de infraestrutura GPU para servir modelos open-source fine-tuned para o domínio de TI/segurança via vLLM. A pesquisa técnica e os benchmarks estão sendo conduzidos na debuga.ai LLM Stack (repositórios públicos). Objetivo: reduzir dependência de APIs externas, permitir análises com dados sensíveis sem envio para cloud, e habilitar modelos especializados (Qwen-Coder, Mistral, Llama) otimizados para correlação de logs, análise de tráfego e raciocínio sobre topologias de rede.
 
 **Roteamento inteligente (v5.0)** — Camada de decisão que direciona consultas entre diferentes provedores e modelos com base em complexidade da query, especificidade do domínio e latência requerida.
 
@@ -329,6 +330,21 @@ A versão atual do debuga.ai possui as seguintes limitações que estão sendo e
 | [Arquitetura](docs/ARCHITECTURE.md) | PT-BR | Arquitetura detalhada com diagramas |
 
 > **Nota:** Alguns documentos técnicos podem conter referências a funcionalidades planejadas (roadmap) que ainda não estão implementadas na versão atual. Consulte a seção "Estado Atual" deste README para a lista precisa de capacidades em produção.
+
+---
+
+## debuga.ai LLM Stack
+
+O debuga.ai mantém uma stack pública de pesquisa e documentação para inferência LLM híbrida, combinando provedores cloud, vLLM local/on-premise e modelos da família Qwen-Coder. Os repositórios abaixo documentam a arquitetura, os benchmarks e as configurações genéricas que fundamentam a estratégia de evolução da plataforma.
+
+| Repositório | Função |
+|---|---|
+| [debuga-llm-stack](https://github.com/SperryTecnologia/debuga-llm-stack) | Documentação central, arquitetura e visão de laboratório |
+| [debuga-qwen-coder-lab](https://github.com/SperryTecnologia/debuga-qwen-coder-lab) | Avaliação de Qwen-Coder para DevOps, infraestrutura e segurança |
+| [debuga-vllm-engine](https://github.com/SperryTecnologia/debuga-vllm-engine) | Configurações genéricas para servir modelos com vLLM |
+| [debuga-llm-gateway](https://github.com/SperryTecnologia/debuga-llm-gateway) | Skeleton community de gateway OpenAI-compatible |
+
+> **Nota:** A stack LLM pública é uma iniciativa de documentação, laboratório e pesquisa técnica. A produção do debuga.ai pode conter integrações e políticas adicionais não publicadas.
 
 ---
 
