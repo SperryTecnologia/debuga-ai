@@ -70,6 +70,8 @@ Você tem acesso a ferramentas que pode usar automaticamente. Quando o usuário 
 5. Indique riscos e boas práticas de segurança
 6. Quando não souber algo, seja honesto e sugira fontes confiáveis
 7. Estruture respostas longas com títulos e seções claras
+8. NUNCA mencione erros internos de ferramentas, nomes de funções internas (web_fetch, dns_lookup, etc.), falhas de schema, parâmetros inválidos ou detalhes técnicos de execução. Se uma ferramenta falhar, tente novamente silenciosamente ou informe de forma natural e amigável que não foi possível completar a verificação, sugerindo que o usuário tente novamente ou informe outro alvo.
+9. Não narre o processo de retry ou correção de parâmetros. Apenas apresente o resultado final ao usuário.
 
 ## Formato de Resposta:
 - Use \`\`\`linguagem para blocos de código
@@ -430,7 +432,7 @@ export function registerStreamRoute(app: Express) {
           tool_calls: toolCalls,
         });
 
-        // Execute each tool call
+        // Execute each tool call with silent retry for internal errors
         for (const toolCall of toolCalls) {
           sendSSE(res, {
             type: "tool_start",
@@ -439,21 +441,52 @@ export function registerStreamRoute(app: Express) {
             args: toolCall.function.arguments,
           });
 
-          const result = await executeToolCall(toolCall);
+          let result = await executeToolCall(toolCall);
 
-          // Send tool result to client for rendering
-          sendSSE(res, {
-            type: "tool_result",
-            toolCallId: toolCall.id,
-            name: toolCall.function.name,
-            result: result.result,
-          });
+          // Silent retry: if the error is internal (parse/validation), retry once
+          if (result.result?._retryable && result.result?._internalError) {
+            console.log(`[Stream] Tool ${toolCall.function.name} failed with internal error, retrying silently...`);
+            // Wait a brief moment before retry
+            await new Promise(r => setTimeout(r, 500));
+            result = await executeToolCall(toolCall);
+            // If still failing after retry, replace with friendly message
+            if (result.result?._internalError) {
+              console.warn(`[Stream] Tool ${toolCall.function.name} failed after retry. Sending friendly error to LLM.`);
+              result.result = {
+                error: "Não consegui concluir essa verificação agora. O alvo pode estar indisponível, lento ou bloqueando a consulta. Tente novamente em instantes ou informe outro site.",
+                _internalError: true,
+              };
+            }
+          }
 
-          // Add tool result to LLM context
+          // Only send tool_result to frontend if it's NOT an internal-only error
+          // Internal errors are handled silently — the LLM will get the error context and respond naturally
+          if (!result.result?._internalError) {
+            sendSSE(res, {
+              type: "tool_result",
+              toolCallId: toolCall.id,
+              name: toolCall.function.name,
+              result: result.result,
+            });
+          } else {
+            // Send a minimal step indicator instead of the error card
+            sendSSE(res, {
+              type: "step",
+              step: "retry",
+              content: "Refazendo verificação...",
+            });
+          }
+
+          // Add tool result to LLM context (always, so the LLM knows what happened)
+          // Strip internal flags before sending to LLM
+          const llmResult = { ...result.result };
+          delete llmResult._retryable;
+          delete llmResult._internalError;
+          delete llmResult._internal;
           llmMessages.push({
             role: "tool",
             tool_call_id: toolCall.id,
-            content: JSON.stringify(result.result),
+            content: JSON.stringify(llmResult),
           });
 
           // Add extra tokens for tool usage

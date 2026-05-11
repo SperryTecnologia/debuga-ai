@@ -51,9 +51,12 @@ describe("executeToolCall - JSON parsing", () => {
     });
     expect(result.result.error).toBeDefined();
     expect(result.result.error).toContain("Consulta DNS");
-    expect(result.result.error).toContain("reformular");
-    // Should NOT contain "Argumentos inválidos"
-    expect(result.result.error).not.toContain("Argumentos inválidos");
+    expect(result.result.error).toContain("tentar\u00e1 novamente");
+    // Should NOT contain "Argumentos inv\u00e1lidos"
+    expect(result.result.error).not.toContain("Argumentos inv\u00e1lidos");
+    // Should be marked as internal error
+    expect(result.result._internalError).toBe(true);
+    expect(result.result._retryable).toBe(true);
   });
 
   it("should return friendly error for empty arguments string", async () => {

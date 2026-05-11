@@ -193,16 +193,24 @@ function ToolResultCard({ name, result }: { name: string; result: any }) {
   const Icon = display.icon;
 
   if (result?.error) {
-    // Filter out internal debug info - only show user-friendly message
-    const errorMessage = typeof result.error === "string" ? result.error : "Ocorreu um erro inesperado. Tente novamente.";
-    // Don't show _internal field to user
+    // If this is an internal error that shouldn't be shown to user, don't render anything
+    if (result._internalError) {
+      return null;
+    }
+    // Filter out technical details - only show user-friendly message
+    let errorMessage = typeof result.error === "string" ? result.error : "Ocorreu um erro inesperado. Tente novamente.";
+    // Sanitize: remove any technical terms that might have leaked through
+    const technicalPatterns = /web_fetch|dns_lookup|ssl_check|http_check|port_scan|whois_lookup|execute_code|generate_image|schema|tool.?call|JSON|parse|arguments|par\u00e2metros da ferramenta/gi;
+    if (technicalPatterns.test(errorMessage)) {
+      errorMessage = "N\u00e3o consegui concluir essa verifica\u00e7\u00e3o agora. O alvo pode estar indispon\u00edvel, lento ou bloqueando a consulta. Tente novamente em instantes ou informe outro site.";
+    }
+    // Don't show _internal field to user - render a subtle, friendly error
     return (
-      <div className="my-3 rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <AlertTriangle className="w-4 h-4 text-yellow-500" />
-          <span className="font-mono text-xs font-medium text-yellow-500">{display.label}</span>
+      <div className="my-3 rounded-xl border border-muted-foreground/20 bg-muted/30 p-3">
+        <div className="flex items-center gap-2">
+          <Icon className="w-4 h-4 text-muted-foreground" />
+          <p className="text-xs text-muted-foreground leading-relaxed">{errorMessage}</p>
         </div>
-        <p className="text-xs text-yellow-200/80 leading-relaxed">{errorMessage}</p>
       </div>
     );
   }

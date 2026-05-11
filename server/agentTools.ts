@@ -864,11 +864,14 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
   args = tryParseJSON(argsStr);
   if (!args) {
     console.error(`[Tool] JSON parse failed for ${name}:`, argsStr);
+    // Mark as internal-only error — frontend should NOT show this to user
     return {
       toolCallId: toolCall.id,
       name,
       result: {
-        error: `Não foi possível processar os parâmetros da ferramenta ${friendlyName}. Tente reformular sua solicitação.`,
+        _retryable: true,
+        _internalError: true,
+        error: `Parâmetros inválidos para ${friendlyName}. A IA tentará novamente automaticamente.`,
         _internal: "JSON parse failed",
       },
     };
@@ -878,10 +881,13 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
   const validation = validateToolArgs(name, args);
   if (!validation.valid) {
     console.warn(`[Tool] Validation failed for ${name}:`, validation.error);
+    // Mark as internal-only error — frontend should NOT show this to user
     return {
       toolCallId: toolCall.id,
       name,
       result: {
+        _retryable: true,
+        _internalError: true,
         error: validation.error,
         _internal: "Validation failed",
       },
@@ -947,7 +953,8 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
       name,
       result: {
         error: friendlyError,
-        _internal: msg, // For internal logging only, not shown to user
+        _internalError: false, // This is a user-facing friendly error (timeout, DNS, etc.)
+        _internal: msg,
       },
     };
   }
