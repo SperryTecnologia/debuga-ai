@@ -112,3 +112,6 @@
 - [x] Avaliação de riscos: repositório público vs privado (APROVADO para público)
 - [x] Verificar se webhook Stripe processou pagamento de teste corretamente (webhook não chega no Preview, funciona após publicar)
 - [x] Adicionar links sutis dos whitepapers no footer da landing page (apontando para GitHub)
+- [x] Remover mensagem sandbox/4242 da PricingPage (produção)
+- [x] Remover console.log do ComponentShowcase.tsx
+- [x] Revisão completa de código para produção: zero conteúdo dev-only visível ao usuário

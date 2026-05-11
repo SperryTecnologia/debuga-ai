@@ -490,7 +490,6 @@ export default function PricingPage() {
           </motion.div>
           <motion.p variants={fadeInUp} className="text-[11px] text-muted-foreground/50 max-w-lg mx-auto">
             Todos os valores em Reais (BRL). Planos anuais são cobrados em parcela única com desconto.
-            Para testar no modo sandbox, use o cartão 4242 4242 4242 4242.
           </motion.p>
         </motion.div>
       </div>
