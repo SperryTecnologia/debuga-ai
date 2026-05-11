@@ -658,10 +658,49 @@ Não sugira exploração, brute force, bypass ou ataque. Apenas defesa e hardeni
   {
     icon: ImageIcon,
     title: "Gerar Diagrama",
-    visible: false,
-    displayMessage: "Gere um diagrama de arquitetura segura para uma aplicação web.",
-    prompt: "Crie um diagrama profissional de arquitetura segura para uma aplicação web moderna, incluindo usuário, DNS, CDN/WAF, firewall, load balancer, servidores de aplicação, banco de dados, backup, monitoramento, logs/SIEM e alertas. O resultado deve ser limpo, técnico, executivo e adequado para apresentação. Tente gerar uma imagem visual. Se não for possível, gere o diagrama em formato Mermaid. Explique cada componente e sua função na arquitetura.",
-    description: "Cria uma arquitetura segura em formato profissional",
+    displayMessage: "Gere um diagrama técnico de infraestrutura.",
+    prompt: `Você é um arquiteto de infraestrutura sênior. Sua tarefa é gerar um diagrama técnico profissional em formato Mermaid.
+
+REGRA OBRIGATÓRIA: Sempre responda com um diagrama Mermaid válido. NUNCA tente gerar imagem. NUNCA use a ferramenta generate_image. O formato é SEMPRE Mermaid.
+
+REGRA DE VARIAÇÃO: Como o usuário não especificou o cenário, escolha ALEATORIAMENTE UM dos cenários abaixo (varie a cada execução, não repita o último):
+1. Rede corporativa com firewall de borda e segmentação interna
+2. Firewall em alta disponibilidade (HA) com failover
+3. Matriz e filial conectadas via VPN site-to-site
+4. Segmentação por VLANs (servidores, usuários, IoT, gestão)
+5. DMZ com serviços expostos e zona interna protegida
+6. Backup local + replicação para S3/nuvem com retenção
+7. Monitoramento com Zabbix/Grafana e alertas
+8. Virtualização com Proxmox/XCP-ng e storage compartilhado
+9. Ambiente de cartório/empresa com AD, impressoras e CFTV
+10. Aplicação web segura com WAF, CDN, load balancer e banco
+
+FORMATO DA RESPOSTA (seguir exatamente):
+## 🏗️ [Título do Diagrama]
+
+**Cenário:** [Descrever brevemente o cenário escolhido]
+
+\`\`\`mermaid
+[Diagrama Mermaid completo, válido, com nós e conexões claras]
+\`\`\`
+
+### Componentes
+[Explicar cada componente do diagrama e sua função]
+
+### Pontos de Segurança
+[Listar 3-5 boas práticas de segurança aplicadas neste cenário]
+
+### Valor para o Cliente
+[Explicar em 2-3 frases como essa arquitetura protege o negócio]
+
+REGRAS FINAIS:
+- O diagrama Mermaid deve ser sintaticamente válido (graph TD, flowchart LR, etc.)
+- Usar nomes técnicos reais (não genéricos)
+- Mínimo 8 nós no diagrama
+- Incluir pelo menos 1 elemento de segurança (firewall, WAF, IDS, etc.)
+- Incluir pelo menos 1 elemento de redundância ou backup
+- NÃO usar a ferramenta generate_image em hipótese alguma`,
+    description: "Cria diagramas técnicos de rede, segurança e infraestrutura",
   },
   // --- Cards ocultos (manter para reabilitação futura) ---
   {

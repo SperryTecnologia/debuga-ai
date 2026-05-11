@@ -33,13 +33,14 @@ describe("Simplified Card Structure", () => {
       expect(chatPageContent).toContain('title: "Auditor de Domínio"');
     });
 
-    it("should have Gerar Diagrama card (hidden)", () => {
+    it("should have Gerar Diagrama card (visible)", () => {
       expect(chatPageContent).toContain('title: "Gerar Diagrama"');
+      // Gerar Diagrama should NOT have visible: false (it's visible)
       const diagramSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Gerar Diagrama"'),
         chatPageContent.indexOf('title: "Gerar Diagrama"') + 200
       );
-      expect(diagramSection).toContain("visible: false");
+      expect(diagramSection).not.toContain("visible: false");
     });
 
     it("should have Navegar em Site card (hidden)", () => {
