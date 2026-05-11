@@ -1,12 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 const WHATSAPP_NUMBER = "555137374357";
 const WHATSAPP_MESSAGE = encodeURIComponent(
   "Olá! Gostaria de saber mais sobre o debuga.ai"
 );
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
+
+const DISMISS_KEY = "whatsapp_tooltip_dismissed";
+
+// Routes where the widget should be HIDDEN (authenticated/internal areas)
+const HIDDEN_ROUTES = ["/chat", "/account", "/logout-success"];
+
+function isPublicRoute(pathname: string): boolean {
+  return !HIDDEN_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(route + "/")
+  );
+}
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -22,18 +34,64 @@ function WhatsAppIcon({ className }: { className?: string }) {
 }
 
 export default function WhatsAppButton() {
+  const [location] = useLocation();
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(DISMISS_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
 
-  // Show tooltip after 3 seconds
-  useState(() => {
+  // Show tooltip after 3 seconds (only on public routes)
+  useEffect(() => {
+    if (!isPublicRoute(location) || isDismissed) return;
     const timer = setTimeout(() => {
       setIsTooltipVisible(true);
     }, 3000);
     return () => clearTimeout(timer);
-  });
+  }, [location, isDismissed]);
 
-  if (isDismissed) return null;
+  // Hide tooltip when navigating to internal routes
+  useEffect(() => {
+    if (!isPublicRoute(location)) {
+      setIsTooltipVisible(false);
+    }
+  }, [location]);
+
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    setIsTooltipVisible(false);
+    try {
+      localStorage.setItem(DISMISS_KEY, "true");
+    } catch {
+      // localStorage not available
+    }
+  };
+
+  // Don't render anything on authenticated/internal routes
+  if (!isPublicRoute(location)) return null;
+
+  // Don't render if user dismissed the entire widget
+  if (isDismissed && !isTooltipVisible) {
+    // Still show the FAB button even if tooltip was dismissed
+    return (
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        <a
+          href={WHATSAPP_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group relative flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+          style={{ backgroundColor: "#25D366" }}
+          aria-label="Contato via WhatsApp"
+        >
+          <WhatsAppIcon className="w-7 h-7 text-white" />
+          <span className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ backgroundColor: "#25D366" }} />
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
@@ -48,7 +106,7 @@ export default function WhatsAppButton() {
       >
         <div className="relative bg-card border border-border rounded-2xl rounded-br-sm p-4 shadow-xl max-w-[260px]">
           <button
-            onClick={() => setIsDismissed(true)}
+            onClick={handleDismiss}
             className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center hover:bg-accent transition-colors"
           >
             <X className="w-3 h-3 text-muted-foreground" />
