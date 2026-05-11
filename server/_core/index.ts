@@ -3,6 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import { registerStorageProxy } from "./storageProxy";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStreamRoute } from "../streamRoute";
 import { registerStripeRoutes } from "../stripeRoutes";
@@ -41,6 +42,9 @@ async function startServer() {
   // Configure body parser with larger size limit
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Storage proxy for /manus-storage/* paths
+  registerStorageProxy(app);
 
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);

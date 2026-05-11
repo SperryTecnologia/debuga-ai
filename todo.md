@@ -119,3 +119,4 @@
 - [x] Redirecionar "Falar com Vendas" (Enterprise) para WhatsApp com mensagem contextual
 - [x] Diferenciar botões: "Entrar" → login, "Começar" → /pricing, CTA final → "Ver Planos"
 - [x] Traduzir README.md principal para português BR (público-alvo brasileiro)
+- [x] Gerar e configurar favicon a partir do logo escudo verde (aba do navegador)
