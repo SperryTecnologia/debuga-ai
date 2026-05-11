@@ -201,8 +201,8 @@ Essa arquitetura garante que o debuga.ai nunca fique indisponível: se o cluster
 │  │ Auth     │  │ Chat     │  │ Credits  │  │ Stripe     │   │
 │  │ Module   │  │ Stream   │  │ System   │  │ Routes     │   │
 │  └──────────┘  └────┬─────┘  └──────────┘  └────────────┘   │
-│                      │                                      │
-│  ┌───────────────────▼──────────────────────────────────┐   │
+│                     │                                       │
+│  ┌──────────────────▼───────────────────────────────────┐   │
 │  │           AGENT LOOP (max 5 iterações)               │   │
 │  │  ┌─────────────────────────────────────────────────┐ │   │
 │  │  │ Tools: code_exec, dns, ssl, http, whois,        │ │   │
