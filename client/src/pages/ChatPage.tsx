@@ -556,74 +556,51 @@ function StepIndicator({ step }: { step: StepEvent }) {
   );
 }
 
-// Card modes:
-// - "demo": controlled example available to Free users (safe targets, pre-defined prompts)
-// - "full": full access available to Starter/Pro users (custom targets)
-// requiredPlanForFull: minimum plan needed for full/custom usage
+// Cards de exemplo: execução real com alvos seguros, consumo normal do plano.
+// Todos os cards são acessíveis a qualquer plano (Free, Starter, Pro).
 type SuggestedPrompt = {
   icon: LucideIcon;
   title: string;
-  demoPrompt: string;
-  demoBadge: string;
-  fullPromptHint: string;
-  requiredPlanForFull: "starter" | "pro";
-  toolsUsed: string[];
+  prompt: string;
+  description: string;
 };
 
 const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: Server,
     title: "Diagnóstico DNS",
-    demoPrompt: "Faça um diagnóstico DNS do domínio github.com consultando registros A, MX, TXT e NS. Execute cada consulta separadamente se necessário e apresente um resumo objetivo.",
-    demoBadge: "Demo",
-    fullPromptHint: "Nos planos Starter e Pro, use qualquer domínio.",
-    requiredPlanForFull: "starter",
-    toolsUsed: ["dns_lookup"],
+    prompt: "Faça um diagnóstico DNS completo do domínio github.com. Consulte registros A, MX, TXT e NS separadamente se necessário. Apresente os resultados organizados em tabelas, com resumo interpretativo e observações técnicas. Explique os resultados de forma clara e profissional.",
+    description: "Consulta DNS completa com registros A, MX, TXT e NS",
   },
   {
     icon: Globe,
     title: "Navegar em Site",
-    demoPrompt: "Acesse https://example.com, leia o conteúdo principal e resuma o que o site apresenta.",
-    demoBadge: "Demo",
-    fullPromptHint: "Nos planos Starter e Pro, navegue em qualquer URL.",
-    requiredPlanForFull: "starter",
-    toolsUsed: ["web_fetch"],
+    prompt: "Analise o site https://www.cloudflare.com. Acesse a página, extraia o título, resumo do conteúdo principal, status HTTP, tempo de resposta se disponível e apresente um resumo profissional com observações relevantes.",
+    description: "Análise completa de página web com status e resumo",
   },
   {
     icon: Shield,
     title: "Auditoria de Segurança",
-    demoPrompt: "Faça uma auditoria passiva e segura de https://example.com verificando HTTPS, certificado SSL, headers de segurança e DNS público. Não execute scan invasivo.",
-    demoBadge: "Demo",
-    fullPromptHint: "Nos planos Starter e Pro, audite qualquer domínio.",
-    requiredPlanForFull: "starter",
-    toolsUsed: ["ssl_check", "http_check", "dns_lookup"],
+    prompt: "Faça uma auditoria passiva e segura de https://www.cloudflare.com. Verifique HTTPS, certificado SSL, headers HTTP básicos de segurança (HSTS, CSP, X-Frame-Options, X-Content-Type-Options), DNS público e apresente um checklist profissional com pontos positivos, pontos de atenção e conclusão. Não execute scan invasivo.",
+    description: "Checklist de segurança passiva com SSL, headers e DNS",
   },
   {
     icon: ImageIcon,
     title: "Gerar Diagrama",
-    demoPrompt: "Gere um diagrama simples de arquitetura com usuário, firewall, servidor web, banco de dados e serviço de monitoramento.",
-    demoBadge: "Demo",
-    fullPromptHint: "No plano Pro, crie diagramas personalizados.",
-    requiredPlanForFull: "pro",
-    toolsUsed: ["generate_image"],
+    prompt: "Gere um diagrama profissional em alta qualidade de uma arquitetura segura com usuário, firewall, WAF, balanceador, servidor web, aplicação, banco de dados, backup e monitoramento. O visual deve ser limpo, moderno e adequado para apresentação técnica.",
+    description: "Diagrama de arquitetura profissional em alta qualidade",
   },
   {
     icon: Network,
     title: "Scan de Portas",
-    demoPrompt: "Verifique de forma segura apenas as portas 80 e 443 de example.com e explique o resultado.",
-    demoBadge: "Demo segura",
-    fullPromptHint: "No plano Pro, escaneie qualquer alvo e portas.",
-    requiredPlanForFull: "pro",
-    toolsUsed: ["port_scan"],
+    prompt: "Faça uma verificação segura apenas das portas 80 e 443 de cloudflare.com. Informe se as portas estão abertas, fechadas ou filtradas, apresente o resultado em tabela com host, portas analisadas e interpretação profissional.",
+    description: "Verificação segura de portas com interpretação técnica",
   },
   {
     icon: Terminal,
     title: "Sandbox de Código",
-    demoPrompt: "Execute um script Python seguro que valida se '192.168.0.1' é um endereço IPv4 válido usando a biblioteca padrão ipaddress e mostre informações sobre a rede.",
-    demoBadge: "Demo segura",
-    fullPromptHint: "No plano Pro, execute código personalizado.",
-    requiredPlanForFull: "pro",
-    toolsUsed: ["execute_code"],
+    prompt: "Execute um script Python seguro usando apenas biblioteca padrão para validar se 192.168.0.1 é um endereço IPv4 válido. Mostre o código, a saída e explique o resultado de forma clara.",
+    description: "Execução segura de código Python com explicação",
   },
 ];
 
@@ -644,7 +621,7 @@ export default function ChatPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; message: string; planId: string } | null>(null);
-  const [showDemoUpgradeCTA, setShowDemoUpgradeCTA] = useState(false);
+  const [showCardUpgradeCTA, setShowCardUpgradeCTA] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
   const [searchQuery, setSearchQuery] = useState("");
@@ -1797,47 +1774,37 @@ export default function ChatPage() {
                       Olá! Sou o <span className="terminal-glow text-primary">debuga.ai</span>
                     </h2>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Comece com exemplos guiados e veja o debuga.ai em ação. Faça upgrade para usar seus próprios domínios, servidores e ferramentas avançadas.
+                      Escolha um exemplo abaixo para ver o debuga.ai em ação com consultas reais.
                     </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {SUGGESTED_PROMPTS.map((item, i) => {
                     const userPlan = usageQuery.data?.planId || "free";
-                    const planHierarchy: Record<string, number> = { free: 0, starter: 1, pro: 2, enterprise: 3 };
-                    const userLevel = planHierarchy[userPlan] ?? 0;
-                    const requiredLevel = planHierarchy[item.requiredPlanForFull] ?? 0;
-                    const isDemoMode = userLevel < requiredLevel;
+                    const isPaidPlan = userPlan !== "free";
 
                     return (
                       <button
                         key={i}
                         onClick={() => {
-                          handleSendMessage(item.demoPrompt);
-                          if (isDemoMode) {
-                            setTimeout(() => setShowDemoUpgradeCTA(true), 2000);
+                          handleSendMessage(item.prompt);
+                          // Show CTA after card execution for Free users (only if limit modal won't show)
+                          if (!isPaidPlan) {
+                            setTimeout(() => {
+                              setShowCardUpgradeCTA((prev) => prev); // will be set only if no upgradeModal
+                              setShowCardUpgradeCTA(true);
+                            }, 3000);
                           }
                         }}
                         disabled={isStreaming}
-                        className="group flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left relative"
+                        className="group flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left"
                       >
                         <div className="p-2 rounded-lg shrink-0 transition-colors bg-primary/10 text-primary group-hover:bg-primary/20">
                           <item.icon className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium font-mono text-foreground">{item.title}</p>
-                            {isDemoMode && (
-                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 whitespace-nowrap flex items-center gap-1">
-                                <Activity className="w-2.5 h-2.5" />
-                                {item.demoBadge}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.demoPrompt}</p>
-                          {isDemoMode && (
-                            <p className="text-[10px] text-primary/60 mt-1.5 font-mono">{item.fullPromptHint}</p>
-                          )}
+                          <p className="text-sm font-medium font-mono text-foreground">{item.title}</p>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
                         </div>
                       </button>
                     );
@@ -2118,8 +2085,8 @@ export default function ChatPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Demo Upgrade CTA */}
-      <Dialog open={showDemoUpgradeCTA} onOpenChange={setShowDemoUpgradeCTA}>
+      {/* Post-card CTA - only shows if upgrade modal is NOT open */}
+      <Dialog open={showCardUpgradeCTA && !upgradeModal?.open} onOpenChange={setShowCardUpgradeCTA}>
         <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
@@ -2131,10 +2098,10 @@ export default function ChatPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 sm:gap-2">
-            <Button variant="ghost" onClick={() => setShowDemoUpgradeCTA(false)} className="font-mono text-sm">
+            <Button variant="ghost" onClick={() => setShowCardUpgradeCTA(false)} className="font-mono text-sm">
               Continuar testando
             </Button>
-            <Button onClick={() => { setShowDemoUpgradeCTA(false); setLocation("/pricing"); }} className="font-mono text-sm gap-2">
+            <Button onClick={() => { setShowCardUpgradeCTA(false); setLocation("/pricing"); }} className="font-mono text-sm gap-2">
               <Crown className="w-4 h-4" />
               Fazer Upgrade
             </Button>

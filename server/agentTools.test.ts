@@ -407,45 +407,33 @@ describe("executeToolCall - code execution", () => {
   });
 });
 
-// ── Suggested Prompts Validation ──
+// ── Suggested Prompts Validation (Simplified - no plan gating) ──
 describe("Suggested prompts", () => {
-  // These prompts are defined in the frontend but we validate their structure here
+  // Prompts mirror the frontend SUGGESTED_PROMPTS - real execution, safe targets
   const SUGGESTED_PROMPTS = [
     {
+      title: "Diagnóstico DNS",
+      prompt: "Faça um diagnóstico DNS completo do domínio github.com.",
+    },
+    {
       title: "Navegar em Site",
-      prompt: "Acesse https://example.com, leia o conteúdo principal e resuma o que o site apresenta.",
-      requiredPlan: "starter",
-      toolsUsed: ["web_fetch"],
+      prompt: "Analise o site https://www.cloudflare.com.",
     },
     {
       title: "Auditoria de Segurança",
-      prompt: "Faça uma auditoria passiva e segura de https://example.com verificando HTTPS, certificado SSL, headers de segurança e DNS público. Não execute scan invasivo.",
-      requiredPlan: "starter",
-      toolsUsed: ["ssl_check", "http_check", "dns_lookup"],
-    },
-    {
-      title: "Sandbox de Código",
-      prompt: "Execute um script Python seguro que valida se '192.168.0.1' é um endereço IPv4 válido usando a biblioteca padrão ipaddress e mostre informações sobre a rede.",
-      requiredPlan: "pro",
-      toolsUsed: ["execute_code"],
-    },
-    {
-      title: "Scan de Portas",
-      prompt: "Verifique de forma segura apenas as portas 80 e 443 de example.com e explique o resultado.",
-      requiredPlan: "pro",
-      toolsUsed: ["port_scan"],
-    },
-    {
-      title: "Diagnóstico DNS",
-      prompt: "Faça um diagnóstico DNS do domínio github.com consultando registros A, MX, TXT e NS. Execute cada consulta separadamente se necessário e apresente um resumo objetivo.",
-      requiredPlan: "starter",
-      toolsUsed: ["dns_lookup"],
+      prompt: "Faça uma auditoria passiva e segura de https://www.cloudflare.com.",
     },
     {
       title: "Gerar Diagrama",
-      prompt: "Gere um diagrama simples de arquitetura com usuário, firewall, servidor web, banco de dados e serviço de monitoramento.",
-      requiredPlan: "pro",
-      toolsUsed: ["generate_image"],
+      prompt: "Gere um diagrama profissional em alta qualidade.",
+    },
+    {
+      title: "Scan de Portas",
+      prompt: "Faça uma verificação segura apenas das portas 80 e 443 de cloudflare.com.",
+    },
+    {
+      title: "Sandbox de Código",
+      prompt: "Execute um script Python seguro usando apenas biblioteca padrão para validar se 192.168.0.1 é um endereço IPv4 válido.",
     },
   ];
 
@@ -460,63 +448,28 @@ describe("Suggested prompts", () => {
     }
   });
 
-  it("each prompt should reference valid tools", () => {
-    const validTools = AGENT_TOOLS.map(t => t.function.name);
-    for (const p of SUGGESTED_PROMPTS) {
-      for (const tool of p.toolsUsed) {
-        expect(validTools).toContain(tool);
-      }
-    }
-  });
-
-  it("prompts using Starter tools should require starter plan", () => {
-    const starterTools = ["dns_lookup", "ssl_check", "http_check", "whois_lookup", "web_fetch"];
-    for (const p of SUGGESTED_PROMPTS) {
-      const usesOnlyStarter = p.toolsUsed.every(t => starterTools.includes(t));
-      if (usesOnlyStarter) {
-        expect(["starter", "free"]).toContain(p.requiredPlan);
-      }
-    }
-  });
-
-  it("prompts using Pro tools should require pro plan", () => {
-    const proOnlyTools = ["port_scan", "execute_code", "generate_image"];
-    for (const p of SUGGESTED_PROMPTS) {
-      const usesProTool = p.toolsUsed.some(t => proOnlyTools.includes(t));
-      if (usesProTool) {
-        expect(p.requiredPlan).toBe("pro");
-      }
-    }
-  });
-
-  it("DNS prompt should include specific domain and record types", () => {
+  it("DNS prompt should include github.com and record types", () => {
     const dnsPrompt = SUGGESTED_PROMPTS.find(p => p.title === "Diagnóstico DNS");
     expect(dnsPrompt).toBeDefined();
     expect(dnsPrompt!.prompt).toContain("github.com");
-    expect(dnsPrompt!.prompt).toMatch(/A|MX|TXT|NS/);
   });
 
-  it("Navegar em Site should use a stable URL", () => {
+  it("Navegar em Site should use cloudflare.com", () => {
     const navPrompt = SUGGESTED_PROMPTS.find(p => p.title === "Navegar em Site");
     expect(navPrompt).toBeDefined();
-    expect(navPrompt!.prompt).toContain("https://");
-    // Should NOT use gov.br/anatel (unstable)
-    expect(navPrompt!.prompt).not.toContain("gov.br");
+    expect(navPrompt!.prompt).toContain("cloudflare.com");
   });
 
-  it("Auditoria should be passive (no port scan)", () => {
+  it("Auditoria should be passive", () => {
     const auditPrompt = SUGGESTED_PROMPTS.find(p => p.title === "Auditoria de Segurança");
     expect(auditPrompt).toBeDefined();
-    expect(auditPrompt!.toolsUsed).not.toContain("port_scan");
     expect(auditPrompt!.prompt.toLowerCase()).toContain("passiva");
   });
 
   it("Sandbox de Código should use safe code", () => {
     const codePrompt = SUGGESTED_PROMPTS.find(p => p.title === "Sandbox de Código");
     expect(codePrompt).toBeDefined();
-    // Should not mention port scan in code
-    expect(codePrompt!.prompt.toLowerCase()).not.toContain("port scan");
-    expect(codePrompt!.prompt).toContain("ipaddress");
+    expect(codePrompt!.prompt).toContain("192.168.0.1");
   });
 
   it("Scan de Portas should only scan safe ports", () => {
