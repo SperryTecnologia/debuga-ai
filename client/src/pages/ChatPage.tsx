@@ -604,6 +604,7 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: Monitor,
     title: "Monitor de Servidor",
+    visible: false,
     displayMessage: "Faça uma verificação defensiva do servidor 161.97.132.110.",
     prompt: `Faça uma verificação defensiva e não invasiva do servidor 161.97.132.110.
 
@@ -657,6 +658,7 @@ Não sugira exploração, brute force, bypass ou ataque. Apenas defesa e hardeni
   {
     icon: ImageIcon,
     title: "Gerar Diagrama",
+    visible: false,
     displayMessage: "Gere um diagrama de arquitetura segura para uma aplicação web.",
     prompt: "Crie um diagrama profissional de arquitetura segura para uma aplicação web moderna, incluindo usuário, DNS, CDN/WAF, firewall, load balancer, servidores de aplicação, banco de dados, backup, monitoramento, logs/SIEM e alertas. O resultado deve ser limpo, técnico, executivo e adequado para apresentação. Tente gerar uma imagem visual. Se não for possível, gere o diagrama em formato Mermaid. Explique cada componente e sua função na arquitetura.",
     description: "Cria uma arquitetura segura em formato profissional",
@@ -867,7 +869,7 @@ export default function ChatPage() {
         setToolResults([]);
         setActiveSteps([]);
         setStreamingContent("");
-        utils.chat.list.invalidate();
+        utils.chat.listConversations.invalidate();
       }
     }
   }, [messagesQuery.error, activeConversationId, utils]);

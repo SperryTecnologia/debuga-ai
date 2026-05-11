@@ -20,22 +20,26 @@ describe("Simplified Card Structure", () => {
       expect(chatPageContent).toContain('title: "Scan de Portas"');
     });
 
-    it("should have Monitor de Servidor card", () => {
+    it("should have Monitor de Servidor card (hidden)", () => {
       expect(chatPageContent).toContain('title: "Monitor de Servidor"');
+      const monitorSection = chatPageContent.substring(
+        chatPageContent.indexOf('title: "Monitor de Servidor"'),
+        chatPageContent.indexOf('title: "Monitor de Servidor"') + 200
+      );
+      expect(monitorSection).toContain("visible: false");
     });
 
     it("should have Auditor de Domínio card", () => {
       expect(chatPageContent).toContain('title: "Auditor de Domínio"');
     });
 
-    it("should have Gerar Diagrama card (visible)", () => {
+    it("should have Gerar Diagrama card (hidden)", () => {
       expect(chatPageContent).toContain('title: "Gerar Diagrama"');
-      // Gerar Diagrama should NOT have visible: false
       const diagramSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Gerar Diagrama"'),
         chatPageContent.indexOf('title: "Gerar Diagrama"') + 200
       );
-      expect(diagramSection).not.toContain("visible: false");
+      expect(diagramSection).toContain("visible: false");
     });
 
     it("should have Navegar em Site card (hidden)", () => {
