@@ -213,6 +213,8 @@ export default function PricingPage() {
     }
   };
 
+  const isFromApp = search.includes("from=app") || !!user;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
@@ -222,11 +224,11 @@ export default function PricingPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setLocation("/")}
+              onClick={() => setLocation(isFromApp ? "/chat" : "/")}
               className="gap-2 font-mono"
             >
               <ArrowLeft className="w-4 h-4" />
-              Voltar
+              {isFromApp ? "Voltar ao Chat" : "Voltar"}
             </Button>
           </div>
           <div className="flex items-center gap-3">

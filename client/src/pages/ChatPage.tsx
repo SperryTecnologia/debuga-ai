@@ -87,6 +87,8 @@ import {
   ArchiveRestore,
   User,
   Crown,
+  BarChart3,
+  ArrowUpCircle,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -1508,9 +1510,13 @@ export default function ChatPage() {
                 <User className="mr-2 h-4 w-4" />
                 Minha Conta
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => (window.location.href = "/pricing")} className="cursor-pointer">
-                <Crown className="mr-2 h-4 w-4" />
-                Meus Planos
+              <DropdownMenuItem onClick={() => (window.location.href = "/account")} className="cursor-pointer">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Plano e Uso
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => (window.location.href = "/pricing?from=app")} className="cursor-pointer">
+                <ArrowUpCircle className="mr-2 h-4 w-4" />
+                Fazer Upgrade
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => window.open("https://wa.me/555137374357?text=Ol%C3%A1!%20Preciso%20de%20suporte%20com%20o%20debuga.ai", "_blank")} className="cursor-pointer">
                 <MessageSquare className="mr-2 h-4 w-4" />
