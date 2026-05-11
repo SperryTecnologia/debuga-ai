@@ -849,7 +849,7 @@ export default function ChatPage() {
         stream.getTracks().forEach((t) => t.stop());
         const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         if (audioBlob.size < 1000) {
-          toast.error("Gravacao muito curta, tente novamente");
+          toast.error("Gravação muito curta, tente novamente");
           return;
         }
 
@@ -884,20 +884,20 @@ export default function ChatPage() {
               const transcription = await transcribeRes.json();
               if (transcription.text) {
                 setInput((prev) => prev + (prev ? " " : "") + transcription.text);
-                toast.success("Audio transcrito com sucesso!");
+                toast.success("Áudio transcrito com sucesso!");
               } else {
-                toast.error("Nao foi possivel transcrever o audio");
+                toast.error("Não foi possível transcrever o áudio");
               }
             } else {
               // Fallback: add as file attachment
               setUploadedFiles((prev) => [...prev, data.file]);
-              toast.info("Audio anexado (transcricao indisponivel)");
+              toast.info("Áudio anexado (transcrição indisponível)");
             }
           } else {
-            toast.error("Falha ao enviar audio");
+            toast.error("Falha ao enviar áudio");
           }
         } catch {
-          toast.error("Erro ao processar audio");
+          toast.error("Erro ao processar áudio");
         } finally {
           setIsUploading(false);
         }
@@ -906,9 +906,9 @@ export default function ChatPage() {
       mediaRecorderRef.current = recorder;
       recorder.start();
       setIsRecording(true);
-      toast.info("Gravando audio... Clique novamente para parar");
+      toast.info("Gravando áudio... Clique novamente para parar");
     } catch {
-      toast.error("Nao foi possivel acessar o microfone");
+      toast.error("Não foi possível acessar o microfone");
     }
   }, []);
 

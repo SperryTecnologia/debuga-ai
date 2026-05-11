@@ -47,20 +47,20 @@ const stagger = {
 const FEATURES = [
   {
     icon: Bot,
-    title: "Agente Autonomo com Sandbox",
-    desc: "Diferente de chatbots comuns, o debuga.ai executa tarefas de forma autonoma em um ambiente isolado: navega em sites, roda scripts e analisa resultados em tempo real.",
+    title: "Agente Autônomo com Sandbox",
+    desc: "Diferente de chatbots comuns, o debuga.ai executa tarefas de forma autônoma em um ambiente isolado: navega em sites, roda scripts e analisa resultados em tempo real.",
     highlight: true,
   },
   {
     icon: Globe,
-    title: "Navegacao Web Autonoma",
-    desc: "O agente acessa URLs, extrai conteudo de paginas, analisa meta tags, SEO e links. Peca para ele 'ler' qualquer site e reportar o que encontrou.",
+    title: "Navegação Web Autônoma",
+    desc: "O agente acessa URLs, extrai conteúdo de páginas, analisa meta tags, SEO e links. Peça para ele 'ler' qualquer site e reportar o que encontrou.",
     highlight: true,
   },
   {
     icon: Code2,
-    title: "Sandbox de Codigo",
-    desc: "Execute scripts Python e Bash em ambiente seguro e isolado. Ideal para automacao, analise de dados, calculos e validacao de configuracoes.",
+    title: "Sandbox de Código",
+    desc: "Execute scripts Python e Bash em ambiente seguro e isolado. Ideal para automação, análise de dados, cálculos e validação de configurações.",
     highlight: true,
   },
   {
@@ -70,28 +70,28 @@ const FEATURES = [
   },
   {
     icon: Shield,
-    title: "Seguranca da Informacao",
-    desc: "Analise de vulnerabilidades, hardening de servidores, resposta a incidentes e compliance com ISO 27001 e NIST.",
+    title: "Segurança da Informação",
+    desc: "Análise de vulnerabilidades, hardening de servidores, resposta a incidentes e compliance com ISO 27001 e NIST.",
   },
   {
     icon: Server,
     title: "Infraestrutura de TI",
-    desc: "Diagnostico e resolucao de problemas em servidores, storage, virtualizacao e ambientes cloud (AWS, Azure, GCP).",
+    desc: "Diagnóstico e resolução de problemas em servidores, storage, virtualização e ambientes cloud (AWS, Azure, GCP).",
   },
   {
     icon: Terminal,
-    title: "DevOps & Automacao",
+    title: "DevOps & Automação",
     desc: "CI/CD, containers, Kubernetes, Ansible, Terraform. Scripts prontos para uso em Python, Bash e PowerShell.",
   },
   {
     icon: Wifi,
     title: "Redes & Telecom",
-    desc: "Troubleshooting de rede, analise de trafego, configuracao de firewalls, VPNs e infraestrutura de telecomunicacoes.",
+    desc: "Troubleshooting de rede, análise de tráfego, configuração de firewalls, VPNs e infraestrutura de telecomunicações.",
   },
   {
     icon: Lock,
     title: "SIEM & Monitoramento",
-    desc: "Conectores planejados para Zabbix, Wazuh, Prometheus e Grafana — analise inteligente de alertas e metricas (em breve).",
+    desc: "Conectores planejados para Zabbix, Wazuh, Prometheus e Grafana — análise inteligente de alertas e métricas (em breve).",
   },
 ];
 
@@ -136,7 +136,7 @@ export default function Home() {
               Recursos
             </a>
             <a href="#integrations" className="hover:text-primary transition-colors">
-              Integracoes
+              Integrações
             </a>
             <a href="/pricing" className="hover:text-primary transition-colors">
               Planos
@@ -190,19 +190,19 @@ export default function Home() {
                 className="text-4xl md:text-6xl font-bold leading-tight"
               >
                 Seu agente{" "}
-                <span className="text-primary terminal-glow">autonomo</span>{" "}
+                <span className="text-primary terminal-glow">autônomo</span>{" "}
                 de IA para{" "}
                 <span className="text-primary terminal-glow">TI</span> e{" "}
-                <span className="text-primary terminal-glow">Seguranca</span>
+                <span className="text-primary terminal-glow">Segurança</span>
               </motion.h1>
 
               <motion.p
                 variants={fadeInUp}
                 className="text-lg text-muted-foreground leading-relaxed max-w-lg"
               >
-                O primeiro agente de IA com sandbox que navega em sites, executa codigo,
-                escaneia portas e audita sua infraestrutura de forma autonoma.
-                Nao e um chatbot — e um especialista de TI que age.
+                O primeiro agente de IA com sandbox que navega em sites, executa código,
+                escaneia portas e audita sua infraestrutura de forma autônoma.
+                Não é um chatbot — é um especialista de TI que age.
               </motion.p>
 
               <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
@@ -273,8 +273,8 @@ export default function Home() {
               Mais que um chatbot. Um agente que age.
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-muted-foreground max-w-2xl mx-auto">
-              Sandbox isolada, navegacao web autonoma, execucao de codigo e ferramentas
-              de seguranca integradas. Tudo o que sua equipe de TI precisa em um unico agente.
+              Sandbox isolada, navegação web autônoma, execução de código e ferramentas
+              de segurança integradas. Tudo o que sua equipe de TI precisa em um único agente.
             </motion.p>
           </motion.div>
 
@@ -327,10 +327,10 @@ export default function Home() {
               {"// CONECTORES PLANEJADOS"}
             </motion.p>
             <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">
-              Integracoes em evolucao
+              Integrações em evolução
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-muted-foreground max-w-2xl mx-auto">
-              Conectores para as principais ferramentas de monitoramento, seguranca e gestao de infraestrutura estao no roadmap e serao liberados gradualmente para planos avancados e projetos Enterprise.
+              Conectores para as principais ferramentas de monitoramento, segurança e gestão de infraestrutura estão no roadmap e serão liberados gradualmente para planos avançados e projetos Enterprise.
             </motion.p>
           </motion.div>
 
@@ -407,7 +407,7 @@ export default function Home() {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Agente autonomo de IA para infraestrutura de TI, seguranca da informacao e telecomunicacoes.
+                Agente autônomo de IA para infraestrutura de TI, segurança da informação e telecomunicações.
               </p>
               <a
                 href="https://www.sperrytecnologia.com.br"
@@ -424,14 +424,14 @@ export default function Home() {
               <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Links</p>
               <div className="flex flex-col gap-2">
                 <a href="#features" className="text-sm text-muted-foreground hover:text-primary transition-colors">Recursos</a>
-                <a href="#integrations" className="text-sm text-muted-foreground hover:text-primary transition-colors">Integracoes</a>
+                <a href="#integrations" className="text-sm text-muted-foreground hover:text-primary transition-colors">Integrações</a>
                 <a href="/pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">Planos</a>
               </div>
             </div>
 
             {/* Open Source & Docs */}
             <div className="space-y-3">
-              <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Documentacao</p>
+              <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Documentação</p>
               <div className="flex flex-col gap-2">
                 <a
                   href="https://github.com/SperryTecnologia/debuga-ai"
