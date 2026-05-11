@@ -74,11 +74,22 @@ export function registerStripeRoutes(app: Express) {
               const sub = await stripe.subscriptions.retrieve(session.subscription as string);
               if (userId) {
                 const uid = parseInt(userId);
-                // Stripe API v2025 may return current_period_end in different formats
-                const periodEndRaw = (sub as any).current_period_end;
-                const periodEndMs = periodEndRaw && periodEndRaw > 0
-                  ? periodEndRaw * 1000
+                // Stripe API v2025+ may return period end in various formats or nested objects
+                const subAny = sub as any;
+                const periodEndRaw = subAny.current_period_end
+                  ?? subAny.currentPeriodEnd
+                  ?? subAny.items?.data?.[0]?.current_period_end
+                  ?? 0;
+                // If it's a Unix timestamp (seconds), convert to ms; if already ms, use as-is
+                const periodEndSec = typeof periodEndRaw === 'number' && periodEndRaw > 1e12
+                  ? periodEndRaw  // already in ms
+                  : typeof periodEndRaw === 'number' && periodEndRaw > 1e9
+                    ? periodEndRaw * 1000  // seconds → ms
+                    : 0;
+                const periodEndMs = periodEndSec > Date.now() - 86400000
+                  ? periodEndSec
                   : Date.now() + 30 * 24 * 60 * 60 * 1000; // fallback: 30 days from now
+                console.log(`[Stripe Webhook] periodEndRaw=${periodEndRaw}, periodEndMs=${periodEndMs}, date=${new Date(periodEndMs).toISOString()}`);
                 await upsertSubscription({
                   userId: uid,
                   stripeSubscriptionId: sub.id,
@@ -105,10 +116,16 @@ export function registerStripeRoutes(app: Express) {
             const user = await getUserByStripeCustomerId(customerId);
 
             if (user) {
-              const updPeriodEndRaw = sub.current_period_end;
-              const updPeriodEndMs = updPeriodEndRaw && updPeriodEndRaw > 0
-                ? updPeriodEndRaw * 1000
+              const updPeriodEndRaw = sub.current_period_end ?? sub.currentPeriodEnd ?? 0;
+              const updPeriodEndSec = typeof updPeriodEndRaw === 'number' && updPeriodEndRaw > 1e12
+                ? updPeriodEndRaw
+                : typeof updPeriodEndRaw === 'number' && updPeriodEndRaw > 1e9
+                  ? updPeriodEndRaw * 1000
+                  : 0;
+              const updPeriodEndMs = updPeriodEndSec > Date.now() - 86400000
+                ? updPeriodEndSec
                 : Date.now() + 30 * 24 * 60 * 60 * 1000;
+              console.log(`[Stripe Webhook] subscription.updated periodEndRaw=${updPeriodEndRaw}, periodEndMs=${updPeriodEndMs}`);
               await upsertSubscription({
                 userId: user.id,
                 stripeSubscriptionId: sub.id,

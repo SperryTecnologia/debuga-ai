@@ -157,7 +157,7 @@ export default function Home() {
                 >
                   Entrar
                 </Button>
-                <Button onClick={handleGetStarted} className="gap-2 font-mono">
+                <Button onClick={() => setLocation('/pricing')} className="gap-2 font-mono">
                   Comecar <ArrowRight className="w-4 h-4" />
                 </Button>
               </>
@@ -208,7 +208,7 @@ export default function Home() {
               <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
                 <Button
                   size="lg"
-                  onClick={handleGetStarted}
+                  onClick={() => setLocation('/pricing')}
                   className="gap-2 font-mono text-base px-8 h-12"
                 >
                   Comecar Agora <ChevronRight className="w-5 h-5" />
@@ -382,10 +382,10 @@ export default function Home() {
             <motion.div variants={fadeInUp}>
               <Button
                 size="lg"
-                onClick={handleGetStarted}
+                onClick={() => setLocation('/pricing')}
                 className="gap-2 font-mono text-base px-8 h-12"
               >
-                Comecar Gratuitamente <ArrowRight className="w-5 h-5" />
+                Ver Planos <ArrowRight className="w-5 h-5" />
               </Button>
             </motion.div>
           </motion.div>
