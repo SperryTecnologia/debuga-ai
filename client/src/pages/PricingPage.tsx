@@ -513,7 +513,7 @@ export default function PricingPage() {
           <motion.div variants={fadeInUp} className="flex flex-wrap justify-center gap-6 text-xs text-muted-foreground/70 font-mono">
             <span>Pagamento seguro via Stripe</span>
             <span className="text-border">|</span>
-            <span>Cartão, PIX e Boleto</span>
+            <span>Cartão de crédito e débito</span>
             <span className="text-border">|</span>
             <span>Cancele quando quiser</span>
             <span className="text-border">|</span>

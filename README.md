@@ -294,7 +294,7 @@ A versão atual do debuga.ai possui as seguintes limitações que estão sendo e
 - **Conectores de observabilidade em desenvolvimento** — Os conectores para Zabbix, Wazuh, Prometheus e Grafana existem como scaffold preparatório no código, mas não estão ativos nos fluxos de produção. A integração real com essas plataformas faz parte do roadmap.
 - **Rate limiter in-memory** — O rate limiting é armazenado em memória do processo. Em caso de restart do servidor, os contadores são resetados. Uma solução persistente (Redis ou banco) está planejada.
 - **Execução de código sem sandbox dedicado** — A ferramenta `execute_code` roda no mesmo ambiente do servidor, com isolamento fornecido pela plataforma de deploy. Um sandbox dedicado (Docker/seccomp) está no roadmap de segurança.
-- **Método de pagamento** — Atualmente apenas cartão de crédito via Stripe. Suporte a PIX e Boleto está planejado.
+- **Método de pagamento** — Atualmente apenas cartão de crédito e débito via Stripe. Suporte a métodos de pagamento locais (PIX, Boleto) depende da disponibilidade do Stripe no Brasil.
 - **Documentação em alinhamento** — Alguns documentos técnicos (whitepaper, arquitetura) contêm referências a funcionalidades planejadas que ainda não estão implementadas. Estamos alinhando progressivamente a documentação ao estado real do código.
 
 ---
@@ -304,7 +304,7 @@ A versão atual do debuga.ai possui as seguintes limitações que estão sendo e
 | Versão | Timeline | Funcionalidades |
 |---|---|---|
 | **v4.x** (Atual) | Q2 2026 | Agente autônomo com 8 ferramentas, billing Stripe, busca global, arquivamento, 236+ testes |
-| **v5.0** | Q3 2026 | Conectores Zabbix/Wazuh ativos, roteamento multi-modelo, PIX/Boleto via Stripe, cupons educacionais |
+| **v5.0** | Q3 2026 | Conectores Zabbix/Wazuh ativos, roteamento multi-modelo, métodos de pagamento locais (quando disponíveis), cupons educacionais |
 | **v6.0** | Q4 2026 | Inferência on-premise via vLLM/TGI (Qwen, Mistral, Llama), API REST pública, memória de longo prazo |
 | **v7.0** | 2027 | Multi-tenancy, white-label, execução remota de agentes, marketplace de ferramentas |
 

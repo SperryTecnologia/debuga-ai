@@ -266,7 +266,7 @@ O debuga.ai utiliza um modelo **freemium** com 4 tiers de assinatura recorrente 
 - Ativação dos conectores Zabbix e Wazuh para consulta de dados reais de monitoramento
 - Roteamento multi-modelo para direcionar queries entre diferentes provedores
 - Sistema de cupons para programa educacional Open Infra Pro
-- Suporte a PIX e Boleto via Stripe
+- Métodos de pagamento locais (quando disponíveis no Stripe Brasil)
 - Dashboard de métricas para equipes
 
 ### 6.3 Fase 3 (v6.0) — Q4 2026

@@ -266,7 +266,7 @@ debuga.ai uses a **freemium** model with 4 recurring subscription tiers in BRL (
 - Activation of Zabbix and Wazuh connectors for querying real monitoring data
 - Multi-model routing to direct queries between different providers
 - Coupon system for Open Infra Pro educational program
-- PIX and Boleto support via Stripe
+- Local payment methods (when available on Stripe Brazil)
 - Team metrics dashboard
 
 ### 6.3 Phase 3 (v6.0) — Q4 2026
