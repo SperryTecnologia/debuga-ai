@@ -91,7 +91,7 @@ const FEATURES = [
   {
     icon: Lock,
     title: "SIEM & Monitoramento",
-    desc: "Integracao com Zabbix, Wazuh, Prometheus e Grafana para analise inteligente de alertas e metricas.",
+    desc: "Conectores planejados para Zabbix, Wazuh, Prometheus e Grafana — analise inteligente de alertas e metricas (em breve).",
   },
 ];
 
@@ -324,14 +324,13 @@ export default function Home() {
             className="text-center mb-16"
           >
             <motion.p variants={fadeInUp} className="text-primary font-mono text-sm mb-3">
-              {"// INTEGRACOES"}
+              {"// CONECTORES PLANEJADOS"}
             </motion.p>
             <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">
-              Conecte suas ferramentas
+              Integracoes em evolucao
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-muted-foreground max-w-2xl mx-auto">
-              O debuga.ai se integra com as principais ferramentas de monitoramento,
-              seguranca e gestao de infraestrutura do mercado.
+              Conectores para as principais ferramentas de monitoramento, seguranca e gestao de infraestrutura estao no roadmap e serao liberados gradualmente para planos avancados e projetos Enterprise.
             </motion.p>
           </motion.div>
 
@@ -346,8 +345,11 @@ export default function Home() {
               <motion.div
                 key={item.name}
                 variants={fadeInUp}
-                className="flex flex-col items-center gap-3 p-6 rounded-xl border border-border/50 bg-card/30 hover:border-primary/30 hover:bg-card/60 transition-all duration-300"
+                className="relative flex flex-col items-center gap-3 p-6 rounded-xl border border-border/50 bg-card/30 hover:border-primary/30 hover:bg-card/60 transition-all duration-300"
               >
+                <span className="absolute top-2 right-2 text-[9px] font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary/70 border border-primary/20">
+                  Em breve
+                </span>
                 <item.icon className="w-8 h-8 text-primary/70" />
                 <span className="text-sm font-mono text-muted-foreground">{item.name}</span>
               </motion.div>
