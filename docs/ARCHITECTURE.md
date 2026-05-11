@@ -25,7 +25,7 @@ The most significant architectural decision is the **dual-inference topology** t
 
 ### 2.1 Cloud Path (Primary)
 
-General-purpose queries, tool calling orchestration, and conversational responses are routed to **Google Gemini 2.5 Flash** via the Forge API proxy. This path optimizes for latency and cost on standard IT support queries. The LLM wrapper (`server/_core/llm.ts`) abstracts the provider, making it trivial to swap to OpenAI, Anthropic, or any OpenAI-compatible endpoint.
+General-purpose queries, tool calling orchestration, and conversational responses are routed through the **Manus Forge API** — a multi-model gateway that intelligently routes between providers (Claude, GPT-4o, Gemini) with automatic failover and cost optimization. This path optimizes for latency and cost on standard IT support queries. The LLM wrapper (`server/_core/llm.ts`) abstracts the provider, making it trivial to swap endpoints or add new models.
 
 ### 2.2 On-Premise Path (Specialized)
 
@@ -35,7 +35,7 @@ Deep infrastructure analysis workloads are routed to a proprietary fine-tuned mo
 |---|---|
 | **GPU Cluster** | 16x NVIDIA RTX 3090 (24GB VRAM each, 384GB total) |
 | **Servers** | 3x 4U rack-mount dedicated AI servers |
-| **Model** | Custom fork fine-tuned on IT infrastructure, network security, and telecom datasets |
+| **Model** | Qwen2.5-72B-Infra (fine-tuned on IT infrastructure, network security, and telecom datasets) |
 | **Inference** | vLLM / TGI serving with tensor parallelism across GPUs |
 | **Interconnect** | NVLink where available, PCIe Gen4 x16 fallback |
 
@@ -228,7 +228,7 @@ The codebase has passed a full production security audit (see [SECURITY_AUDIT.md
 
 ### ADR-004: Hybrid LLM Architecture
 
-**Context:** General-purpose cloud LLMs lack domain-specific knowledge for deep network analysis. **Decision:** Implement a routing layer that dispatches to cloud LLM (Gemini) for general queries and on-premise GPU cluster for specialized infrastructure analysis. **Consequence:** Best-of-both-worlds: low latency and cost for simple queries, deep domain expertise for complex analysis. Trade-off: Operational complexity of maintaining on-premise GPU infrastructure.
+**Context:** General-purpose cloud LLMs lack domain-specific knowledge for deep network analysis. **Decision:** Implement a routing layer that dispatches to cloud LLM gateway (Manus Forge API) for general queries and on-premise GPU cluster (Qwen2.5-72B-Infra) for specialized infrastructure analysis. **Consequence:** Best-of-both-worlds: low latency and cost for simple queries, deep domain expertise for complex analysis. Trade-off: Operational complexity of maintaining on-premise GPU infrastructure.
 
 ### ADR-005: Credit-Based Billing over Per-Request Pricing
 
@@ -238,14 +238,14 @@ The codebase has passed a full production security audit (see [SECURITY_AUDIT.md
 
 ## 9. Deployment Topology
 
-### Current (Manus Hosting)
+### Current (Production)
 
 ```
-[Cloudflare CDN] → [debuga.ai] → [Manus Platform]
+[Cloudflare CDN] → [debuga.ai] → [Cloud Platform]
                                     ├── Express Server (Node.js)
                                     ├── TiDB Database
                                     ├── S3 Storage
-                                    └── Forge API (LLM Proxy)
+                                    └── Forge API (Multi-Model Gateway)
 ```
 
 ### Self-Hosted (Future)
@@ -261,7 +261,7 @@ The codebase has passed a full production security audit (see [SECURITY_AUDIT.md
                                     └── 16x RTX 3090 (3 servers)
 ```
 
-See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for detailed self-hosting instructions.
+Self-hosting documentation is available upon request for Enterprise customers.
 
 ---
 

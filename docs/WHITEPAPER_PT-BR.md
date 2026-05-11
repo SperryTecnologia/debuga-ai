@@ -47,7 +47,7 @@ Soluções como ChatGPT, que domina 99% do mercado brasileiro de IA generativa [
 
 ### 2.1 Visão do Produto
 
-O debuga.ai é um **agente autônomo** — não um chatbot. A diferença fundamental é que o agente possui capacidade de **ação**: ele decide quais ferramentas usar, executa-as automaticamente, analisa os resultados e itera até resolver o problema do usuário. Além disso, o debuga.ai é alimentado por um **modelo de linguagem proprietário** (fork customizado) que adiciona uma camada de inteligência especializada em redes, segurança e infraestrutura.
+O debuga.ai é um **agente autônomo** — não um chatbot. A diferença fundamental é que o agente possui capacidade de **ação**: ele decide quais ferramentas usar, executa-as automaticamente, analisa os resultados e itera até resolver o problema do usuário. Além disso, o debuga.ai é alimentado por um **modelo de linguagem proprietário** (Qwen2.5-72B-Infra, fine-tuned) que adiciona uma camada de inteligência especializada em redes, segurança e infraestrutura.
 
 ### 2.2 Capacidades do Agente
 
@@ -112,7 +112,7 @@ Sintetiza resposta final com resultados
 Debita créditos e registra uso
 ```
 
-O agente opera em um loop de até 5 iterações, decidindo autonomamente quais ferramentas usar em cada etapa. A LLM proprietária é consultada para análises que exigem conhecimento especializado em redes e segurança, enquanto a API comercial (Gemini) lida com interações conversacionais de alta velocidade.
+O agente opera em um loop de até 5 iterações, decidindo autonomamente quais ferramentas usar em cada etapa. A LLM proprietária é consultada para análises que exigem conhecimento especializado em redes e segurança, enquanto o gateway multi-modelo (Manus Forge API) lida com interações conversacionais de alta velocidade.
 
 ---
 
@@ -125,8 +125,8 @@ O agente opera em um loop de até 5 iterações, decidindo autonomamente quais f
 | Frontend | React 19 + Tailwind CSS 4 | Performance, DX, ecossistema |
 | Backend | Express 4 + tRPC 11 | Type-safety end-to-end |
 | Banco de Dados | MySQL/TiDB (Drizzle ORM) | Escalabilidade horizontal |
-| LLM Comercial | Google Gemini 2.5 Flash (via API) | Custo-benefício, velocidade |
-| **LLM Proprietária** | **Fork customizado (16x RTX 3090)** | **Análise profunda especializada** |
+| LLM Cloud | Manus Forge API (gateway multi-modelo) | Roteamento inteligente, failover, velocidade |
+| **LLM Proprietária** | **Qwen2.5-72B-Infra (fine-tuned) — 16x RTX 3090** | **Análise profunda especializada** |
 | Streaming | Server-Sent Events (SSE) | Resposta em tempo real |
 | Pagamentos | Stripe (BRL) | Padrão global, suporte a PIX |
 | Armazenamento | S3 (compatível) | Escalável, baixo custo |
@@ -148,9 +148,9 @@ O debuga.ai opera com uma arquitetura **híbrida de processamento de IA**, combi
 | **Storage** | NVMe RAID para datasets e checkpoints |
 | **Refrigeração** | Liquid cooling em circuito fechado |
 
-**Modelo Proprietário (Fork LLM):**
+**Modelo Proprietário (Qwen2.5-72B-Infra):**
 
-O modelo proprietário do debuga.ai é um fork de um modelo de linguagem de código aberto, fine-tuned com datasets especializados em:
+O modelo proprietário do debuga.ai é baseado no Qwen2.5-72B, fine-tuned com datasets especializados em:
 
 - Documentação técnica de equipamentos de rede (Cisco, Juniper, MikroTik, Fortinet, Ubiquiti)
 - RFCs do IETF (TCP, UDP, IP, BGP, OSPF, DNS, TLS, HTTP/2, HTTP/3)
@@ -169,8 +169,8 @@ O modelo proprietário do debuga.ai é um fork de um modelo de linguagem de cód
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌─────────────────────┐    ┌──────────────────────────┐    │
-│  │  API Comercial       │    │  LLM Proprietária         │    │
-│  │  (Gemini 2.5 Flash)  │    │  (16x RTX 3090 Cluster)   │    │
+│  │  API Cloud (Gateway)  │    │  LLM Proprietária         │    │
+│  │  (Manus Forge API)   │    │  (Qwen2.5-72B-Infra)     │    │
 │  │                       │    │                            │    │
 │  │  • Chat conversacional│    │  • Análise TCP/IP profunda │    │
 │  │  • Respostas rápidas  │    │  • Correlação de logs      │    │
@@ -216,8 +216,8 @@ Essa arquitetura garante que o debuga.ai nunca fique indisponível: se o cluster
         ┌─────────────┼─────────────┬─────────────┐
         ▼             ▼             ▼             ▼
 ┌──────────────┐ ┌─────────┐ ┌──────────┐ ┌────────────────┐
-│ MySQL/TiDB   │ │ Gemini  │ │ S3       │ │ GPU Cluster    │
-│ (Drizzle)    │ │ API     │ │ Storage  │ │ (16x RTX 3090) │
+│ MySQL/TiDB   │ │ Forge   │ │ S3       │ │ GPU Cluster    │
+│ (Drizzle)    │ │ API GW  │ │ Storage  │ │ (16x RTX 3090) │
 └──────────────┘ └─────────┘ └──────────┘ └────────────────┘
 ```
 
@@ -327,7 +327,7 @@ O cluster de GPUs proprietário opera em uma rede isolada com:
 
 - Integração completa da LLM proprietária via API interna
 - Sistema de cupons para programa educacional Open Infra Pro
-- Google OAuth com tela de login personalizada (hosting próprio)
+- OAuth multi-provedor com tela de login personalizada (hosting próprio)
 - Análise TCP/IP em tempo real via captura de pacotes
 - Integração direta com Zabbix API (monitoramento real-time)
 - Integração com Wazuh API (alertas de segurança)
@@ -392,7 +392,7 @@ O cluster de GPUs proprietário opera em uma rede isolada com:
 - Expertise em JSX e desenvolvimento de interfaces modernas com React
 - Programa educacional "Open Infra Pro" com base de alunos ativa
 - Suporte humano + IA como modelo híbrido de atendimento
-- Especialista na plataforma Manus.im, dominando completamente a ferramenta
+- Infraestrutura de gateway multi-modelo com roteamento inteligente entre provedores de LLM
 
 **Infraestrutura Física:**
 - 3 servidores rack 4U dedicados para processamento de IA

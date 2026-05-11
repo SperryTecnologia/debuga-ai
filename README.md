@@ -8,7 +8,7 @@
   <a href="docs/WHITEPAPER_PT-BR.md">Whitepaper PT-BR</a> · 
   <a href="docs/WHITEPAPER_EN.md">Whitepaper EN</a> · 
   <a href="docs/ARCHITECTURE.md">Arquitetura</a> · 
-  <a href="docs/MIGRATION_GUIDE.md">Guia de Self-Hosting</a>
+  <a href="docs/SECURITY_AUDIT.md">Auditoria de Segurança</a>
 </p>
 
 ---
@@ -19,7 +19,7 @@
 
 O diferencial central é o **Agent Loop** — um ciclo de raciocínio-ação-observação que itera até 5 vezes por mensagem do usuário. O agente decide quais ferramentas invocar, interpreta resultados e encadeia operações para resolver problemas complexos de diagnóstico que exigem múltiplas consultas correlacionadas. Essa arquitetura é inspirada no paradigma ReAct [1] e traz capacidades agênticas para o domínio de operações de TI.
 
-Desenvolvido e mantido pela **[Sperry Tecnologia](https://www.sperrytecnologia.com.br)** — empresa especializada em soluções de IA utilizando a plataforma Manus.im, oferecendo o debuga.ai como serviço e produto de treinamento para profissionais de TI através do programa **Open Infra Pro**.
+Desenvolvido e mantido pela **[Sperry Tecnologia](https://www.sperrytecnologia.com.br)** — empresa brasileira especializada em inteligência artificial aplicada à infraestrutura de TI, oferecendo o debuga.ai como serviço e produto de treinamento para profissionais de TI através do programa **Open Infra Pro**.
 
 ---
 
@@ -139,9 +139,7 @@ debuga-ai/
 │   ├── WHITEPAPER_PT-BR.md        # Whitepaper (Português)
 │   ├── WHITEPAPER_EN.md           # Whitepaper (Inglês)
 │   ├── ARCHITECTURE.md            # Arquitetura do sistema com diagramas
-│   ├── MIGRATION_GUIDE.md         # Guia de self-hosting (Docker + Google OAuth)
-│   ├── SECURITY_AUDIT.md          # Relatório de auditoria de segurança
-│   └── STRIPE_PRODUCTION_GUIDE.md # Checklist de go-live do Stripe
+│   └── SECURITY_AUDIT.md          # Relatório de auditoria de segurança
 └── todo.md                        # Rastreamento de features e bugs
 ```
 
@@ -235,7 +233,7 @@ pnpm test
 | Versão | Timeline | Funcionalidades |
 |---|---|---|
 | **v4.0** (Atual) | Q2 2026 | Agente autônomo, 8 ferramentas, cobrança, créditos, LLM híbrido |
-| **v5.0** | Q3 2026 | Google OAuth (self-hosted), integração com APIs Zabbix/Wazuh, cupons educacionais |
+| **v5.0** | Q3 2026 | OAuth multi-provedor (self-hosted), integração com APIs Zabbix/Wazuh, cupons educacionais |
 | **v6.0** | Q4 2026 | API REST pública, memória de longo prazo, marketplace de ferramentas |
 | **v7.0** | 2027 | Multi-tenancy, white-label, execução remota de agentes |
 
@@ -248,9 +246,7 @@ pnpm test
 | [Whitepaper](docs/WHITEPAPER_PT-BR.md) | PT-BR | Whitepaper técnico com análise de mercado, arquitetura, modelo de negócio |
 | [Whitepaper](docs/WHITEPAPER_EN.md) | EN | Versão em inglês do whitepaper técnico |
 | [Arquitetura](docs/ARCHITECTURE.md) | PT-BR | Arquitetura detalhada com 4 diagramas renderizados |
-| [Guia de Migração](docs/MIGRATION_GUIDE.md) | PT-BR | Guia de self-hosting com Docker, Google OAuth, Cloudflare |
 | [Auditoria de Segurança](docs/SECURITY_AUDIT.md) | PT-BR | Relatório de auditoria de segurança para produção |
-| [Guia Stripe](docs/STRIPE_PRODUCTION_GUIDE.md) | PT-BR | Checklist de go-live e configuração do Stripe |
 
 ---
 

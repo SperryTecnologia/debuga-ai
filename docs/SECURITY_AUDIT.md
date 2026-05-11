@@ -48,7 +48,7 @@ O `.gitignore` está configurado corretamente, excluindo:
 
 ### Execução de Código (agentTools.ts)
 
-A ferramenta `execute_code` roda em `/tmp` com timeout de 30s e output limitado a 50KB. Em produção no Manus hosting, isso é aceitável pois o ambiente já é sandboxed. Para hosting próprio, recomenda-se Docker sandbox.
+A ferramenta `execute_code` roda em `/tmp` com timeout de 30s e output limitado a 50KB. Em produção, o ambiente de deploy já é sandboxed por padrão. Para hosting próprio, recomenda-se Docker sandbox com isolamento de rede.
 
 ### Recomendação Final
 

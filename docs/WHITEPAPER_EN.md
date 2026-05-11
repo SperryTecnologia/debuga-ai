@@ -112,7 +112,7 @@ Synthesizes final response with results
 Debits credits and logs usage
 ```
 
-The agent operates in a loop of up to 5 iterations, autonomously deciding which tools to use at each step. The proprietary LLM is consulted for analyses requiring specialized networking and security knowledge, while the commercial API (Gemini) handles high-speed conversational interactions.
+The agent operates in a loop of up to 5 iterations, autonomously deciding which tools to use at each step. The proprietary LLM is consulted for analyses requiring specialized networking and security knowledge, while the multi-model gateway (Manus Forge API) handles high-speed conversational interactions.
 
 ---
 
@@ -125,8 +125,8 @@ The agent operates in a loop of up to 5 iterations, autonomously deciding which 
 | Frontend | React 19 + Tailwind CSS 4 | Performance, DX, ecosystem |
 | Backend | Express 4 + tRPC 11 | End-to-end type safety |
 | Database | MySQL/TiDB (Drizzle ORM) | Horizontal scalability |
-| Commercial LLM | Google Gemini 2.5 Flash (via API) | Cost-effectiveness, speed |
-| **Proprietary LLM** | **Custom fork (16x RTX 3090)** | **Deep specialized analysis** |
+| Cloud LLM | Manus Forge API (multi-model gateway) | Intelligent routing, failover, speed |
+| **Proprietary LLM** | **Qwen2.5-72B-Infra (fine-tuned) — 16x RTX 3090** | **Deep specialized analysis** |
 | Streaming | Server-Sent Events (SSE) | Real-time response |
 | Payments | Stripe (BRL) | Global standard, PIX support |
 | Storage | S3 (compatible) | Scalable, low cost |
@@ -148,9 +148,9 @@ debuga.ai operates with a **hybrid AI processing architecture**, combining comme
 | **Storage** | NVMe RAID for datasets and checkpoints |
 | **Cooling** | Closed-loop liquid cooling |
 
-**Proprietary Model (LLM Fork):**
+**Proprietary Model (Qwen2.5-72B-Infra):**
 
-debuga.ai's proprietary model is a fork of an open-source language model, fine-tuned with specialized datasets including:
+debuga.ai's proprietary model is based on Qwen2.5-72B, fine-tuned with specialized datasets including:
 
 - Technical documentation from network equipment vendors (Cisco, Juniper, MikroTik, Fortinet, Ubiquiti)
 - IETF RFCs (TCP, UDP, IP, BGP, OSPF, DNS, TLS, HTTP/2, HTTP/3)
@@ -169,8 +169,8 @@ debuga.ai's proprietary model is a fork of an open-source language model, fine-t
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌─────────────────────┐    ┌──────────────────────────┐    │
-│  │  Commercial API      │    │  Proprietary LLM          │    │
-│  │  (Gemini 2.5 Flash)  │    │  (16x RTX 3090 Cluster)   │    │
+│  │  Cloud API (Gateway)  │    │  Proprietary LLM          │    │
+│  │  (Manus Forge API)   │    │  (Qwen2.5-72B-Infra)     │    │
 │  │                       │    │                            │    │
 │  │  • Conversational chat│    │  • Deep TCP/IP analysis    │    │
 │  │  • Quick responses    │    │  • Log correlation         │    │
@@ -216,8 +216,8 @@ This architecture ensures debuga.ai never becomes unavailable: if the GPU cluste
         ┌─────────────┼─────────────┬─────────────┐
         ▼             ▼             ▼             ▼
 ┌──────────────┐ ┌─────────┐ ┌──────────┐ ┌────────────────┐
-│ MySQL/TiDB   │ │ Gemini  │ │ S3       │ │ GPU Cluster    │
-│ (Drizzle)    │ │ API     │ │ Storage  │ │ (16x RTX 3090) │
+│ MySQL/TiDB   │ │ Forge   │ │ S3       │ │ GPU Cluster    │
+│ (Drizzle)    │ │ API GW  │ │ Storage  │ │ (16x RTX 3090) │
 └──────────────┘ └─────────┘ └──────────┘ └────────────────┘
 ```
 
@@ -327,7 +327,7 @@ The proprietary GPU cluster operates on an isolated network with:
 
 - Full proprietary LLM integration via internal API
 - Coupon system for Open Infra Pro educational program
-- Google OAuth with custom login screen (self-hosted)
+- Multi-provider OAuth with custom login screen (self-hosted)
 - Real-time TCP/IP analysis via packet capture
 - Direct Zabbix API integration (real-time monitoring)
 - Wazuh API integration (security alerts)
@@ -392,7 +392,7 @@ The proprietary GPU cluster operates on an isolated network with:
 - Expertise in JSX and modern interface development with React
 - "Open Infra Pro" educational program with active student base
 - Human + AI hybrid support model
-- Specialist in the Manus.im platform, fully mastering the tool
+- Multi-model gateway infrastructure with intelligent routing between LLM providers
 
 **Physical Infrastructure:**
 - 3 dedicated 4U rack servers for AI processing
