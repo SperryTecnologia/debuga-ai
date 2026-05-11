@@ -283,7 +283,7 @@ export const appRouter = router({
       .input(z.object({ conversationId: z.number() }))
       .query(async ({ ctx, input }) => {
         const conv = await getConversation(input.conversationId, ctx.user.id);
-        if (!conv) throw new Error("Conversation not found");
+        if (!conv) throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
         return getMessages(input.conversationId);
       }),
 

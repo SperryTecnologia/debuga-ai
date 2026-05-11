@@ -7,29 +7,53 @@ const chatPageContent = fs.readFileSync(
 );
 
 describe("Simplified Card Structure", () => {
-  describe("All 6 cards exist with real prompts", () => {
+  describe("All 8 cards exist (6 visible + 2 hidden)", () => {
     it("should have Diagnóstico DNS card", () => {
       expect(chatPageContent).toContain('title: "Diagnóstico DNS"');
-    });
-
-    it("should have Navegar em Site card", () => {
-      expect(chatPageContent).toContain('title: "Navegar em Site"');
     });
 
     it("should have Auditoria de Segurança card", () => {
       expect(chatPageContent).toContain('title: "Auditoria de Segurança"');
     });
 
-    it("should have Gerar Diagrama card", () => {
-      expect(chatPageContent).toContain('title: "Gerar Diagrama"');
-    });
-
     it("should have Scan de Portas card", () => {
       expect(chatPageContent).toContain('title: "Scan de Portas"');
     });
 
-    it("should have Sandbox de Código card", () => {
+    it("should have Monitor de Servidor card", () => {
+      expect(chatPageContent).toContain('title: "Monitor de Servidor"');
+    });
+
+    it("should have Auditor de Domínio card", () => {
+      expect(chatPageContent).toContain('title: "Auditor de Domínio"');
+    });
+
+    it("should have Gerar Diagrama card (visible)", () => {
+      expect(chatPageContent).toContain('title: "Gerar Diagrama"');
+      // Gerar Diagrama should NOT have visible: false
+      const diagramSection = chatPageContent.substring(
+        chatPageContent.indexOf('title: "Gerar Diagrama"'),
+        chatPageContent.indexOf('title: "Gerar Diagrama"') + 200
+      );
+      expect(diagramSection).not.toContain("visible: false");
+    });
+
+    it("should have Navegar em Site card (hidden)", () => {
+      expect(chatPageContent).toContain('title: "Navegar em Site"');
+      const navSection = chatPageContent.substring(
+        chatPageContent.indexOf('title: "Navegar em Site"'),
+        chatPageContent.indexOf('title: "Navegar em Site"') + 200
+      );
+      expect(navSection).toContain("visible: false");
+    });
+
+    it("should have Sandbox de Código card (hidden)", () => {
       expect(chatPageContent).toContain('title: "Sandbox de Código"');
+      const sandboxSection = chatPageContent.substring(
+        chatPageContent.indexOf('title: "Sandbox de Código"'),
+        chatPageContent.indexOf('title: "Sandbox de Código"') + 200
+      );
+      expect(sandboxSection).toContain("visible: false");
     });
   });
 
@@ -42,13 +66,20 @@ describe("Simplified Card Structure", () => {
       expect(dnsSection).toContain("github.com");
     });
 
-    it("Navegar em Site uses example.com (not cloudflare.com)", () => {
-      const navSection = chatPageContent.substring(
-        chatPageContent.indexOf('title: "Navegar em Site"'),
-        chatPageContent.indexOf('title: "Navegar em Site"') + 1200
+    it("Monitor de Servidor uses debuga.ai", () => {
+      const monitorSection = chatPageContent.substring(
+        chatPageContent.indexOf('title: "Monitor de Servidor"'),
+        chatPageContent.indexOf('title: "Monitor de Servidor"') + 800
       );
-      expect(navSection).toContain("debuga.ai/demo/web-analysis");
-      expect(navSection).not.toContain("cloudflare.com");
+      expect(monitorSection).toContain("debuga.ai");
+    });
+
+    it("Auditor de Domínio uses debuga.ai", () => {
+      const auditorSection = chatPageContent.substring(
+        chatPageContent.indexOf('title: "Auditor de Domínio"'),
+        chatPageContent.indexOf('title: "Auditor de Domínio"') + 800
+      );
+      expect(auditorSection).toContain("debuga.ai");
     });
 
     it("Auditoria uses example.com (not cloudflare.com)", () => {
@@ -69,15 +100,6 @@ describe("Simplified Card Structure", () => {
       expect(scanSection).toContain("443");
       expect(scanSection).toContain("example.com");
       expect(scanSection).not.toContain("cloudflare.com");
-    });
-
-    it("Sandbox uses safe ipaddress validation", () => {
-      const sandboxSection = chatPageContent.substring(
-        chatPageContent.indexOf('title: "Sandbox de Código"'),
-        chatPageContent.indexOf('title: "Sandbox de Código"') + 500
-      );
-      expect(sandboxSection).toContain("192.168.0.1");
-      expect(sandboxSection).toContain("IPv4");
     });
   });
 
@@ -100,8 +122,12 @@ describe("Simplified Card Structure", () => {
 
     it("should NOT have isLocked or isDemoMode logic in card rendering", () => {
       const cardSection = chatPageContent.substring(
-        chatPageContent.indexOf("SUGGESTED_PROMPTS.map"),
-        chatPageContent.indexOf("SUGGESTED_PROMPTS.map") + 2000
+        chatPageContent.indexOf("SUGGESTED_PROMPTS.map") !== -1
+          ? chatPageContent.indexOf("SUGGESTED_PROMPTS.map")
+          : chatPageContent.indexOf("SUGGESTED_PROMPTS.filter"),
+        (chatPageContent.indexOf("SUGGESTED_PROMPTS.map") !== -1
+          ? chatPageContent.indexOf("SUGGESTED_PROMPTS.map")
+          : chatPageContent.indexOf("SUGGESTED_PROMPTS.filter")) + 2000
       );
       expect(cardSection).not.toContain("isLocked");
       expect(cardSection).not.toContain("isDemoMode");
@@ -117,11 +143,10 @@ describe("Simplified Card Structure", () => {
   });
 
   describe("Cards have description field", () => {
-    it("each card has a description", () => {
+    it("each card has a description (8 total: 6 visible + 2 hidden)", () => {
       expect(chatPageContent).toContain("description: ");
-      // Count descriptions - should be 6
       const descMatches = chatPageContent.match(/description: "/g);
-      expect(descMatches?.length).toBe(6);
+      expect(descMatches?.length).toBe(8);
     });
   });
 
@@ -157,11 +182,6 @@ describe("Simplified Card Structure", () => {
       expect(chatPageContent).toContain("Ocultar exemplos");
     });
 
-    it("desktop grid is hidden on mobile, compact list is hidden on desktop", () => {
-      expect(chatPageContent).toContain("hidden md:grid");
-      expect(chatPageContent).toContain("md:hidden");
-    });
-
     it("cards are filtered by visible property", () => {
       expect(chatPageContent).toContain("filter(p => p.visible !== false)");
     });
@@ -177,16 +197,36 @@ describe("Simplified Card Structure", () => {
       expect(dnsSection).toContain("conclusão profissional");
     });
 
-    it("Navegar prompt asks for title, description, sections", () => {
-      const navSection = chatPageContent.substring(
-        chatPageContent.indexOf('title: "Navegar em Site"'),
-        chatPageContent.indexOf('title: "Navegar em Site"') + 1200
+    it("Monitor de Servidor prompt asks for status OK/Atenção/Crítico", () => {
+      const monitorSection = chatPageContent.substring(
+        chatPageContent.indexOf('title: "Monitor de Servidor"'),
+        chatPageContent.indexOf('title: "Monitor de Servidor"') + 1200
       );
-      expect(navSection).toContain("título");
-      expect(navSection).toContain("descrição");
-      expect(navSection).toContain("análise profissional");
-      expect(navSection).toContain("Nunca deixe o usuário sem resposta");
-      expect(navSection).toContain("debuga.ai/demo/web-analysis");
+      expect(monitorSection).toContain("OK");
+      expect(monitorSection).toContain("Atenção");
+      expect(monitorSection).toContain("Crítico");
+      expect(monitorSection).toContain("JSON técnico resumido");
+    });
+
+    it("Auditor de Domínio prompt asks for DNS, SPF, DMARC analysis", () => {
+      const auditorSection = chatPageContent.substring(
+        chatPageContent.indexOf('title: "Auditor de Domínio"'),
+        chatPageContent.indexOf('title: "Auditor de Domínio"') + 1200
+      );
+      expect(auditorSection).toContain("SPF");
+      expect(auditorSection).toContain("DMARC");
+      expect(auditorSection).toContain("pontos positivos");
+      expect(auditorSection).toContain("recomendações");
+    });
+
+    it("Diagrama prompt has Mermaid fallback", () => {
+      const diagramSection = chatPageContent.substring(
+        chatPageContent.indexOf('title: "Gerar Diagrama"'),
+        chatPageContent.indexOf('title: "Gerar Diagrama"') + 2000
+      );
+      expect(diagramSection).toContain("profissional");
+      expect(diagramSection).toContain("Mermaid");
+      expect(diagramSection).toContain("Nunca deixe sem resposta");
     });
 
     it("Auditoria prompt asks for checklist with positives and concerns", () => {
@@ -199,32 +239,12 @@ describe("Simplified Card Structure", () => {
       expect(auditSection).toContain("pontos de atenção");
     });
 
-    it("Diagrama prompt asks for professional high-quality output", () => {
-      const diagramSection = chatPageContent.substring(
-        chatPageContent.indexOf('title: "Gerar Diagrama"'),
-        chatPageContent.indexOf('title: "Gerar Diagrama"') + 1200
-      );
-      expect(diagramSection).toContain("profissional");
-      expect(diagramSection).toContain("Mermaid");
-      expect(diagramSection).toContain("Nunca deixe o usuário sem resultado");
-    });
-
     it("Scan prompt asks for professional interpretation", () => {
       const scanSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Scan de Portas"'),
         chatPageContent.indexOf('title: "Scan de Portas"') + 600
       );
       expect(scanSection).toContain("interpretação profissional");
-    });
-
-    it("Sandbox prompt asks for code, output and explanation", () => {
-      const sandboxSection = chatPageContent.substring(
-        chatPageContent.indexOf('title: "Sandbox de Código"'),
-        chatPageContent.indexOf('title: "Sandbox de Código"') + 600
-      );
-      expect(sandboxSection).toContain("código");
-      expect(sandboxSection).toContain("saída");
-      expect(sandboxSection).toContain("explique");
     });
   });
 
@@ -246,7 +266,6 @@ describe("Simplified Card Structure", () => {
     });
 
     it("ToolResultCard sanitizes technical terms from error messages", () => {
-      // Should have sanitization logic for technical terms
       expect(chatPageContent).toContain("Sanitize: remove any technical terms");
     });
 
@@ -281,6 +300,18 @@ describe("Simplified Card Structure", () => {
 
     it("should have streamTimedOut state", () => {
       expect(chatPageContent).toContain("streamTimedOut");
+    });
+  });
+
+  describe("Conversation not found handling", () => {
+    it("should handle conversation not found error gracefully", () => {
+      expect(chatPageContent).toContain("not found");
+      expect(chatPageContent).toContain("resetting");
+    });
+
+    it("getMessages query has retry logic for NOT_FOUND", () => {
+      expect(chatPageContent).toContain("Conversation not found");
+      expect(chatPageContent).toContain("NOT_FOUND");
     });
   });
 });

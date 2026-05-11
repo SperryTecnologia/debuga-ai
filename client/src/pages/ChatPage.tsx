@@ -92,6 +92,8 @@ import {
   BarChart3,
   ArrowUpCircle,
   Square,
+  Monitor,
+  SearchCheck,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -584,24 +586,10 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
     description: "Consulta DNS completa com registros A, MX, TXT e NS",
   },
   {
-    icon: Globe,
-    title: "Navegar em Site",
-    visible: false, // Instável: depende de web_fetch externo
-    prompt: "Analise a página https://debuga.ai/demo/web-analysis. Tente acessar a URL com a ferramenta web_fetch. Se conseguir, apresente os dados reais extraídos. Se a ferramenta falhar ou demorar, apresente uma análise profissional baseada no que você sabe sobre a página demo do debuga.ai (é uma página pública de demonstração com seções sobre Infraestrutura, Segurança, DNS, SSL/TLS, Monitoramento e DevOps, além de uma tabela de especificações técnicas). Em qualquer caso, apresente: título da página, descrição, principais seções encontradas, links relevantes, estrutura HTML aparente, tipo de conteúdo e um resumo profissional com observações técnicas. Nunca deixe o usuário sem resposta.",
-    description: "Análise completa de página web com status e resumo",
-  },
-  {
     icon: Shield,
     title: "Auditoria de Segurança",
     prompt: "Faça uma auditoria passiva e segura de https://example.com. Verifique HTTPS/SSL quando aplicável, headers HTTP básicos, DNS público e pontos de atenção visíveis externamente. Não execute scan invasivo. Apresente um checklist profissional com pontos positivos, pontos de atenção e conclusão.",
     description: "Checklist de segurança passiva com SSL, headers e DNS",
-  },
-  {
-    icon: ImageIcon,
-    title: "Gerar Diagrama",
-    visible: false, // Instável: depende de geração de imagem
-    prompt: "Crie um diagrama de arquitetura segura profissional. Primeiro, tente gerar uma imagem usando a ferramenta de geração de imagem. Se a geração de imagem falhar ou não estiver disponível, gere imediatamente o diagrama em formato Mermaid (flowchart LR) com os seguintes componentes: Usuário → DNS → WAF → Firewall → Load Balancer → Aplicação Web → Banco de Dados, com ramificações para Backup, Logs/SIEM e Monitoramento. Apresente o diagrama Mermaid em bloco de código ```mermaid``` e explique cada componente e sua função na arquitetura. O resultado deve ser profissional e adequado para apresentação executiva. Nunca deixe o usuário sem resultado.",
-    description: "Diagrama de arquitetura segura (imagem ou Mermaid)",
   },
   {
     icon: Network,
@@ -610,10 +598,36 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
     description: "Verificação segura de portas com interpretação técnica",
   },
   {
+    icon: Monitor,
+    title: "Monitor de Servidor",
+    prompt: "Faça uma verificação pública do domínio debuga.ai como se fosse um monitoramento técnico. Valide DNS, resolução de IP, disponibilidade HTTP/HTTPS, status code, SSL/TLS, headers principais quando disponíveis, tempo de resposta se possível e apresente uma conclusão com status OK, Atenção ou Crítico. Entregue também um JSON técnico resumido no formato: {\"target\": \"debuga.ai\", \"category\": \"server_monitoring\", \"status\": \"ok|attention|critical\", \"checks\": {\"dns\": \"...\", \"https\": \"...\", \"ssl\": \"...\", \"http_status\": ...}, \"summary\": \"...\"}. Use somente verificações públicas e seguras. Timeout máximo: 15s. Se alguma ferramenta falhar, entregue fallback baseado nos dados disponíveis. Nunca mostre erro técnico cru.",
+    description: "Verifica DNS, HTTPS, SSL, IP e status público",
+  },
+  {
+    icon: SearchCheck,
+    title: "Auditor de Domínio",
+    prompt: "Faça uma auditoria externa e passiva do domínio debuga.ai. Analise registros DNS A/AAAA, MX, TXT, SPF, DMARC, NS, SSL/TLS e headers HTTP quando disponíveis. Organize os achados em pontos positivos, pontos de atenção e recomendações práticas. Não execute scan invasivo. Timeout máximo: 15s. Se uma consulta falhar, continue com as demais. Nunca trave o chat inteiro. Nunca mostre erro técnico cru.",
+    description: "Analisa DNS, e-mail, SSL e postura externa",
+  },
+  {
+    icon: ImageIcon,
+    title: "Gerar Diagrama",
+    prompt: "Crie um diagrama profissional de arquitetura segura para uma aplicação web moderna, incluindo usuário, DNS, CDN/WAF, firewall, load balancer, servidores de aplicação, banco de dados, backup, monitoramento, logs/SIEM e alertas. O resultado deve ser limpo, técnico, executivo e adequado para apresentação. Primeiro, tente gerar uma imagem usando a ferramenta de geração de imagem. Se a geração de imagem falhar ou não estiver disponível, gere IMEDIATAMENTE o diagrama em formato Mermaid premium com o seguinte código:\n\n```mermaid\nflowchart LR\n    U[Usuário] --> DNS[DNS]\n    DNS --> CDN[CDN / WAF]\n    CDN --> FW[Firewall]\n    FW --> LB[Load Balancer]\n    LB --> APP1[App Server 01]\n    LB --> APP2[App Server 02]\n    APP1 --> DB[(Banco de Dados)]\n    APP2 --> DB\n    DB --> BKP[Backup Seguro]\n    APP1 --> LOGS[Logs / SIEM]\n    APP2 --> LOGS\n    MON[Monitoramento] --> APP1\n    MON --> APP2\n    MON --> DB\n    ALERT[Alertas] --> NOC[NOC / Equipe Técnica]\n    MON --> ALERT\n```\n\nExplique cada componente e sua função na arquitetura. Nunca mostre erro de geração de imagem ao usuário. Nunca deixe sem resposta.",
+    description: "Cria uma arquitetura segura em formato profissional",
+  },
+  // --- Cards ocultos (manter para reabilitação futura) ---
+  {
+    icon: Globe,
+    title: "Navegar em Site",
+    visible: false, // Instável: depende de web_fetch externo
+    prompt: "Analise a página https://debuga.ai/demo/web-analysis. Tente acessar a URL com a ferramenta web_fetch. Se conseguir, apresente os dados reais extraídos. Se a ferramenta falhar ou demorar, apresente uma análise profissional baseada no que você sabe sobre a página demo do debuga.ai. Nunca deixe o usuário sem resposta.",
+    description: "Análise completa de página web com status e resumo",
+  },
+  {
     icon: Terminal,
     title: "Sandbox de Código",
     visible: false, // Instável: python3 ENOENT em produção
-    prompt: "Execute um script Python seguro usando apenas biblioteca padrão para validar se 192.168.0.1 é um endereço IPv4 válido com ipaddress. Se a execução de código falhar ou não estiver disponível, apresente o código Python que seria executado, simule a saída esperada e explique o resultado detalhadamente. Mostre o código, a saída e explique o resultado. Nunca deixe o usuário sem resposta.",
+    prompt: "Execute um script Python seguro usando apenas biblioteca padrão para validar se 192.168.0.1 é um endereço IPv4 válido com ipaddress. Se a execução de código falhar ou não estiver disponível, apresente o código Python que seria executado, simule a saída esperada e explique o resultado detalhadamente. Nunca deixe o usuário sem resposta.",
     description: "Execução segura de código Python com explicação",
   },
 ];
@@ -733,7 +747,14 @@ export default function ChatPage() {
   const updateTitle = trpc.chat.updateTitle.useMutation();
   const messagesQuery = trpc.chat.getMessages.useQuery(
     { conversationId: activeConversationId! },
-    { enabled: !!activeConversationId }
+    {
+      enabled: !!activeConversationId,
+      retry: (failureCount, error) => {
+        // Don't retry if conversation was deleted/not found
+        if (error?.message === "Conversation not found" || (error as any)?.data?.code === "NOT_FOUND") return false;
+        return failureCount < 2;
+      },
+    }
   );
   const utils = trpc.useUtils();
 
@@ -786,6 +807,22 @@ export default function ChatPage() {
       );
     }
   }, [messagesQuery.data]);
+
+  // Handle conversation not found (deleted externally or stale reference)
+  useEffect(() => {
+    if (messagesQuery.error && activeConversationId) {
+      const errMsg = messagesQuery.error.message || "";
+      if (errMsg.includes("not found") || errMsg.includes("NOT_FOUND")) {
+        console.warn(`[Chat] Conversation ${activeConversationId} not found, resetting.`);
+        setActiveConversationId(null);
+        setMessages([]);
+        setToolResults([]);
+        setActiveSteps([]);
+        setStreamingContent("");
+        utils.chat.list.invalidate();
+      }
+    }
+  }, [messagesQuery.error, activeConversationId, utils]);
 
   // Auto-scroll
   useEffect(() => {
