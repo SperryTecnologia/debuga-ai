@@ -36,66 +36,64 @@ describe("Freemium Card Structure", () => {
 
   describe("Demo prompts use safe, stable targets", () => {
     it("DNS demo uses github.com", () => {
-      // Extract the DNS card demoPrompt
       const dnsSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Diagnóstico DNS"'),
-        chatPageContent.indexOf('title: "Diagnóstico DNS"') + 500
+        chatPageContent.indexOf('title: "Diagnóstico DNS"') + 800
       );
       expect(dnsSection).toContain("github.com");
     });
 
-    it("Navegar em Site demo uses example.com", () => {
+    it("Navegar em Site demo uses cloudflare.com", () => {
       const navSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Navegar em Site"'),
-        chatPageContent.indexOf('title: "Navegar em Site"') + 500
+        chatPageContent.indexOf('title: "Navegar em Site"') + 800
       );
-      expect(navSection).toContain("example.com");
+      expect(navSection).toContain("cloudflare.com");
     });
 
-    it("Auditoria demo uses example.com", () => {
+    it("Auditoria demo uses cloudflare.com", () => {
       const auditSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Auditoria de Segurança"'),
-        chatPageContent.indexOf('title: "Auditoria de Segurança"') + 500
+        chatPageContent.indexOf('title: "Auditoria de Segurança"') + 800
       );
-      expect(auditSection).toContain("example.com");
+      expect(auditSection).toContain("cloudflare.com");
     });
 
-    it("Scan de Portas demo only scans ports 80 and 443", () => {
+    it("Scan de Portas demo uses scanme.nmap.org", () => {
       const scanSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Scan de Portas"'),
-        chatPageContent.indexOf('title: "Scan de Portas"') + 500
+        chatPageContent.indexOf('title: "Scan de Portas"') + 800
       );
+      expect(scanSection).toContain("scanme.nmap.org");
       expect(scanSection).toContain("80");
       expect(scanSection).toContain("443");
-      expect(scanSection).toContain("example.com");
     });
 
-    it("Sandbox demo uses safe ipaddress validation", () => {
+    it("Sandbox demo uses safe ipaddress network analysis", () => {
       const sandboxSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Sandbox de Código"'),
-        chatPageContent.indexOf('title: "Sandbox de Código"') + 500
+        chatPageContent.indexOf('title: "Sandbox de Código"') + 800
       );
-      expect(sandboxSection).toContain("192.168.0.1");
+      expect(sandboxSection).toContain("192.168.1.0/24");
       expect(sandboxSection).toContain("ipaddress");
     });
   });
 
   describe("No cards are locked/blocked for Free users", () => {
     it("should not have isLocked logic that blocks card clicks", () => {
-      // The old pattern was: if (isLocked) { setUpgradeModal(...) }
-      // Now all cards should call handleSendMessage directly
       const cardSection = chatPageContent.substring(
         chatPageContent.indexOf("SUGGESTED_PROMPTS.map"),
         chatPageContent.indexOf("SUGGESTED_PROMPTS.map") + 2000
       );
       expect(cardSection).not.toContain("if (isLocked)");
-      expect(cardSection).toContain("handleSendMessage(item.demoPrompt)");
+      // Cards now send with isDemo flag
+      expect(cardSection).toContain("handleSendMessage(item.demoPrompt, { isDemo: true })");
     });
   });
 
   describe("Cards have commercial badges", () => {
-    it("should use 'Demo' badge instead of plan name badge", () => {
-      expect(chatPageContent).toContain('demoBadge: "Demo"');
+    it("should use 'Demonstração' badge for main tools", () => {
+      expect(chatPageContent).toContain('demoBadge: "Demonstração"');
     });
 
     it("should use 'Demo segura' badge for sensitive tools", () => {
@@ -107,7 +105,6 @@ describe("Freemium Card Structure", () => {
         chatPageContent.indexOf("SUGGESTED_PROMPTS.map"),
         chatPageContent.indexOf("SUGGESTED_PROMPTS.map") + 2000
       );
-      // The old pattern had <Lock> icon for locked cards
       expect(cardSection).not.toContain("<Lock");
     });
   });
@@ -127,6 +124,28 @@ describe("Freemium Card Structure", () => {
 
     it("should have 'Fazer Upgrade' button", () => {
       expect(chatPageContent).toContain("Fazer Upgrade");
+    });
+
+    it("CTA should not show when upgrade modal is open", () => {
+      expect(chatPageContent).toContain("showDemoUpgradeCTA && !upgradeModal?.open");
+    });
+  });
+
+  describe("Demo Mode integration", () => {
+    it("cards send isDemo flag to handleSendMessage", () => {
+      expect(chatPageContent).toContain("{ isDemo: true }");
+    });
+
+    it("handleSendMessage accepts isDemo option", () => {
+      expect(chatPageContent).toContain("options?: { isDemo?: boolean }");
+    });
+
+    it("isDemo flag is sent in the fetch body", () => {
+      expect(chatPageContent).toContain("isDemo: true");
+    });
+
+    it("done event triggers CTA for demo mode", () => {
+      expect(chatPageContent).toContain("parsed.isDemo && !upgradeModal?.open");
     });
   });
 
@@ -158,7 +177,7 @@ describe("Freemium Card Structure", () => {
     });
 
     it("Scan hints at any target", () => {
-      expect(chatPageContent).toContain("qualquer alvo e portas");
+      expect(chatPageContent).toContain("escaneie qualquer alvo");
     });
 
     it("Sandbox hints at custom code", () => {
@@ -168,7 +187,6 @@ describe("Freemium Card Structure", () => {
 
   describe("No prices displayed in upgrade modal", () => {
     it("should not contain R$ in upgrade modal", () => {
-      // Extract the upgrade modal section
       const modalSection = chatPageContent.substring(
         chatPageContent.indexOf("Upgrade Modal"),
         chatPageContent.indexOf("Delete confirmation dialog")
@@ -183,7 +201,6 @@ describe("Freemium Card Structure", () => {
         "/home/ubuntu/debuga-ai/server/products.ts",
         "utf-8"
       );
-      // Verify products file still has the expected plans
       expect(productsContent).toContain("free");
       expect(productsContent).toContain("starter");
       expect(productsContent).toContain("pro");

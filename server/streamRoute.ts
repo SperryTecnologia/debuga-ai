@@ -87,6 +87,28 @@ const rateLimitMap = new Map<number, { count: number; windowStart: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 20; // max 20 messages per minute per user
 
+// ── Demo Mode rate limiter (separate from plan limits) ──
+const demoLimitMap = new Map<number, { count: number; dayStart: number }>();
+const DEMO_MAX_PER_DAY = 10;
+
+function checkDemoLimit(userId: number): { allowed: boolean; used: number } {
+  const now = Date.now();
+  const todayStart = new Date().setHours(0, 0, 0, 0);
+  const entry = demoLimitMap.get(userId);
+
+  if (!entry || entry.dayStart < todayStart) {
+    demoLimitMap.set(userId, { count: 1, dayStart: todayStart });
+    return { allowed: true, used: 1 };
+  }
+
+  if (entry.count >= DEMO_MAX_PER_DAY) {
+    return { allowed: false, used: entry.count };
+  }
+
+  entry.count++;
+  return { allowed: true, used: entry.count };
+}
+
 function checkRateLimit(userId: number): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(userId);
@@ -256,10 +278,26 @@ export function registerStreamRoute(app: Express) {
         return;
       }
 
-      const { conversationId, content } = req.body;
+      const { conversationId, content, isDemo } = req.body;
       if (!conversationId || !content) {
         res.status(400).json({ error: "Missing conversationId or content" });
         return;
+      }
+
+      // ── Demo Mode: separate limit, no plan consumption ──
+      const isDemoMode = isDemo === true;
+      if (isDemoMode) {
+        const demoCheck = checkDemoLimit(user.id);
+        if (!demoCheck.allowed) {
+          res.status(429).json({
+            error: `Você atingiu o limite de ${DEMO_MAX_PER_DAY} demonstrações por hoje. Volte amanhã ou faça upgrade para uso ilimitado.`,
+            code: "DEMO_LIMIT_REACHED",
+            limit: DEMO_MAX_PER_DAY,
+            used: demoCheck.used,
+          });
+          return;
+        }
+        console.log(`[Stream] Demo mode for user ${user.id} (${demoCheck.used}/${DEMO_MAX_PER_DAY} today)`);
       }
 
       // ── Rate limiting ──
@@ -271,55 +309,57 @@ export function registerStreamRoute(app: Express) {
         return;
       }
 
-      // ── Plan limits enforcement ──
+      // ── Plan limits enforcement (skip for demo mode) ──
       const plan = await getUserPlan(user.id);
       const isAdmin = user.role === "admin";
 
-      // Reset credits if monthly cycle has passed
-      if (!isAdmin) {
-        await resetCreditsIfNeeded(user.id);
-      }
-
-      if (!isAdmin) {
-        // Check daily message limit
-        const todayMessages = await getTodayMessageCount(user.id);
-        if (todayMessages >= plan.limits.messagesPerDay) {
-          res.status(402).json({
-            error: `Você atingiu o limite de ${plan.limits.messagesPerDay} mensagens por dia do plano ${plan.name}. Faça upgrade para continuar.`,
-            code: "DAILY_LIMIT_REACHED",
-            limit: plan.limits.messagesPerDay,
-            used: todayMessages,
-            planId: plan.id,
-          });
-          return;
+      if (!isDemoMode) {
+        // Reset credits if monthly cycle has passed
+        if (!isAdmin) {
+          await resetCreditsIfNeeded(user.id);
         }
 
-        // Check monthly conversation limit (only if this is the first message in conversation)
-        const existingMsgs = await getMessages(conversationId);
-        const isFirstUserMsg = existingMsgs.filter(m => m.role === "user").length === 0;
-        if (isFirstUserMsg) {
-          const monthConversations = await getMonthConversationCount(user.id);
-          if (monthConversations >= plan.limits.conversationsPerMonth) {
+        if (!isAdmin) {
+          // Check daily message limit
+          const todayMessages = await getTodayMessageCount(user.id);
+          if (todayMessages >= plan.limits.messagesPerDay) {
             res.status(402).json({
-              error: `Você atingiu o limite de ${plan.limits.conversationsPerMonth} conversas por mês do plano ${plan.name}. Faça upgrade para continuar.`,
-              code: "MONTHLY_CONV_LIMIT_REACHED",
-              limit: plan.limits.conversationsPerMonth,
-              used: monthConversations,
+              error: `Você atingiu o limite de ${plan.limits.messagesPerDay} mensagens por dia do plano ${plan.name}. Faça upgrade para continuar.`,
+              code: "DAILY_LIMIT_REACHED",
+              limit: plan.limits.messagesPerDay,
+              used: todayMessages,
               planId: plan.id,
             });
             return;
           }
-        }
 
-        // Check credits
-        const creds = await getOrCreateCredits(user.id, plan.id);
-        if (creds && creds.usedCredits >= creds.totalCredits && plan.id === "free") {
-          res.status(402).json({
-            error: "Seus créditos gratuitos acabaram. Assine um plano para continuar usando o debuga.ai.",
-            code: "CREDITS_EXHAUSTED",
-            planId: plan.id,
-          });
-          return;
+          // Check monthly conversation limit (only if this is the first message in conversation)
+          const existingMsgs = await getMessages(conversationId);
+          const isFirstUserMsg = existingMsgs.filter(m => m.role === "user").length === 0;
+          if (isFirstUserMsg) {
+            const monthConversations = await getMonthConversationCount(user.id);
+            if (monthConversations >= plan.limits.conversationsPerMonth) {
+              res.status(402).json({
+                error: `Você atingiu o limite de ${plan.limits.conversationsPerMonth} conversas por mês do plano ${plan.name}. Faça upgrade para continuar.`,
+                code: "MONTHLY_CONV_LIMIT_REACHED",
+                limit: plan.limits.conversationsPerMonth,
+                used: monthConversations,
+                planId: plan.id,
+              });
+              return;
+            }
+          }
+
+          // Check credits
+          const creds = await getOrCreateCredits(user.id, plan.id);
+          if (creds && creds.usedCredits >= creds.totalCredits && plan.id === "free") {
+            res.status(402).json({
+              error: "Seus créditos gratuitos acabaram. Assine um plano para continuar usando o debuga.ai.",
+              code: "CREDITS_EXHAUSTED",
+              planId: plan.id,
+            });
+            return;
+          }
         }
       }
 
@@ -331,8 +371,11 @@ export function registerStreamRoute(app: Express) {
       }
 
       // Record usage events (independent counters - cannot be bypassed by deleting chats)
-      await recordMessageSent(user.id, conversationId);
-      await recordConversationStarted(user.id, conversationId);
+      // Skip for demo mode to not pollute plan usage
+      if (!isDemoMode) {
+        await recordMessageSent(user.id, conversationId);
+        await recordConversationStarted(user.id, conversationId);
+      }
 
       // Save user message
       await addMessage({ conversationId, role: "user", content });
@@ -392,7 +435,8 @@ export function registerStreamRoute(app: Express) {
       console.log("[Stream] Starting agent loop for conversation:", conversationId);
 
       // Determine tools available for this plan
-      const planTools = isAdmin ? AGENT_TOOLS : getToolsForPlan(plan);
+      // Demo mode gets ALL tools regardless of plan
+      const planTools = (isAdmin || isDemoMode) ? AGENT_TOOLS : getToolsForPlan(plan);
       const maxTokens = plan.limits.maxTokensPerMessage;
 
       while (iteration < maxIterations) {
@@ -482,8 +526,8 @@ export function registerStreamRoute(app: Express) {
         console.log("[Stream] WARNING: No final content to save!");
       }
 
-      // ── Credit consumption ──
-      if (!isAdmin && totalTokensEstimate > 0) {
+      // ── Credit consumption (skip for demo mode) ──
+      if (!isAdmin && !isDemoMode && totalTokensEstimate > 0) {
         try {
           // Ensure credits row exists
           await getOrCreateCredits(user.id, plan.id);
@@ -501,6 +545,8 @@ export function registerStreamRoute(app: Express) {
           console.error("[Stream] Failed to update credits:", err);
           // Non-blocking: don't fail the response if credits update fails
         }
+      } else if (isDemoMode) {
+        console.log(`[Stream] Demo mode: skipped credit consumption for user ${user.id}`);
       }
 
       // Auto-title on first exchange
@@ -541,7 +587,7 @@ export function registerStreamRoute(app: Express) {
         }
       }
 
-      sendSSE(res, { type: "done" });
+      sendSSE(res, { type: "done", isDemo: isDemoMode || undefined });
       res.write("data: [DONE]\n\n");
       res.end();
     } catch (error: any) {
