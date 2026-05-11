@@ -25,6 +25,7 @@ import {
   recordMessageSent,
   recordConversationStarted,
   getRecentActivity,
+  searchConversations,
 } from "./db";
 import { PLANS } from "./products";
 import { invokeLLM } from "./_core/llm";
@@ -260,6 +261,22 @@ export const appRouter = router({
     listArchived: protectedProcedure.query(async ({ ctx }) => {
       return listArchivedConversations(ctx.user.id);
     }),
+
+    // Search conversations
+    search: protectedProcedure
+      .input(z.object({
+        query: z.string().min(1).max(200),
+        includeArchived: z.boolean().optional().default(false),
+        limit: z.number().min(1).max(50).optional().default(20),
+        offset: z.number().min(0).optional().default(0),
+      }))
+      .query(async ({ ctx, input }) => {
+        return searchConversations(ctx.user.id, input.query, {
+          includeArchived: input.includeArchived,
+          limit: input.limit,
+          offset: input.offset,
+        });
+      }),
 
     // Get messages for a conversation
     getMessages: protectedProcedure

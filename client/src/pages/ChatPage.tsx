@@ -91,7 +91,7 @@ import {
   ArrowUpCircle,
   type LucideIcon,
 } from "lucide-react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
 
@@ -580,6 +580,10 @@ export default function ChatPage() {
   const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; message: string; planId: string } | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [includeArchivedSearch, setIncludeArchivedSearch] = useState(false);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, setLocation] = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -612,6 +616,32 @@ export default function ChatPage() {
   const usageQuery = trpc.account.usage.useQuery(undefined, {
     enabled: !!user,
     refetchInterval: 30000, // refresh every 30s
+  });
+
+  // Debounce search query (300ms)
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    if (searchQuery.trim().length < 2) {
+      setDebouncedSearch("");
+      return;
+    }
+    searchDebounceRef.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 300);
+    return () => { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); };
+  }, [searchQuery]);
+
+  // Search query
+  const searchEnabled = debouncedSearch.length >= 2;
+  const searchInput = useMemo(() => ({
+    query: debouncedSearch,
+    includeArchived: includeArchivedSearch,
+    limit: 20,
+    offset: 0,
+  }), [debouncedSearch, includeArchivedSearch]);
+  const searchResults = trpc.chat.search.useQuery(searchInput, {
+    enabled: !!user && searchEnabled,
+    placeholderData: (prev: any) => prev,
   });
 
   // Load messages when conversation changes
@@ -1222,7 +1252,7 @@ export default function ChatPage() {
           </Button>
         </div>
 
-        <div className="p-3 shrink-0">
+        <div className="p-3 shrink-0 space-y-2">
           <Button
             onClick={handleNewChat}
             className="w-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 font-mono text-sm"
@@ -1232,10 +1262,106 @@ export default function ChatPage() {
             <Plus className="w-4 h-4 mr-2" />
             Nova Conversa
           </Button>
+          {/* Search field */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-sidebar-foreground/40 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Pesquisar conversas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-8 pl-8 pr-8 rounded-lg bg-sidebar-accent/30 border border-sidebar-border/50 text-xs font-mono text-sidebar-foreground placeholder:text-sidebar-foreground/30 outline-none focus:border-primary/50 focus:bg-sidebar-accent/50 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => { setSearchQuery(""); setDebouncedSearch(""); }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          {searchEnabled && (
+            <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={includeArchivedSearch}
+                onChange={(e) => setIncludeArchivedSearch(e.target.checked)}
+                className="w-3 h-3 rounded border-sidebar-border accent-primary"
+              />
+              <span className="text-[10px] font-mono text-sidebar-foreground/40">Incluir arquivadas</span>
+            </label>
+          )}
         </div>
 
         <ScrollArea className="flex-1 px-2">
-          <div className="space-y-0.5 py-1">
+          {/* Search results mode */}
+          {searchEnabled ? (
+            <div className="space-y-0.5 py-1">
+              {searchResults.isLoading && !searchResults.data ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-4 h-4 animate-spin text-sidebar-foreground/40" />
+                </div>
+              ) : searchResults.data && searchResults.data.results.length > 0 ? (
+                <>
+                  <div className="px-3 pt-1 pb-2">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-sidebar-foreground/40">
+                      {searchResults.data.total} resultado{searchResults.data.total !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  {searchResults.data.results.map((result: any) => (
+                    <div
+                      key={`search-${result.conversationId}`}
+                      className={cn(
+                        "group flex flex-col gap-1 rounded-lg px-3 py-2.5 cursor-pointer transition-colors",
+                        activeConversationId === result.conversationId
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                      )}
+                      onClick={() => {
+                        setActiveConversationId(result.conversationId);
+                        setStreamingContent("");
+                        setToolResults([]);
+                        setActiveSteps([]);
+                        setSearchQuery("");
+                        setDebouncedSearch("");
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <ConversationIcon title={result.title || ""} />
+                        <span className="flex-1 truncate font-mono text-xs font-medium">{result.title || "Sem título"}</span>
+                        {result.isArchived && (
+                          <span className="shrink-0 text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400/80 border border-amber-500/20">
+                            Arquivada
+                          </span>
+                        )}
+                      </div>
+                      {result.snippet && (
+                        <p className="text-[10px] font-mono text-sidebar-foreground/40 line-clamp-2 pl-6 leading-relaxed">
+                          {result.messageRole === "assistant" ? "IA: " : "Você: "}
+                          {result.snippet}
+                        </p>
+                      )}
+                      <span className="text-[9px] font-mono text-sidebar-foreground/25 pl-6">
+                        {new Date(result.updatedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                      </span>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                  <Search className="w-5 h-5 text-sidebar-foreground/20 mb-2" />
+                  <p className="text-xs font-mono text-sidebar-foreground/40">
+                    Nenhuma conversa encontrada para
+                  </p>
+                  <p className="text-xs font-mono text-primary/60 mt-1 break-all">
+                    "{debouncedSearch}"
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-0.5 py-1">
             {/* Pinned section label */}
             {conversations.some((c: any) => c.isPinned) && (
               <div className="px-3 pt-2 pb-1">
@@ -1423,7 +1549,8 @@ export default function ChatPage() {
                 </ContextMenuContent>
               </ContextMenu>
             ))}
-          </div>
+            </div>
+          )}
         </ScrollArea>
 
         {/* Archived conversations toggle */}

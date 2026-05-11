@@ -1,4 +1,4 @@
-import { eq, desc, and, asc, sql, gte, lte, inArray } from "drizzle-orm";
+import { eq, desc, and, asc, sql, gte, lte, inArray, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, conversations, messages, subscriptions, credits, usageLog, usageEvents, type InsertConversation, type InsertMessage, type InsertSubscription, type InsertCredits, type InsertUsageLog, type InsertUsageEvent } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -650,4 +650,137 @@ export async function getUsageStats(userId: number) {
     todayMessages: Number(todayMsgResult[0]?.count || 0),
     monthConversations: Number(monthConvResult[0]?.count || 0),
   };
+}
+
+
+export async function searchConversations(
+  userId: number,
+  query: string,
+  options: { includeArchived?: boolean; limit?: number; offset?: number } = {}
+): Promise<{
+  results: Array<{
+    conversationId: number;
+    title: string;
+    isArchived: boolean;
+    matchType: "title" | "message";
+    snippet: string | null;
+    messageRole: string | null;
+    updatedAt: Date;
+  }>;
+  total: number;
+}> {
+  const db = await getDb();
+  if (!db) return { results: [], total: 0 };
+
+  const { includeArchived = false, limit = 20, offset = 0 } = options;
+  const searchPattern = `%${query}%`;
+
+  // Search in conversation titles
+  const titleConditions = [
+    eq(conversations.userId, userId),
+    like(conversations.title, searchPattern),
+  ];
+  if (!includeArchived) {
+    titleConditions.push(eq(conversations.isArchived, false));
+  }
+
+  const titleResults = await db
+    .select({
+      conversationId: conversations.id,
+      title: conversations.title,
+      isArchived: conversations.isArchived,
+      updatedAt: conversations.updatedAt,
+    })
+    .from(conversations)
+    .where(and(...titleConditions))
+    .orderBy(desc(conversations.updatedAt))
+    .limit(limit);
+
+  // Search in messages content
+  const messageConditions = [
+    eq(conversations.userId, userId),
+    like(messages.content, searchPattern),
+  ];
+  if (!includeArchived) {
+    messageConditions.push(eq(conversations.isArchived, false));
+  }
+
+  const messageResults = await db
+    .select({
+      conversationId: conversations.id,
+      title: conversations.title,
+      isArchived: conversations.isArchived,
+      updatedAt: conversations.updatedAt,
+      messageContent: messages.content,
+      messageRole: messages.role,
+    })
+    .from(messages)
+    .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+    .where(and(...messageConditions))
+    .orderBy(desc(conversations.updatedAt))
+    .limit(limit * 2); // get more to deduplicate
+
+  // Deduplicate and merge results
+  const seen = new Set<number>();
+  const results: Array<{
+    conversationId: number;
+    title: string;
+    isArchived: boolean;
+    matchType: "title" | "message";
+    snippet: string | null;
+    messageRole: string | null;
+    updatedAt: Date;
+  }> = [];
+
+  // Title matches first
+  for (const r of titleResults) {
+    if (!seen.has(r.conversationId)) {
+      seen.add(r.conversationId);
+      results.push({
+        conversationId: r.conversationId,
+        title: r.title,
+        isArchived: r.isArchived,
+        matchType: "title",
+        snippet: null,
+        messageRole: null,
+        updatedAt: r.updatedAt,
+      });
+    }
+  }
+
+  // Message matches
+  for (const r of messageResults) {
+    if (!seen.has(r.conversationId)) {
+      seen.add(r.conversationId);
+      // Extract snippet around the match
+      const content = r.messageContent || "";
+      const lowerContent = content.toLowerCase();
+      const lowerQuery = query.toLowerCase();
+      const matchIndex = lowerContent.indexOf(lowerQuery);
+      let snippet = "";
+      if (matchIndex >= 0) {
+        const start = Math.max(0, matchIndex - 40);
+        const end = Math.min(content.length, matchIndex + query.length + 60);
+        snippet = (start > 0 ? "..." : "") + content.slice(start, end) + (end < content.length ? "..." : "");
+      } else {
+        snippet = content.slice(0, 100) + (content.length > 100 ? "..." : "");
+      }
+
+      results.push({
+        conversationId: r.conversationId,
+        title: r.title,
+        isArchived: r.isArchived,
+        matchType: "message",
+        snippet,
+        messageRole: r.messageRole,
+        updatedAt: r.updatedAt,
+      });
+    }
+  }
+
+  // Sort by updatedAt desc and paginate
+  results.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  const paginated = results.slice(offset, offset + limit);
+
+  return { results: paginated, total: results.length };
 }
