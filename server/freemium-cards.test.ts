@@ -173,14 +173,15 @@ describe("Simplified Card Structure", () => {
       expect(dnsSection).toContain("conclusão profissional");
     });
 
-    it("Navegar prompt asks for title, status, summary", () => {
+    it("Navegar prompt asks for title, description, sections", () => {
       const navSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Navegar em Site"'),
         chatPageContent.indexOf('title: "Navegar em Site"') + 600
       );
       expect(navSection).toContain("título");
-      expect(navSection).toContain("status HTTP");
+      expect(navSection).toContain("descrição");
       expect(navSection).toContain("resumo profissional");
+      expect(navSection).toContain("debuga.ai/demo/web-analysis");
     });
 
     it("Auditoria prompt asks for checklist with positives and concerns", () => {

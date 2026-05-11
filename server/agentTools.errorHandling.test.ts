@@ -133,3 +133,50 @@ describe("executeToolCall - successful execution has no error flags", () => {
     expect(result.result.type).toBe("dns");
   });
 });
+
+// ── Concatenated JSON handling (root cause of "Navegar em Site" failures) ──
+describe("executeToolCall - concatenated JSON repair", () => {
+  it("should parse concatenated JSON objects from LLM", async () => {
+    // This is the exact pattern that was causing failures:
+    // LLM emits {"url":"https://example.com"}{"extract":"full","url":"https://example.com"}
+    const result = await executeToolCall({
+      id: "call_concat_1",
+      type: "function",
+      function: {
+        name: "web_fetch",
+        arguments: '{"url":"https://example.com"}{"extract":"full","url":"https://example.com"}',
+      },
+    });
+    // Should NOT be an internal error — the parser should merge the objects
+    expect(result.result._internalError).toBeUndefined();
+    expect(result.result._retryable).toBeUndefined();
+    expect(result.result.type).toBe("web_fetch");
+  });
+
+  it("should parse concatenated JSON for http_check", async () => {
+    const result = await executeToolCall({
+      id: "call_concat_2",
+      type: "function",
+      function: {
+        name: "http_check",
+        arguments: '{"url":"https://example.com"}{"url":"https://example.com"}',
+      },
+    });
+    expect(result.result._internalError).toBeUndefined();
+    expect(result.result.type).toBe("http");
+  });
+
+  it("should merge fields from concatenated JSON objects", async () => {
+    const result = await executeToolCall({
+      id: "call_concat_3",
+      type: "function",
+      function: {
+        name: "dns_lookup",
+        arguments: '{"domain":"google.com"}{"recordType":"A","domain":"google.com"}',
+      },
+    });
+    expect(result.result._internalError).toBeUndefined();
+    expect(result.result.type).toBe("dns");
+    expect(result.result.domain).toBe("google.com");
+  });
+});

@@ -10,6 +10,7 @@ import PricingPage from "./pages/PricingPage";
 import AccountPage from "./pages/AccountPage";
 import WhatsAppButton from "./components/WhatsAppButton";
 import LogoutSuccess from "./pages/LogoutSuccess";
+import DemoWebAnalysis from "./pages/DemoWebAnalysis";
 
 function Router() {
   return (
@@ -19,6 +20,7 @@ function Router() {
       <Route path={"/pricing"} component={PricingPage} />
       <Route path={"/account"} component={AccountPage} />
       <Route path={"/logout-success"} component={LogoutSuccess} />
+      <Route path={"/demo/web-analysis"} component={DemoWebAnalysis} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

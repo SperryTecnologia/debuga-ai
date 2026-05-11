@@ -584,7 +584,7 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: Globe,
     title: "Navegar em Site",
-    prompt: "Analise o site https://example.com. Acesse a página, extraia o título, status HTTP, resumo do conteúdo principal, tipo provável de conteúdo, links relevantes se existirem e apresente um resumo profissional. Se possível, informe também observações sobre estrutura HTML, tecnologias aparentes e limitações da análise.",
+    prompt: "Analise a página https://debuga.ai/demo/web-analysis. Extraia o título, descrição, principais seções, links encontrados, estrutura HTML aparente, tipo de conteúdo e apresente um resumo profissional com observações técnicas.",
     description: "Análise completa de página web com status e resumo",
   },
   {

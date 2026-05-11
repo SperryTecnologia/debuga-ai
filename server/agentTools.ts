@@ -747,6 +747,31 @@ function tryParseJSON(str: string): any | null {
   } catch {
     // noop
   }
+  // Handle concatenated JSON objects: {"url":"x"}{"extract":"full","url":"x"}
+  // LLM sometimes emits two JSON objects glued together. Take the last (most complete) one.
+  try {
+    const parts = str.match(/\{[^{}]*\}/g);
+    if (parts && parts.length > 1) {
+      // Merge all objects, later ones override earlier ones
+      let merged: Record<string, any> = {};
+      for (const part of parts) {
+        const parsed = JSON.parse(part);
+        merged = { ...merged, ...parsed };
+      }
+      return merged;
+    }
+  } catch {
+    // noop
+  }
+  // Try just the first JSON object
+  try {
+    const firstObj = str.match(/\{[^{}]*\}/);
+    if (firstObj) {
+      return JSON.parse(firstObj[0]);
+    }
+  } catch {
+    // noop
+  }
   // Try wrapping in braces if it looks like key-value pairs
   try {
     if (!str.trim().startsWith("{")) {
