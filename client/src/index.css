@@ -211,4 +211,15 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
   }
+
+  /* Stream loading bar animation */
+  .animate-loading-bar {
+    animation: loadingBar 2s ease-in-out infinite;
+  }
+
+  @keyframes loadingBar {
+    0% { width: 0%; opacity: 0.4; }
+    50% { width: 80%; opacity: 1; }
+    100% { width: 100%; opacity: 0.2; }
+  }
 }

@@ -618,6 +618,71 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   },
 ];
 
+// --- Stream Loading Indicator (typing animation before first chunk) ---
+const LOADING_PHRASES = [
+  "Analisando",
+  "Processando",
+  "Consultando ferramentas",
+  "Preparando resposta",
+  "Investigando",
+];
+
+function StreamLoadingIndicator({ avatarSrc }: { avatarSrc: string }) {
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [dots, setDots] = useState(1);
+  const [fadeIn, setFadeIn] = useState(false);
+
+  useEffect(() => {
+    // Trigger fade-in on mount
+    const t = requestAnimationFrame(() => setFadeIn(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
+  useEffect(() => {
+    // Animate dots: 1 → 2 → 3 → 1
+    const dotInterval = setInterval(() => {
+      setDots((d) => (d >= 3 ? 1 : d + 1));
+    }, 500);
+    return () => clearInterval(dotInterval);
+  }, []);
+
+  useEffect(() => {
+    // Rotate phrases every 3s
+    const phraseInterval = setInterval(() => {
+      setPhraseIndex((i) => (i + 1) % LOADING_PHRASES.length);
+    }, 3000);
+    return () => clearInterval(phraseInterval);
+  }, []);
+
+  return (
+    <div
+      className={cn(
+        "flex gap-3 items-start transition-all duration-500 ease-out",
+        fadeIn ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+      )}
+    >
+      <Avatar className="h-8 w-8 border border-primary/20 shrink-0 mt-0.5">
+        <AvatarImage src={avatarSrc} alt="Agent" />
+        <AvatarFallback className="bg-primary/10 text-primary text-xs">AI</AvatarFallback>
+      </Avatar>
+      <div className="flex flex-col gap-1.5 py-1.5">
+        {/* Terminal-style typing line */}
+        <div className="flex items-center gap-2">
+          <span className="text-primary font-mono text-xs select-none">$</span>
+          <span className="text-sm font-mono text-foreground/80">
+            {LOADING_PHRASES[phraseIndex]}{".".repeat(dots)}
+          </span>
+          <span className="inline-block w-[2px] h-4 bg-primary animate-pulse" />
+        </div>
+        {/* Subtle progress bar */}
+        <div className="w-48 h-[2px] rounded-full bg-border overflow-hidden">
+          <div className="h-full bg-primary/60 rounded-full animate-loading-bar" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ChatPage() {
   const { user, loading: authLoading, logout } = useAuth();
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
@@ -2022,22 +2087,9 @@ export default function ChatPage() {
                 </div>
               )}
 
-              {/* Loading indicator */}
+              {/* Loading indicator — typing animation before first chunk */}
               {isStreaming && !streamingContent && activeSteps.length === 0 && (
-                <div className="flex gap-3 items-start animate-in fade-in duration-300">
-                  <Avatar className="h-8 w-8 border border-primary/20 shrink-0 mt-0.5">
-                    <AvatarImage src={AVATAR_AGENT} alt="Agent" />
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs">AI</AvatarFallback>
-                  </Avatar>
-                  <div className="flex items-center gap-2 py-2">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </div>
-                    <span className="text-xs text-muted-foreground font-mono">Analisando...</span>
-                  </div>
-                </div>
+                <StreamLoadingIndicator avatarSrc={AVATAR_AGENT} />
               )}
 
               <div ref={messagesEndRef} />
