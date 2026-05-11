@@ -784,3 +784,4 @@ export async function searchConversations(
 
   return { results: paginated, total: results.length };
 }
+
