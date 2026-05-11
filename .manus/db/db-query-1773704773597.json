@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE `conversations` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`title` varchar(255) NOT NULL DEFAULT 'Nova conversa',\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `conversations_id` PRIMARY KEY(`id`)\n);\n\nCREATE TABLE `messages` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`conversationId` int NOT NULL,\n\t`role` enum('user','assistant','system') NOT NULL,\n\t`content` text NOT NULL,\n\t`toolCalls` json,\n\t`tokenCount` int,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `messages_id` PRIMARY KEY(`id`)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user pNiV3hkTGADEQu8.7c5e28ef3035 --database JiyqPBx8bCsA9W2jSDpwkK --execute CREATE TABLE `conversations` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`title` varchar(255) NOT NULL DEFAULT 'Nova conversa',\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `conversations_id` PRIMARY KEY(`id`)\n);\n\nCREATE TABLE `messages` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`conversationId` int NOT NULL,\n\t`role` enum('user','assistant','system') NOT NULL,\n\t`content` text NOT NULL,\n\t`toolCalls` json,\n\t`tokenCount` int,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `messages_id` PRIMARY KEY(`id`)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 339
-}

@@ -108,3 +108,10 @@ temp/
 
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
+
+# Arquivos internos / bastidores do projeto
+todo.md
+.manus/
+screenshot-notes.md
+logo-urls.md
+patches/
