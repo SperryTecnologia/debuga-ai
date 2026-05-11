@@ -123,6 +123,26 @@ export const appRouter = router({
       return getUsageStats(ctx.user.id);
     }),
 
+    // Get real usage data + plan limits (used by ChatPage indicator and /account)
+    usage: protectedProcedure.query(async ({ ctx }) => {
+      const creds = await getOrCreateCredits(ctx.user.id, "free");
+      const effectivePlanId = creds?.planId || "free";
+      const plan = PLANS.find(p => p.id === effectivePlanId) || PLANS[0];
+      const todayMessages = await getTodayMessageCount(ctx.user.id);
+      const monthConversations = await getMonthConversationCount(ctx.user.id);
+      return {
+        planId: plan.id,
+        planName: plan.name,
+        todayMessages,
+        monthConversations,
+        limits: {
+          messagesPerDay: plan.limits.messagesPerDay,
+          conversationsPerMonth: plan.limits.conversationsPerMonth,
+        },
+        isAdmin: ctx.user.role === "admin",
+      };
+    }),
+
     // Get usage history
     usageHistory: protectedProcedure
       .input(z.object({ limit: z.number().min(1).max(100).optional() }))

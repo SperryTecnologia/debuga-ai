@@ -5,7 +5,6 @@ import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import {
   ArrowLeft,
-  CreditCard,
   Zap,
   TrendingUp,
   MessageSquare,
@@ -13,13 +12,12 @@ import {
   Crown,
   Shield,
   ArrowUpRight,
-  Cpu,
   Activity,
-  BarChart3,
   Calendar,
   User,
   Mail,
   Loader2,
+  FolderOpen,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -46,84 +44,45 @@ function formatDate(date: Date | string | null | undefined): string {
   });
 }
 
-function ProgressBar({ used, total, color = "primary" }: { used: number; total: number; color?: string }) {
-  const percent = total > 0 ? Math.min((used / total) * 100, 100) : 0;
+function ProgressBar({ used, total, label }: { used: number; total: number; label: string }) {
+  const isUnlimited = total >= 999999;
+  const percent = isUnlimited ? 0 : total > 0 ? Math.min((used / total) * 100, 100) : 0;
   const isWarning = percent > 80;
-  const isCritical = percent > 95;
+  const isCritical = percent >= 100;
 
   return (
     <div className="w-full">
       <div className="flex justify-between text-xs mb-1.5">
         <span className="text-muted-foreground font-mono">
-          {used.toLocaleString("pt-BR")} / {total.toLocaleString("pt-BR")}
+          {label}
         </span>
         <span
           className={cn(
             "font-mono font-bold",
-            isCritical ? "text-red-400" : isWarning ? "text-amber-400" : "text-primary"
+            isUnlimited ? "text-primary" : isCritical ? "text-red-400" : isWarning ? "text-amber-400" : "text-primary"
           )}
         >
-          {percent.toFixed(1)}%
+          {isUnlimited ? "Ilimitado" : `${used} / ${total}`}
         </span>
       </div>
-      <div className="h-2.5 rounded-full bg-muted/50 overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percent}%` }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className={cn(
-            "h-full rounded-full",
-            isCritical
-              ? "bg-gradient-to-r from-red-500 to-red-400"
-              : isWarning
-              ? "bg-gradient-to-r from-amber-500 to-amber-400"
-              : "bg-gradient-to-r from-primary to-emerald-400"
-          )}
-        />
-      </div>
-    </div>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  accent = false,
-}: {
-  icon: typeof Zap;
-  label: string;
-  value: string | number;
-  sub?: string;
-  accent?: boolean;
-}) {
-  return (
-    <motion.div
-      variants={fadeInUp}
-      className={cn(
-        "rounded-xl border p-5 transition-all",
-        accent
-          ? "border-primary/30 bg-primary/5"
-          : "border-border/50 bg-card/50"
-      )}
-    >
-      <div className="flex items-center gap-3 mb-3">
-        <div
-          className={cn(
-            "w-9 h-9 rounded-lg flex items-center justify-center",
-            accent ? "bg-primary/20" : "bg-muted"
-          )}
-        >
-          <Icon className={cn("w-4 h-4", accent ? "text-primary" : "text-muted-foreground")} />
+      {!isUnlimited && (
+        <div className="h-2.5 rounded-full bg-muted/50 overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${percent}%` }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className={cn(
+              "h-full rounded-full",
+              isCritical
+                ? "bg-gradient-to-r from-red-500 to-red-400"
+                : isWarning
+                ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                : "bg-gradient-to-r from-primary to-emerald-400"
+            )}
+          />
         </div>
-        <span className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
-          {label}
-        </span>
-      </div>
-      <p className="text-2xl font-bold font-mono">{value}</p>
-      {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
-    </motion.div>
+      )}
+    </div>
   );
 }
 
@@ -135,7 +94,7 @@ export default function AccountPage() {
     undefined,
     { enabled: !!user }
   );
-  const { data: usageStats, isLoading: statsLoading } = trpc.account.usageStats.useQuery(
+  const { data: usageData, isLoading: usageLoading } = trpc.account.usage.useQuery(
     undefined,
     { enabled: !!user }
   );
@@ -158,9 +117,8 @@ export default function AccountPage() {
     return null;
   }
 
-  const isLoading = creditsLoading || statsLoading;
+  const isLoading = creditsLoading || usageLoading;
   const plan = creditsData?.plan;
-  const creds = creditsData?.credits;
   const sub = creditsData?.subscription;
 
   const planBadgeColors: Record<string, string> = {
@@ -231,83 +189,80 @@ export default function AccountPage() {
             </div>
           ) : (
             <>
-              {/* Credits Section */}
+              {/* Usage Section - Real data from usage_events */}
               <motion.div variants={fadeInUp} className="mb-8">
                 <div className="rounded-2xl border border-border/50 bg-card/30 p-6">
                   <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3">
-                      <Zap className="w-5 h-5 text-primary" />
-                      <h2 className="text-lg font-bold">Seus Créditos</h2>
+                      <Activity className="w-5 h-5 text-primary" />
+                      <h2 className="text-lg font-bold">Uso do Plano</h2>
                     </div>
-                    {creds?.resetAt && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>Renovam em {formatDate(creds.resetAt)}</span>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Reset diário à meia-noite (UTC-3)</span>
+                    </div>
+                  </div>
+
+                  {usageData && (
+                    <div className="space-y-5">
+                      <ProgressBar
+                        used={usageData.todayMessages}
+                        total={usageData.limits.messagesPerDay}
+                        label="Mensagens hoje"
+                      />
+                      <ProgressBar
+                        used={usageData.monthConversations}
+                        total={usageData.limits.conversationsPerMonth}
+                        label="Conversas no mês"
+                      />
+                    </div>
+                  )}
+
+                  {usageData && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-5 border-t border-border/30">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold font-mono text-primary">
+                          {usageData.todayMessages}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
+                          Msgs Hoje
+                        </p>
                       </div>
-                    )}
-                  </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold font-mono">
+                          {usageData.limits.messagesPerDay >= 999999 ? "∞" : usageData.limits.messagesPerDay}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
+                          Limite Diário
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold font-mono text-primary">
+                          {usageData.monthConversations}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
+                          Conversas Mês
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold font-mono">
+                          {usageData.limits.conversationsPerMonth >= 999999 ? "∞" : usageData.limits.conversationsPerMonth}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
+                          Limite Mensal
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
-                  <ProgressBar
-                    used={creds?.usedCredits || 0}
-                    total={creds?.totalCredits || 50}
-                  />
-
-                  <div className="grid grid-cols-3 gap-4 mt-5">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold font-mono text-primary">
-                        {((creds?.totalCredits || 0) - (creds?.usedCredits || 0)).toLocaleString("pt-BR")}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
-                        Disponíveis
+                  {usageData?.isAdmin && (
+                    <div className="mt-4 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                      <p className="text-xs text-amber-400 font-mono">
+                        Conta admin — limites não se aplicam.
                       </p>
                     </div>
-                    <div className="text-center border-x border-border/30">
-                      <p className="text-2xl font-bold font-mono">
-                        {(creds?.usedCredits || 0).toLocaleString("pt-BR")}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
-                        Utilizados
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold font-mono">
-                        {(creds?.totalCredits || 0).toLocaleString("pt-BR")}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
-                        Total do Plano
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              </motion.div>
-
-              {/* Stats Grid */}
-              <motion.div variants={stagger} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <StatCard
-                  icon={MessageSquare}
-                  label="Conversas"
-                  value={usageStats?.totalConversations || 0}
-                  sub="Total criadas"
-                />
-                <StatCard
-                  icon={Activity}
-                  label="Mensagens"
-                  value={usageStats?.totalMessages || 0}
-                  sub="Enviadas e recebidas"
-                />
-                <StatCard
-                  icon={Cpu}
-                  label="Tokens Hoje"
-                  value={(usageStats?.todayTokens || 0).toLocaleString("pt-BR")}
-                  sub="Consumo do dia"
-                  accent
-                />
-                <StatCard
-                  icon={BarChart3}
-                  label="Tokens Total"
-                  value={(usageStats?.totalTokens || 0).toLocaleString("pt-BR")}
-                  sub="Desde o início"
-                />
               </motion.div>
 
               {/* Plan & Actions */}
@@ -436,7 +391,11 @@ export default function AccountPage() {
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                              <Activity className="w-4 h-4 text-muted-foreground" />
+                              {log.toolName ? (
+                                <Activity className="w-4 h-4 text-muted-foreground" />
+                              ) : (
+                                <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                              )}
                             </div>
                             <div>
                               <p className="text-sm font-medium">
@@ -447,15 +406,17 @@ export default function AccountPage() {
                               </p>
                             </div>
                           </div>
-                          <span className="text-xs font-mono text-muted-foreground">
-                            {log.tokensUsed.toLocaleString("pt-BR")} tokens
-                          </span>
+                          {log.tokensUsed > 0 && (
+                            <span className="text-xs font-mono text-muted-foreground">
+                              {log.tokensUsed.toLocaleString("pt-BR")} tokens
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <Calendar className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                      <FolderOpen className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                       <p className="text-sm text-muted-foreground">
                         Nenhum registro de uso ainda
                       </p>

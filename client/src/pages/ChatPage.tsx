@@ -591,6 +591,12 @@ export default function ChatPage() {
   const subQuery = trpc.subscription.status.useQuery(undefined, { enabled: !!user });
   const hasAccess = !!user || subQuery.data?.isAdmin || subQuery.data?.hasActiveSubscription;
 
+  // Usage data for indicator
+  const usageQuery = trpc.account.usage.useQuery(undefined, {
+    enabled: !!user,
+    refetchInterval: 30000, // refresh every 30s
+  });
+
   // Load messages when conversation changes
   useEffect(() => {
     if (messagesQuery.data) {
@@ -1016,6 +1022,8 @@ export default function ChatPage() {
         setStreamingContent("");
         setActiveSteps([]);
         abortControllerRef.current = null;
+        // Refresh usage indicator after message sent
+        utils.account.usage.invalidate();
       }
     },
     [activeConversationId, isStreaming, createConversation, utils, uploadedFiles]
@@ -1672,6 +1680,40 @@ export default function ChatPage() {
                 {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </form>
+            {/* Usage Indicator */}
+            {usageQuery.data && !usageQuery.data.isAdmin && (
+              <div className="flex items-center justify-center gap-4 mt-2">
+                {usageQuery.data.planId === "pro" || usageQuery.data.planId === "enterprise" ? (
+                  <span className="text-[10px] font-mono text-muted-foreground/50">
+                    {usageQuery.data.planId === "pro" ? "Uso ilimitado com política de uso justo" : "Limites personalizados por contrato"}
+                  </span>
+                ) : (
+                  <>
+                    <span className={cn(
+                      "text-[10px] font-mono",
+                      usageQuery.data.todayMessages >= usageQuery.data.limits.messagesPerDay
+                        ? "text-red-400/80"
+                        : usageQuery.data.todayMessages >= usageQuery.data.limits.messagesPerDay * 0.8
+                        ? "text-yellow-400/70"
+                        : "text-muted-foreground/50"
+                    )}>
+                      Mensagens hoje: {usageQuery.data.todayMessages}/{usageQuery.data.limits.messagesPerDay}
+                    </span>
+                    <span className="text-muted-foreground/20">|</span>
+                    <span className={cn(
+                      "text-[10px] font-mono",
+                      usageQuery.data.monthConversations >= usageQuery.data.limits.conversationsPerMonth
+                        ? "text-red-400/80"
+                        : usageQuery.data.monthConversations >= usageQuery.data.limits.conversationsPerMonth * 0.8
+                        ? "text-yellow-400/70"
+                        : "text-muted-foreground/50"
+                    )}>
+                      Conversas no mês: {usageQuery.data.monthConversations}/{usageQuery.data.limits.conversationsPerMonth}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
             <div className="flex items-center justify-center gap-3 mt-2">
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/40">
                 <Paperclip className="w-3 h-3" /> Ctrl+V / Drag

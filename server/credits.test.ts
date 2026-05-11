@@ -142,6 +142,49 @@ describe("db helpers - credits", () => {
   });
 });
 
+describe("account.usage", () => {
+  it("returns real usage data with plan limits", async () => {
+    const ctx = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.account.usage();
+
+    expect(result).toHaveProperty("planId");
+    expect(result).toHaveProperty("planName");
+    expect(result).toHaveProperty("todayMessages");
+    expect(result).toHaveProperty("monthConversations");
+    expect(result).toHaveProperty("limits");
+    expect(result.limits).toHaveProperty("messagesPerDay");
+    expect(result.limits).toHaveProperty("conversationsPerMonth");
+    expect(result).toHaveProperty("isAdmin");
+    expect(typeof result.todayMessages).toBe("number");
+    expect(typeof result.monthConversations).toBe("number");
+    expect(result.todayMessages).toBeGreaterThanOrEqual(0);
+    expect(result.monthConversations).toBeGreaterThanOrEqual(0);
+  });
+
+  it("returns free plan for user without subscription", async () => {
+    const ctx = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.account.usage();
+
+    expect(result.planId).toBe("free");
+    expect(result.limits.messagesPerDay).toBe(5);
+    expect(result.limits.conversationsPerMonth).toBe(3);
+    expect(result.isAdmin).toBe(false);
+  });
+
+  it("admin flag is true for admin users", async () => {
+    const ctx = createAuthContext({ role: "admin" });
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.account.usage();
+
+    expect(result.isAdmin).toBe(true);
+  });
+});
+
 describe("rate limiter", () => {
   it("PLANS have valid limits", async () => {
     const { PLANS } = await import("./products");
