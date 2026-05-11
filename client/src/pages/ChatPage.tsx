@@ -659,21 +659,111 @@ Não sugira exploração, brute force, bypass ou ataque. Apenas defesa e hardeni
     icon: ImageIcon,
     title: "Gerar Diagrama",
     displayMessage: "Gere um diagrama técnico de infraestrutura.",
-    prompt: `Você é um arquiteto de infraestrutura sênior. Sua tarefa é gerar um diagrama técnico profissional em formato Mermaid.
+    prompt: `Você é um arquiteto de infraestrutura sênior com 15 anos de experiência em projetos corporativos. Sua tarefa é gerar um diagrama técnico PREMIUM em formato Mermaid, com qualidade de documentação vendável para cliente corporativo.
 
 REGRA OBRIGATÓRIA: Sempre responda com um diagrama Mermaid válido. NUNCA tente gerar imagem. NUNCA use a ferramenta generate_image. O formato é SEMPRE Mermaid.
 
-REGRA DE VARIAÇÃO: Como o usuário não especificou o cenário, escolha ALEATORIAMENTE UM dos cenários abaixo (varie a cada execução, não repita o último):
-1. Rede corporativa com firewall de borda e segmentação interna
-2. Firewall em alta disponibilidade (HA) com failover
-3. Matriz e filial conectadas via VPN site-to-site
-4. Segmentação por VLANs (servidores, usuários, IoT, gestão)
-5. DMZ com serviços expostos e zona interna protegida
-6. Backup local + replicação para S3/nuvem com retenção
-7. Monitoramento com Zabbix/Grafana e alertas
-8. Virtualização com Proxmox/XCP-ng e storage compartilhado
-9. Ambiente de cartório/empresa com AD, impressoras e CFTV
-10. Aplicação web segura com WAF, CDN, load balancer e banco
+REGRA DE VARIAÇÃO: Como o usuário não especificou o cenário, escolha ALEATORIAMENTE UM dos cenários abaixo (varie a cada execução):
+1. Rede corporativa com firewall de borda, VLANs e segmentação interna
+2. Firewall em alta disponibilidade (HA) com dois links de internet e failover
+3. Matriz e filial conectadas via VPN site-to-site com redundância
+4. Ambiente de cartório/empresa com DMZ, banco de dados e backup
+5. Infraestrutura virtualizada Proxmox/XCP-ng com storage compartilhado e backup
+6. Aplicação web segura com WAF, app servers, DB e monitoramento
+7. Ambiente com Zabbix/Grafana, coleta de logs centralizada e alertas NOC
+8. Backup local + replicação para Wasabi/S3 com retenção e verificação
+
+PADRÃO PREMIUM DO DIAGRAMA (obrigatório):
+- Usar flowchart TB ou flowchart LR
+- Usar subgraphs bem nomeados para separar zonas/camadas (ex: INTERNET, BORDA, DMZ, LAN, DADOS, MONITORAMENTO)
+- Mínimo 12 a 20 componentes/nós
+- Setas com rótulos descritivos (ex: -->|"HA Sync"|, -->|"HTTPS"|, -->|"Backup diário"|)
+- Usar classDef para diferenciar visualmente as zonas com cores profissionais
+- Incluir componentes redundantes quando fizer sentido (FW1/FW2, WEB1/WEB2, ISP1/ISP2)
+- Nomes técnicos reais nos nós (não genéricos)
+- Comentário no topo: %% Diagrama profissional gerado pelo debuga.ai
+
+EXEMPLO DE QUALIDADE ESPERADA (use como referência de complexidade e estilo):
+\`\`\`mermaid
+flowchart TB
+    %% Diagrama profissional gerado pelo debuga.ai
+
+    subgraph INTERNET["Internet / Acesso Externo"]
+        U1["Usuários Externos"]
+        ISP1["Link ISP 1"]
+        ISP2["Link ISP 2"]
+    end
+
+    subgraph BORDA["Camada de Borda"]
+        FW1["Firewall Principal"]
+        FW2["Firewall Secundário / HA"]
+        WAF["WAF / Proteção HTTP"]
+    end
+
+    subgraph DMZ["DMZ"]
+        WEB1["Servidor Web 01"]
+        WEB2["Servidor Web 02"]
+        RP["Reverse Proxy"]
+    end
+
+    subgraph LAN["Rede Interna Segmentada"]
+        CORE["Switch Core"]
+        VLAN10["VLAN 10 - Servidores"]
+        VLAN20["VLAN 20 - Usuários"]
+        VLAN30["VLAN 30 - Gestão"]
+    end
+
+    subgraph DADOS["Dados e Continuidade"]
+        DB["Banco de Dados"]
+        BKP1["Backup Local"]
+        BKP2["Backup S3 / Wasabi"]
+    end
+
+    subgraph OBS["Monitoramento e Segurança"]
+        ZBX["Zabbix"]
+        GRAF["Grafana"]
+        LOG["Logs / SIEM"]
+        ALERT["Alertas NOC"]
+    end
+
+    U1 --> ISP1
+    U1 --> ISP2
+    ISP1 --> FW1
+    ISP2 --> FW2
+    FW1 <-->|HA Sync| FW2
+    FW1 --> WAF
+    WAF --> RP
+    RP --> WEB1
+    RP --> WEB2
+    WEB1 --> DB
+    WEB2 --> DB
+    FW1 --> CORE
+    CORE --> VLAN10
+    CORE --> VLAN20
+    CORE --> VLAN30
+    DB --> BKP1
+    BKP1 --> BKP2
+    ZBX --> FW1
+    ZBX --> WEB1
+    ZBX --> DB
+    ZBX --> GRAF
+    WEB1 --> LOG
+    WEB2 --> LOG
+    DB --> LOG
+    ZBX --> ALERT
+
+    classDef edge fill:#0f172a,stroke:#22c55e,color:#ffffff
+    classDef secure fill:#052e16,stroke:#22c55e,color:#ffffff
+    classDef dmz fill:#1e293b,stroke:#38bdf8,color:#ffffff
+    classDef data fill:#312e81,stroke:#818cf8,color:#ffffff
+    classDef monitor fill:#422006,stroke:#facc15,color:#ffffff
+
+    class FW1,FW2,WAF secure
+    class WEB1,WEB2,RP dmz
+    class DB,BKP1,BKP2 data
+    class ZBX,GRAF,LOG,ALERT monitor
+    class ISP1,ISP2,U1 edge
+\`\`\`
 
 FORMATO DA RESPOSTA (seguir exatamente):
 ## 🏗️ [Título do Diagrama]
@@ -681,25 +771,30 @@ FORMATO DA RESPOSTA (seguir exatamente):
 **Cenário:** [Descrever brevemente o cenário escolhido]
 
 \`\`\`mermaid
-[Diagrama Mermaid completo, válido, com nós e conexões claras]
+[Diagrama Mermaid PREMIUM completo seguindo o padrão acima]
 \`\`\`
 
 ### Componentes
-[Explicar cada componente do diagrama e sua função]
+[Tabela ou lista explicando cada componente e sua função na arquitetura]
 
 ### Pontos de Segurança
-[Listar 3-5 boas práticas de segurança aplicadas neste cenário]
+[Listar 4-6 boas práticas de segurança aplicadas neste cenário]
 
 ### Valor para o Cliente
-[Explicar em 2-3 frases como essa arquitetura protege o negócio]
+[Explicar em 3-4 frases como essa arquitetura protege o negócio e reduz riscos]
+
+### Próximos Passos Recomendados
+[3-5 recomendações práticas para evolução da infraestrutura]
 
 REGRAS FINAIS:
-- O diagrama Mermaid deve ser sintaticamente válido (graph TD, flowchart LR, etc.)
-- Usar nomes técnicos reais (não genéricos)
-- Mínimo 8 nós no diagrama
-- Incluir pelo menos 1 elemento de segurança (firewall, WAF, IDS, etc.)
-- Incluir pelo menos 1 elemento de redundância ou backup
-- NÃO usar a ferramenta generate_image em hipótese alguma`,
+- O diagrama DEVE ter subgraphs, classDef e setas rotuladas (obrigatório)
+- NUNCA gerar diagrama com menos de 12 nós
+- NUNCA gerar diagrama sem subgraphs
+- NUNCA gerar diagrama sem classDef/estilos
+- Usar nomes técnicos reais e específicos
+- Incluir redundância (HA, backup, dual-link) quando aplicável
+- NÃO usar a ferramenta generate_image em hipótese alguma
+- O resultado deve parecer documentação de consultoria profissional`,
     description: "Cria diagramas técnicos de rede, segurança e infraestrutura",
   },
   // --- Cards ocultos (manter para reabilitação futura) ---
