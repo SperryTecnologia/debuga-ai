@@ -611,7 +611,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const [editingTitle, setEditingTitle] = useState<number | null>(null);
   const [editTitleValue, setEditTitleValue] = useState("");
   const [toolResults, setToolResults] = useState<ToolResultEvent[]>([]);
@@ -1300,10 +1300,18 @@ export default function ChatPage() {
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       {/* Sidebar */}
       <div className={cn(
         "h-full bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 ease-in-out shrink-0",
-        sidebarOpen ? "w-72" : "w-0 overflow-hidden"
+        "fixed md:relative z-50 md:z-auto",
+        sidebarOpen ? "w-[85vw] max-w-72 md:w-72" : "w-0 overflow-hidden"
       )}>
         <div className="h-14 flex items-center justify-between px-3 border-b border-sidebar-border shrink-0">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
@@ -1390,6 +1398,7 @@ export default function ChatPage() {
                         setActiveSteps([]);
                         setSearchQuery("");
                         setDebouncedSearch("");
+                        if (window.innerWidth < 768) setSidebarOpen(false);
                       }}
                     >
                       <div className="flex items-center gap-2">
@@ -1446,7 +1455,7 @@ export default function ChatPage() {
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                     )}
-                    onClick={() => { setActiveConversationId(conv.id); setStreamingContent(""); setToolResults([]); setActiveSteps([]); }}
+                    onClick={() => { setActiveConversationId(conv.id); setStreamingContent(""); setToolResults([]); setActiveSteps([]); if (window.innerWidth < 768) setSidebarOpen(false); }}
                   >
                     {conv.isPinned && <Pin className="w-3 h-3 shrink-0 text-primary/60" />}
                     <ConversationIcon title={conv.title || ""} />
@@ -1540,7 +1549,7 @@ export default function ChatPage() {
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                     )}
-                    onClick={() => { setActiveConversationId(conv.id); setStreamingContent(""); setToolResults([]); setActiveSteps([]); }}
+                    onClick={() => { setActiveConversationId(conv.id); setStreamingContent(""); setToolResults([]); setActiveSteps([]); if (window.innerWidth < 768) setSidebarOpen(false); }}
                   >
                     <ConversationIcon title={conv.title || ""} />
                     {editingTitle === conv.id ? (
@@ -1650,7 +1659,7 @@ export default function ChatPage() {
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-sidebar-foreground/50 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground/70"
                     )}
-                    onClick={() => { setActiveConversationId(conv.id); setStreamingContent(""); setToolResults([]); setActiveSteps([]); }}
+                    onClick={() => { setActiveConversationId(conv.id); setStreamingContent(""); setToolResults([]); setActiveSteps([]); if (window.innerWidth < 768) setSidebarOpen(false); }}
                   >
                     <Archive className="w-3 h-3 shrink-0 opacity-50" />
                     <span className="flex-1 truncate font-mono">{conv.title || "Sem t\u00edtulo"}</span>
@@ -1744,16 +1753,16 @@ export default function ChatPage() {
           </div>
         )}
         {/* Top Bar */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-border shrink-0 bg-background/80 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
+        <div className="h-14 flex items-center justify-between px-3 md:px-4 border-b border-border shrink-0 bg-background/80 backdrop-blur-sm">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
             {!sidebarOpen && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSidebarOpen(true)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setSidebarOpen(true)}>
                 <ChevronRight className="w-4 h-4" />
               </Button>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="font-mono text-xs text-muted-foreground">
+              <span className="font-mono text-xs text-muted-foreground hidden sm:inline">
                 {isStreaming ? "Processando..." : "Online"}
               </span>
             </div>
@@ -1761,23 +1770,23 @@ export default function ChatPage() {
               const activeConv = conversations.find((c: any) => c.id === activeConversationId);
               if (!activeConv) return null;
               return (
-                <div className="flex items-center gap-2 ml-2 px-2 py-1 rounded-md bg-card/50 border border-border/50">
+                <div className="flex items-center gap-1.5 md:gap-2 ml-1 md:ml-2 px-2 py-1 rounded-md bg-card/50 border border-border/50 min-w-0">
                   <ConversationIcon title={activeConv.title || ""} />
-                  <span className="font-mono text-xs text-foreground/80 truncate max-w-[200px]">{activeConv.title}</span>
+                  <span className="font-mono text-xs text-foreground/80 truncate max-w-[120px] md:max-w-[200px]">{activeConv.title}</span>
                 </div>
               );
             })()}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-muted-foreground/50">debuga.ai v3.0</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] font-mono text-muted-foreground/50 hidden sm:inline">debuga.ai v3.0</span>
           </div>
         </div>
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 && !activeConversationId ? (
-            <div className="h-full flex flex-col items-center justify-center px-6">
-              <div className="max-w-2xl w-full space-y-8">
+            <div className="h-full flex flex-col items-center justify-center px-3 md:px-6 overflow-x-hidden">
+              <div className="max-w-2xl w-full space-y-6 md:space-y-8">
                 <div className="text-center space-y-4">
                   <img src={AVATAR_AGENT} alt="debuga.ai Agent" className="w-20 h-20 rounded-2xl mx-auto shadow-lg shadow-primary/10" />
                   <div>
@@ -1789,7 +1798,7 @@ export default function ChatPage() {
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-1">
                   {SUGGESTED_PROMPTS.map((item, i) => {
                     const userPlan = usageQuery.data?.planId || "free";
                     const isPaidPlan = userPlan !== "free";
@@ -1829,7 +1838,7 @@ export default function ChatPage() {
               </div>
             </div>
           ) : (
-            <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+            <div className="max-w-4xl mx-auto px-3 md:px-4 py-4 md:py-6 space-y-4 md:space-y-6 overflow-x-hidden">
               {messages
                 .filter((m) => m.role !== "system")
                 .map((msg, idx) => (
@@ -1941,21 +1950,20 @@ export default function ChatPage() {
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-border bg-background/80 backdrop-blur-sm px-4 py-3 shrink-0">
+        <div className="border-t border-border bg-background/80 backdrop-blur-sm px-3 md:px-4 py-2 md:py-3 shrink-0 pb-[env(safe-area-inset-bottom,8px)]">
           <div className="max-w-4xl mx-auto">
             {/* Uploaded files preview */}
             {uploadedFiles.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
+              <div className="flex flex-wrap gap-1.5 md:gap-2 mb-2 overflow-x-hidden">
                 {uploadedFiles.map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border text-xs font-mono">
+                  <div key={i} className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 rounded-lg bg-card border border-border text-xs font-mono max-w-full">
                     {f.isImage ? (
-                      <img src={f.url} alt={f.filename} className="w-8 h-8 rounded object-cover" />
+                      <img src={f.url} alt={f.filename} className="w-6 h-6 md:w-8 md:h-8 rounded object-cover shrink-0" />
                     ) : (
-                      <FileText className="w-4 h-4 text-primary" />
+                      <FileText className="w-4 h-4 text-primary shrink-0" />
                     )}
-                    <span className="text-foreground/80 truncate max-w-[120px]">{f.filename}</span>
-                    <span className="text-muted-foreground">({(f.size / 1024).toFixed(0)}KB)</span>
-                    <button onClick={() => setUploadedFiles((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive transition-colors">
+                    <span className="text-foreground/80 truncate max-w-[80px] md:max-w-[120px]">{f.filename}</span>
+                    <button onClick={() => setUploadedFiles((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive transition-colors shrink-0">
                       <XCircle className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -1978,8 +1986,8 @@ export default function ChatPage() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
-                placeholder="Cole imagens (Ctrl+V), arraste arquivos, ou descreva seu problema..."
-                className="w-full resize-none bg-card border-border rounded-xl pl-12 pr-24 min-h-[52px] max-h-40 font-mono text-sm placeholder:text-muted-foreground/50 focus-visible:ring-primary/50"
+                placeholder="Descreva seu problema..."
+                className="w-full resize-none bg-card border-border rounded-xl pl-11 md:pl-12 pr-20 md:pr-24 min-h-[48px] md:min-h-[52px] max-h-32 md:max-h-40 font-mono text-sm placeholder:text-muted-foreground/50 focus-visible:ring-primary/50"
                 rows={1}
                 disabled={isStreaming}
               />
@@ -2019,39 +2027,39 @@ export default function ChatPage() {
             </form>
             {/* Usage Indicator */}
             {usageQuery.data && !usageQuery.data.isAdmin && (
-              <div className="flex items-center justify-center gap-4 mt-2">
+              <div className="flex items-center justify-center gap-2 md:gap-4 mt-1.5 md:mt-2 flex-wrap">
                 {usageQuery.data.planId === "pro" || usageQuery.data.planId === "enterprise" ? (
-                  <span className="text-[10px] font-mono text-muted-foreground/50">
-                    {usageQuery.data.planId === "pro" ? "Uso ilimitado com política de uso justo" : "Limites personalizados por contrato"}
+                  <span className="text-[9px] md:text-[10px] font-mono text-muted-foreground/50">
+                    {usageQuery.data.planId === "pro" ? "Uso ilimitado" : "Limites por contrato"}
                   </span>
                 ) : (
                   <>
                     <span className={cn(
-                      "text-[10px] font-mono",
+                      "text-[9px] md:text-[10px] font-mono",
                       usageQuery.data.todayMessages >= usageQuery.data.limits.messagesPerDay
                         ? "text-red-400/80"
                         : usageQuery.data.todayMessages >= usageQuery.data.limits.messagesPerDay * 0.8
                         ? "text-yellow-400/70"
                         : "text-muted-foreground/50"
                     )}>
-                      Mensagens hoje: {usageQuery.data.todayMessages}/{usageQuery.data.limits.messagesPerDay}
+                      Msgs: {usageQuery.data.todayMessages}/{usageQuery.data.limits.messagesPerDay}
                     </span>
                     <span className="text-muted-foreground/20">|</span>
                     <span className={cn(
-                      "text-[10px] font-mono",
+                      "text-[9px] md:text-[10px] font-mono",
                       usageQuery.data.monthConversations >= usageQuery.data.limits.conversationsPerMonth
                         ? "text-red-400/80"
                         : usageQuery.data.monthConversations >= usageQuery.data.limits.conversationsPerMonth * 0.8
                         ? "text-yellow-400/70"
                         : "text-muted-foreground/50"
                     )}>
-                      Conversas no mês: {usageQuery.data.monthConversations}/{usageQuery.data.limits.conversationsPerMonth}
+                      Conv: {usageQuery.data.monthConversations}/{usageQuery.data.limits.conversationsPerMonth}
                     </span>
                   </>
                 )}
               </div>
             )}
-            <div className="flex items-center justify-center gap-3 mt-2">
+            <div className="hidden md:flex items-center justify-center gap-3 mt-2">
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/40">
                 <Paperclip className="w-3 h-3" /> Ctrl+V / Drag
               </div>
