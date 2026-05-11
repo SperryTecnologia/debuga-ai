@@ -188,18 +188,26 @@ export default function PricingPage() {
       const res = await fetch("/api/stripe/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ planId, interval }),
       });
 
       const data = await res.json();
+      if (res.status === 401) {
+        toast.error("Sess\u00e3o expirada. Redirecionando para login...");
+        setTimeout(() => {
+          window.location.href = getLoginUrl("/pricing");
+        }, 1500);
+        return;
+      }
       if (data.url) {
         toast.info("Redirecionando para o checkout seguro...");
         window.open(data.url, "_blank");
       } else {
-        toast.error(data.error || "Erro ao criar sessão de checkout");
+        toast.error(data.error || "Erro ao criar sess\u00e3o de checkout");
       }
     } catch (err) {
-      toast.error("Erro ao processar pagamento. Tente novamente.");
+      toast.error("Erro de conex\u00e3o. Verifique sua internet e tente novamente.");
     } finally {
       setLoadingPlan(null);
     }

@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
+import { toast } from "sonner";
 import { useLocation } from "wouter";
 import {
   ArrowLeft,
@@ -346,13 +347,20 @@ export default function AccountPage() {
                             const res = await fetch("/api/stripe/portal", {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
+                              credentials: "include",
                             });
                             const data = await res.json();
+                            if (res.status === 401) {
+                              toast.error("Sess\u00e3o expirada. Fa\u00e7a login novamente.");
+                              return;
+                            }
                             if (data.url) {
                               window.open(data.url, "_blank");
+                            } else {
+                              toast.error(data.error || "Erro ao abrir portal.");
                             }
                           } catch (err) {
-                            console.error("Portal error:", err);
+                            toast.error("Erro de conex\u00e3o. Tente novamente.");
                           }
                         }}
                         className="w-full gap-2 font-mono text-xs"

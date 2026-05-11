@@ -308,47 +308,57 @@ export function registerStripeRoutes(app: Express) {
 
   // ── Create Checkout Session ──
   app.post("/api/stripe/create-checkout", async (req: Request, res: Response) => {
+    // Step 1: Authenticate user
+    let user;
     try {
-      const user = await sdk.authenticateRequest(req);
-      if (!user) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
+      user = await sdk.authenticateRequest(req);
+    } catch (authError: any) {
+      console.warn("[Stripe Checkout] Auth failed:", authError.message);
+      res.status(401).json({ error: "Sess\u00e3o expirada. Fa\u00e7a login novamente." });
+      return;
+    }
 
-      const { planId, interval } = req.body; // interval: 'monthly' | 'yearly'
+    if (!user) {
+      res.status(401).json({ error: "Sess\u00e3o expirada. Fa\u00e7a login novamente." });
+      return;
+    }
 
-      if (!planId || !interval) {
-        res.status(400).json({ error: "Missing planId or interval" });
-        return;
-      }
+    // Step 2: Validate input
+    const { planId, interval } = req.body;
 
-      // Validate planId — only allow starter and pro
-      if (planId !== "starter" && planId !== "pro") {
-        res.status(400).json({ error: "Invalid plan. Only 'starter' and 'pro' are available for checkout." });
-        return;
-      }
+    if (!planId || !interval) {
+      console.warn(`[Stripe Checkout] Missing params - userId: ${user.id}, planId: ${planId}, interval: ${interval}`);
+      res.status(400).json({ error: "Par\u00e2metros inv\u00e1lidos. Tente novamente." });
+      return;
+    }
 
-      if (interval !== "monthly" && interval !== "yearly") {
-        res.status(400).json({ error: "Invalid interval. Use 'monthly' or 'yearly'." });
-        return;
-      }
+    if (planId !== "starter" && planId !== "pro") {
+      console.warn(`[Stripe Checkout] Invalid planId: ${planId} - userId: ${user.id}`);
+      res.status(400).json({ error: "Plano inv\u00e1lido. Apenas Starter e Pro est\u00e3o dispon\u00edveis." });
+      return;
+    }
 
+    if (interval !== "monthly" && interval !== "yearly") {
+      console.warn(`[Stripe Checkout] Invalid interval: ${interval} - userId: ${user.id}`);
+      res.status(400).json({ error: "Intervalo inv\u00e1lido. Use mensal ou anual." });
+      return;
+    }
+
+    // Step 3: Create checkout session
+    try {
       const stripe = getStripe();
 
-      // Find the plan — price is determined by backend, not frontend
       const plan = PLANS.find((p) => p.id === planId);
       if (!plan) {
-        res.status(400).json({ error: "Invalid plan" });
+        res.status(400).json({ error: "Plano n\u00e3o encontrado" });
         return;
       }
 
       const amount = interval === "yearly" ? plan.stripe.priceYearly : plan.stripe.priceMonthly;
       const recurringInterval = interval === "yearly" ? "year" : "month";
 
-      // Determine origin for redirect URLs
       const origin = req.headers.origin || req.headers.referer?.replace(/\/$/, "") || "";
 
-      // Check if user already has a Stripe customer ID
       let customerId: string | undefined;
       if (user.stripeCustomerId) {
         customerId = user.stripeCustomerId;
@@ -391,35 +401,50 @@ export function registerStripeRoutes(app: Express) {
         cancel_url: `${origin}/pricing?checkout=canceled`,
       };
 
-      // If user already has a customer, use it; otherwise set email
       if (customerId) {
         sessionParams.customer = customerId;
       } else {
         sessionParams.customer_email = user.email || undefined;
       }
 
+      console.log(`[Stripe Checkout] Creating session - userId: ${user.id}, email: ${user.email}, plan: ${planId}, interval: ${interval}, amount: ${amount}, env: ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'live' : 'test'}`);
+
       const session = await stripe.checkout.sessions.create(sessionParams);
+
+      console.log(`[Stripe Checkout] Session created - userId: ${user.id}, sessionId: ${session.id}`);
       res.json({ url: session.url });
-    } catch (error: any) {
-      console.error("[Stripe] Checkout error:", error);
-      res.status(500).json({ error: "Failed to create checkout session" });
+    } catch (stripeError: any) {
+      console.error(`[Stripe Checkout] Stripe API error - userId: ${user.id}, email: ${user.email}, plan: ${planId}, interval: ${interval}`, {
+        message: stripeError.message,
+        type: stripeError.type,
+        code: stripeError.code,
+        statusCode: stripeError.statusCode,
+      });
+      res.status(500).json({ error: "N\u00e3o foi poss\u00edvel iniciar o checkout. Tente novamente ou fale com o suporte." });
     }
   });
 
   // ── Customer Portal (for managing subscription: upgrade, downgrade, cancel) ──
   app.post("/api/stripe/portal", async (req: Request, res: Response) => {
+    let user;
     try {
-      const user = await sdk.authenticateRequest(req);
-      if (!user) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
+      user = await sdk.authenticateRequest(req);
+    } catch (authError: any) {
+      res.status(401).json({ error: "Sess\u00e3o expirada. Fa\u00e7a login novamente." });
+      return;
+    }
 
-      if (!user.stripeCustomerId) {
-        res.status(400).json({ error: "No subscription found" });
-        return;
-      }
+    if (!user) {
+      res.status(401).json({ error: "Sess\u00e3o expirada. Fa\u00e7a login novamente." });
+      return;
+    }
 
+    if (!user.stripeCustomerId) {
+      res.status(400).json({ error: "Nenhuma assinatura encontrada." });
+      return;
+    }
+
+    try {
       const stripe = getStripe();
       const origin = req.headers.origin || req.headers.referer?.replace(/\/$/, "") || "";
 
@@ -430,25 +455,32 @@ export function registerStripeRoutes(app: Express) {
 
       res.json({ url: session.url });
     } catch (error: any) {
-      console.error("[Stripe] Portal error:", error);
-      res.status(500).json({ error: "Failed to create portal session" });
+      console.error("[Stripe] Portal error:", error.message);
+      res.status(500).json({ error: "N\u00e3o foi poss\u00edvel abrir o portal. Tente novamente." });
     }
   });
 
   // ── Get current subscription status ──
   app.get("/api/stripe/subscription", async (req: Request, res: Response) => {
+    let user;
     try {
-      const user = await sdk.authenticateRequest(req);
-      if (!user) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
+      user = await sdk.authenticateRequest(req);
+    } catch (authError: any) {
+      res.status(401).json({ error: "Sess\u00e3o expirada." });
+      return;
+    }
 
+    if (!user) {
+      res.status(401).json({ error: "Sess\u00e3o expirada." });
+      return;
+    }
+
+    try {
       const sub = await getActiveSubscription(user.id);
       res.json({ subscription: sub });
     } catch (error: any) {
-      console.error("[Stripe] Subscription check error:", error);
-      res.status(500).json({ error: "Failed to check subscription" });
+      console.error("[Stripe] Subscription check error:", error.message);
+      res.status(500).json({ error: "Erro ao verificar assinatura." });
     }
   });
 }
