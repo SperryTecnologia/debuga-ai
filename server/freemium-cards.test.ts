@@ -197,15 +197,21 @@ describe("Simplified Card Structure", () => {
       expect(dnsSection).toContain("conclusão profissional");
     });
 
-    it("Monitor de Servidor prompt asks for defensive verification with JSON", () => {
+    it("Monitor de Servidor prompt enforces evidence-based verification", () => {
       const monitorSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Monitor de Servidor"'),
-        chatPageContent.indexOf('title: "Monitor de Servidor"') + 1200
+        chatPageContent.indexOf('title: "Monitor de Servidor"') + 2500
       );
       expect(monitorSection).toContain("161.97.132.110");
       expect(monitorSection).toContain("defensiva");
+      expect(monitorSection).toContain("REGRA CR\u00cdTICA DE EVID\u00caNCIA");
+      expect(monitorSection).toContain("NUNCA invente portas");
+      expect(monitorSection).toContain("NUNCA liste portas comuns");
+      expect(monitorSection).toContain("expected_services");
+      expect(monitorSection).toContain("verified_open_ports");
+      expect(monitorSection).toContain("unverified");
+      expect(monitorSection).toContain("evidence_level");
       expect(monitorSection).toContain("hardening");
-      expect(monitorSection).toContain("JSON técnico resumido");
     });
 
     it("Auditor de Domínio prompt asks for DNS, SPF, DMARC analysis", () => {

@@ -605,8 +605,47 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
     icon: Monitor,
     title: "Monitor de Servidor",
     displayMessage: "Faça uma verificação defensiva do servidor 161.97.132.110.",
-    prompt: "Faça uma verificação defensiva e não invasiva do servidor 161.97.132.110 considerando que ele pode hospedar um serviço VPN OpenVPN em UDP/1194. Verifique disponibilidade básica, IP, reverse DNS se disponível, portas esperadas quando a ferramenta permitir, status público e riscos defensivos. Não execute exploração, brute force, enumeração agressiva ou ataque. Entregue um relatório com status geral, achados, interpretação, riscos defensivos e recomendações de hardening. Entregue também um JSON técnico resumido no formato: {\"target\": \"161.97.132.110\", \"type\": \"server_ip\", \"expected_service\": \"OpenVPN UDP/1194\", \"status\": \"ok|attention|critical\", \"checks\": {\"availability\": \"...\", \"reverse_dns\": \"...\", \"expected_ports\": [\"1194/udp\"], \"risk_level\": \"low|medium|high\"}, \"defensive_summary\": \"...\"}. Se alguma ferramenta falhar, continue com os dados disponíveis.",
-    description: "Verifica IP, portas esperadas e saúde pública",
+    prompt: `Faça uma verificação defensiva e não invasiva do servidor 161.97.132.110.
+
+REGRA CRÍTICA DE EVIDÊNCIA:
+- NUNCA liste portas como "abertas" sem que uma ferramenta real (port_scan, http_check) tenha confirmado.
+- NUNCA invente portas, serviços, status ou riscos. Se não verificou, diga "não verificado".
+- NUNCA liste portas comuns (20, 21, 22, 23, 25, 53, 80, 110, 143, 443, 3306, 3389, 5432, 5900, 8080) como abertas por suposição.
+- Se uma ferramenta falhar ou não estiver disponível, diga explicitamente "não foi possível verificar" em vez de inventar dados.
+- Diferencie CLARAMENTE: "serviço esperado" (informado, não confirmado) vs "porta verificada como aberta" (confirmada por ferramenta) vs "não verificado".
+
+O QUE VERIFICAR (apenas com ferramentas reais):
+1. Disponibilidade básica via http_check (se responde em 80/443)
+2. Reverse DNS se disponível via dns_lookup
+3. Portas APENAS se port_scan estiver disponível e retornar resultado real
+
+INFORMAÇÃO CONTEXTUAL (NÃO CONFIRMADA):
+- O servidor pode hospedar OpenVPN em UDP/1194. Isso é um "serviço esperado", NÃO uma porta confirmada como aberta.
+- UDP/1194 deve aparecer como "serviço esperado (não confirmado)" a menos que uma ferramenta real confirme.
+
+FORMATO DO RELATÓRIO:
+- Seção 1: Verificações realizadas (quais ferramentas foram usadas e seus resultados reais)
+- Seção 2: Serviços esperados (informados, não confirmados)
+- Seção 3: Portas verificadas como abertas (SOMENTE se confirmadas por ferramenta)
+- Seção 4: Itens não verificados (o que não pôde ser confirmado e por quê)
+- Seção 5: Recomendações defensivas (hardening, firewall, monitoramento)
+
+JSON TÉCNICO OBRIGATÓRIO (ao final):
+{
+  "target": "161.97.132.110",
+  "type": "server_ip",
+  "evidence_level": "partial|full|none",
+  "expected_services": [{"port": "1194", "protocol": "udp", "service": "OpenVPN", "source": "user_provided", "status": "not_verified"}],
+  "verified_open_ports": [],
+  "unverified": [{"port": "1194", "protocol": "udp", "reason": "UDP not confirmed by current check"}],
+  "status": "ok|attention|critical",
+  "defensive_summary": "..."
+}
+
+IMPORTANTE: Se nenhuma porta foi confirmada por ferramenta real, verified_open_ports DEVE ser um array vazio []. Não preencha com suposições.
+
+Não sugira exploração, brute force, bypass ou ataque. Apenas defesa e hardening.`,
+    description: "Verifica IP com evidência real, sem dados inventados",
   },
   {
     icon: SearchCheck,
