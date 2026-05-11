@@ -11,6 +11,8 @@ import {
   deleteConversation,
   togglePinConversation,
   archiveConversation,
+  unarchiveConversation,
+  listArchivedConversations,
   addMessage,
   getMessages,
   getActiveSubscription,
@@ -215,6 +217,19 @@ export const appRouter = router({
         await archiveConversation(input.id, ctx.user.id);
         return { success: true };
       }),
+
+    // Unarchive a conversation
+    unarchive: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await unarchiveConversation(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    // List archived conversations
+    listArchived: protectedProcedure.query(async ({ ctx }) => {
+      return listArchivedConversations(ctx.user.id);
+    }),
 
     // Get messages for a conversation
     getMessages: protectedProcedure

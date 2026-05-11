@@ -174,6 +174,27 @@ export async function archiveConversation(id: number, userId: number) {
     .where(and(eq(conversations.id, id), eq(conversations.userId, userId)));
 }
 
+export async function unarchiveConversation(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(conversations)
+    .set({ isArchived: false })
+    .where(and(eq(conversations.id, id), eq(conversations.userId, userId)));
+}
+
+export async function listArchivedConversations(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return db
+    .select()
+    .from(conversations)
+    .where(and(eq(conversations.userId, userId), eq(conversations.isArchived, true)))
+    .orderBy(desc(conversations.updatedAt));
+}
+
 // ── Messages ──
 
 export async function addMessage(data: InsertMessage) {

@@ -12,6 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -74,6 +84,7 @@ import {
   Pin,
   PinOff,
   Archive,
+  ArchiveRestore,
   User,
   Crown,
   type LucideIcon,
@@ -565,6 +576,8 @@ export default function ChatPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; message: string; planId: string } | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
   const [, setLocation] = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -580,6 +593,8 @@ export default function ChatPage() {
   const deleteConversation = trpc.chat.deleteConversation.useMutation();
   const togglePin = trpc.chat.togglePin.useMutation();
   const archiveConv = trpc.chat.archive.useMutation();
+  const unarchiveConv = trpc.chat.unarchive.useMutation();
+  const archivedQuery = trpc.chat.listArchived.useQuery(undefined, { enabled: !!user && showArchived });
   const updateTitle = trpc.chat.updateTitle.useMutation();
   const messagesQuery = trpc.chat.getMessages.useQuery(
     { conversationId: activeConversationId! },
@@ -641,19 +656,10 @@ export default function ChatPage() {
   }, [createConversation, utils]);
 
   const handleDeleteConversation = useCallback(
-    async (id: number) => {
-      try {
-        await deleteConversation.mutateAsync({ id });
-        if (activeConversationId === id) {
-          setActiveConversationId(null);
-          setMessages([]);
-        }
-        utils.chat.listConversations.invalidate();
-      } catch (err) {
-        console.error("Failed to delete conversation:", err);
-      }
+    (id: number) => {
+      setDeleteConfirm({ open: true, id });
     },
-    [deleteConversation, activeConversationId, utils]
+    []
   );
 
   const handleFileUpload = useCallback(async (files: FileList | null) => {
@@ -1066,12 +1072,62 @@ export default function ChatPage() {
         setMessages([]);
       }
       utils.chat.listConversations.invalidate();
-      toast.success("Conversa arquivada");
+      utils.chat.listArchived.invalidate();
+      toast.success("Conversa arquivada", {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              await unarchiveConv.mutateAsync({ id });
+              utils.chat.listConversations.invalidate();
+              utils.chat.listArchived.invalidate();
+              toast.success("Conversa restaurada");
+            } catch {
+              toast.error("Erro ao restaurar conversa");
+            }
+          },
+        },
+      });
     } catch (err) {
       console.error("Failed to archive:", err);
       toast.error("Erro ao arquivar conversa");
     }
-  }, [archiveConv, activeConversationId, utils]);
+  }, [archiveConv, unarchiveConv, activeConversationId, utils]);
+
+  const handleUnarchive = useCallback(async (id: number) => {
+    try {
+      await unarchiveConv.mutateAsync({ id });
+      utils.chat.listConversations.invalidate();
+      utils.chat.listArchived.invalidate();
+      toast.success("Conversa restaurada");
+    } catch (err) {
+      console.error("Failed to unarchive:", err);
+      toast.error("Erro ao restaurar conversa");
+    }
+  }, [unarchiveConv, utils]);
+
+  const handleDeleteWithConfirm = useCallback((id: number) => {
+    setDeleteConfirm({ open: true, id });
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    const id = deleteConfirm.id;
+    if (!id) return;
+    setDeleteConfirm({ open: false, id: null });
+    try {
+      await deleteConversation.mutateAsync({ id });
+      if (activeConversationId === id) {
+        setActiveConversationId(null);
+        setMessages([]);
+      }
+      utils.chat.listConversations.invalidate();
+      utils.chat.listArchived.invalidate();
+      toast.success("Conversa excluída");
+    } catch (err) {
+      console.error("Failed to delete:", err);
+      toast.error("Erro ao excluir conversa");
+    }
+  }, [deleteConfirm.id, deleteConversation, activeConversationId, utils]);
 
   // Auth loading
   if (authLoading) {
@@ -1367,6 +1423,70 @@ export default function ChatPage() {
             ))}
           </div>
         </ScrollArea>
+
+        {/* Archived conversations toggle */}
+        <div className="px-3 py-2 border-t border-sidebar-border shrink-0">
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className="flex items-center gap-2 w-full rounded-lg px-2 py-1.5 text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors font-mono"
+          >
+            <Archive className="w-3.5 h-3.5" />
+            Arquivadas
+            {archivedQuery.data && archivedQuery.data.length > 0 && (
+              <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full">
+                {archivedQuery.data.length}
+              </span>
+            )}
+            <ChevronRight className={cn("w-3 h-3 ml-auto transition-transform", showArchived && "rotate-90")} />
+          </button>
+
+          {showArchived && (
+            <div className="mt-1 space-y-0.5 max-h-48 overflow-y-auto">
+              {archivedQuery.isLoading ? (
+                <div className="flex items-center justify-center py-3">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-sidebar-foreground/40" />
+                </div>
+              ) : archivedQuery.data && archivedQuery.data.length > 0 ? (
+                archivedQuery.data.map((conv: any) => (
+                  <div
+                    key={conv.id}
+                    className={cn(
+                      "group flex items-center gap-2 rounded-lg px-3 py-2 text-xs cursor-pointer transition-colors",
+                      activeConversationId === conv.id
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground/50 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground/70"
+                    )}
+                    onClick={() => { setActiveConversationId(conv.id); setStreamingContent(""); setToolResults([]); setActiveSteps([]); }}
+                  >
+                    <Archive className="w-3 h-3 shrink-0 opacity-50" />
+                    <span className="flex-1 truncate font-mono">{conv.title || "Sem t\u00edtulo"}</span>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-primary transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <MoreHorizontal className="w-3 h-3" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleUnarchive(conv.id); }}>
+                          <ArchiveRestore className="w-3 h-3 mr-2" />
+                          Restaurar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteConversation(conv.id); }}>
+                          <Trash2 className="w-3 h-3 mr-2" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))
+              ) : (
+                <p className="text-[10px] text-sidebar-foreground/30 text-center py-2 font-mono">
+                  Nenhuma conversa arquivada
+                </p>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="p-3 border-t border-sidebar-border shrink-0">
           <DropdownMenu>
@@ -1772,6 +1892,24 @@ export default function ChatPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => !open && setDeleteConfirm({ open: false, id: null })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-mono">Excluir conversa</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              Tem certeza que deseja excluir esta conversa? Essa ação remove o histórico visual, mas não altera o uso já consumido no plano.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-mono text-sm">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-mono text-sm">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
