@@ -1,6 +1,6 @@
 # debuga.ai — System Architecture
 
-**Version:** 2.0  
+**Version:** 3.0  
 **Date:** May 2026  
 **Author:** Sperry Tecnologia  
 **Audience:** Senior developers, technical leads, and infrastructure architects
@@ -15,45 +15,41 @@ debuga.ai is a production SaaS platform built on a **three-tier architecture** (
 
 ![System Architecture](architecture-diagram.png)
 
-The system follows a clear separation of concerns. The React SPA communicates with the Express backend through two channels: tRPC for structured CRUD operations and SSE for real-time agent streaming. The backend orchestrates LLM inference (hybrid cloud + on-premise), tool execution, billing enforcement, and data persistence.
+The system follows a clear separation of concerns. The React SPA communicates with the Express backend through two channels: tRPC for structured CRUD operations and SSE for real-time agent streaming. The backend orchestrates LLM inference, tool execution, billing enforcement, and data persistence.
 
 ---
 
-## 2. Hybrid LLM Inference Layer
+## 2. LLM Inference Layer
 
-The most significant architectural decision is the **dual-inference topology** that combines cloud API calls with on-premise GPU inference:
+### 2.1 Current Architecture (Production)
 
-### 2.1 Cloud Path (Primary)
+All LLM inference in the current production deployment is handled through the **Manus Forge API** — a managed inference gateway. The system sends structured prompts (system instructions + conversation history + tool definitions) and receives streamed completions.
 
-General-purpose queries, tool calling orchestration, and conversational responses are routed through the **Manus Forge API** — a multi-model gateway that intelligently routes between providers (Claude, GPT-4o, Gemini) with automatic failover and cost optimization. This path optimizes for latency and cost on standard IT support queries. The LLM wrapper (`server/_core/llm.ts`) abstracts the provider, making it trivial to swap endpoints or add new models.
+| Component | Status | Description |
+|---|---|---|
+| **Manus Forge API** | **In production** | Managed gateway providing access to state-of-the-art models (currently Gemini 2.5 Flash) |
+| **Model** | **In production** | `gemini-2.5-flash` — used for reasoning, tool calling orchestration, and response generation |
+| **LLM Wrapper** | **In production** | `server/_core/llm.ts` abstracts the provider, making it straightforward to swap endpoints or add new models |
 
-### 2.2 On-Premise Path (Specialized)
+The LLM wrapper is designed to be provider-agnostic. Changing the underlying model requires only updating the endpoint configuration — no changes to the agent loop, tool calling, or streaming logic.
 
-Deep infrastructure analysis workloads are routed to a proprietary fine-tuned model running on dedicated hardware:
+### 2.2 Planned: Multi-Model Routing (Roadmap v5.0)
 
-| Component | Specification |
-|---|---|
-| **GPU Cluster** | 16x NVIDIA RTX 3090 (24GB VRAM each, 384GB total) |
-| **Servers** | 3x 4U rack-mount dedicated AI servers |
-| **Model** | Qwen2.5-72B-Infra (fine-tuned on IT infrastructure, network security, and telecom datasets) |
-| **Inference** | vLLM / TGI serving with tensor parallelism across GPUs |
-| **Interconnect** | NVLink where available, PCIe Gen4 x16 fallback |
+The architecture is designed to support a routing layer that dispatches queries to different models based on complexity, domain specificity, and latency requirements. This layer is not yet implemented. When active, it will enable:
 
-The on-premise model excels at tasks that require domain-specific knowledge not well-represented in general-purpose LLM training data:
+- **Simple queries** (general IT support, tool calling) → cloud API models optimized for speed and cost
+- **Complex analysis** (multi-step diagnostics, security correlation) → specialized models with deeper domain knowledge
+- **Batch workloads** (report generation, bulk analysis) → cost-optimized inference paths
 
-**Deep TCP/IP Analysis (L3–L7):** The model performs packet-level reasoning across the full OSI stack. At Layer 3, it analyzes IP header anomalies, TTL manipulation patterns, and fragmentation attacks. At Layer 4, it identifies TCP session hijacking indicators, SYN flood signatures, and connection state machine violations. At Layer 7, it performs Deep Packet Inspection (DPI) for protocol-specific threats including HTTP request smuggling, DNS tunneling, and TLS fingerprint analysis (JA3/JA3S hashing).
+### 2.3 Planned: On-Premise Inference (Roadmap v6.0)
 
-**Network Security Correlation:** The model cross-references heterogeneous data sources — firewall logs (iptables, pfSense), IDS/IPS alerts (Snort, Suricata), NetFlow/sFlow records, and SNMP traps — to construct attack timelines and identify root causes. It understands the temporal relationships between events that indicate lateral movement, privilege escalation, or data exfiltration.
+The long-term strategy includes deploying dedicated GPU infrastructure for serving open-source models fine-tuned on IT infrastructure and network security datasets. This will enable:
 
-**Infrastructure-Aware Reasoning:** Unlike general-purpose models, the fine-tuned model understands BGP routing tables, OSPF adjacency databases, VLAN topologies, and can reason about complex failure modes such as asymmetric routing, MTU black holes, spanning tree loops, and DHCP scope exhaustion.
+- **Data sovereignty** — Sensitive infrastructure data processed locally without leaving the customer's network
+- **Domain-specialized models** — Fine-tuned models (e.g., Qwen2.5, Mistral, Llama variants) optimized for network analysis, log correlation, and infrastructure reasoning
+- **Reduced API dependency** — Lower operational costs and elimination of third-party API rate limits for high-volume deployments
 
-### 2.3 Routing Logic
-
-The inference router evaluates each incoming request against three criteria:
-
-1. **Query complexity** — Simple lookups go to cloud; multi-step analysis goes to on-premise
-2. **Domain specificity** — Network packet analysis, firewall rule evaluation → on-premise
-3. **Latency requirements** — Real-time tool calling → cloud; batch analysis → on-premise
+The planned serving stack includes vLLM or TGI with tensor parallelism across multiple GPUs. Hardware specifications and deployment guides will be published when this capability reaches production.
 
 ---
 
@@ -75,9 +71,10 @@ Communication with the backend occurs through two distinct channels:
 | Route | Component | Auth Required | Description |
 |---|---|---|---|
 | `/` | `Home.tsx` | No | Landing page with hero, features, integrations, pricing |
-| `/chat` | `ChatPage.tsx` | Yes | Chat interface with conversation sidebar |
+| `/chat` | `ChatPage.tsx` | Yes | Chat interface with conversation sidebar, search, archive |
 | `/pricing` | `PricingPage.tsx` | No | Subscription plans with Stripe checkout |
-| `/account` | `AccountPage.tsx` | Yes | User dashboard with credits, usage metrics, profile |
+| `/account` | `AccountPage.tsx` | Yes | User dashboard with usage metrics, activity, profile |
+| `/logout-success` | `LogoutSuccess.tsx` | No | Post-logout confirmation page |
 
 ### 3.3 State Management
 
@@ -108,7 +105,7 @@ If all checks pass, the message is persisted to the database and the assembled c
 
 | Tool | Implementation | Timeout | Output Limit |
 |---|---|---|---|
-| `execute_code` | `child_process.exec` in `/tmp` sandbox | 30s | 50KB |
+| `execute_code` | `child_process.spawn` in `/tmp` | 30s | 50KB |
 | `port_scan` | TCP socket connection attempts | 30s | — |
 | `dns_lookup` | `dns.promises.resolve` (Node.js native) | 10s | — |
 | `ssl_check` | `tls.connect` with certificate extraction | 10s | — |
@@ -116,6 +113,8 @@ If all checks pass, the message is persisted to the database and the assembled c
 | `whois_lookup` | WHOIS protocol query | 10s | — |
 | `web_fetch` | `fetch` + HTML parsing | 15s | 50KB |
 | `generate_image` | Internal ImageService API | 20s | — |
+
+All tool implementations include robust argument validation with JSON repair (trailing commas, missing braces), domain/URL/hostname validation, and user-friendly error messages in Portuguese. Invalid arguments from the LLM are caught and re-prompted rather than surfaced as raw errors.
 
 ### 4.3 SSE Event Protocol
 
@@ -148,11 +147,13 @@ data: {"message": "Rate limit exceeded", "code": "RATE_LIMITED"}
 
 ### 5.1 Schema Design
 
-The database schema follows a **normalized design** with 6 tables managed by Drizzle ORM. All tables use auto-incrementing integer primary keys and UTC timestamps.
+The database schema follows a **normalized design** with 7 tables managed by Drizzle ORM. All tables use auto-incrementing integer primary keys and UTC timestamps.
 
-The **users** table stores OAuth accounts with role-based access control (`admin` | `user`). The `stripeCustomerId` field links to the Stripe customer object for billing operations. The **conversations** table supports pin and archive functionality with soft-delete semantics. Each conversation contains multiple **messages** that store the role (user/assistant/system/tool), content, serialized tool calls as JSON, and token count for billing.
+The **users** table stores OAuth accounts with role-based access control (`admin` | `user`). The `stripeCustomerId` field links to the Stripe customer object for billing operations. The **conversations** table supports pin and archive functionality. Conversations are hard-deleted when removed by the user (no soft-delete). Each conversation contains multiple **messages** that store the role (user/assistant/system/tool), content, serialized tool calls as JSON, and token count for billing.
 
-On the financial side, **subscriptions** tracks Stripe subscription lifecycle (active, past_due, canceled) with period boundaries and cancellation flags. The **credits** table maintains per-user credit balance with `planId` as the source of truth — updated exclusively by Stripe webhooks to prevent desynchronization. The **usage_log** table provides a granular audit trail of every operation with token counts and credit consumption for analytics and dispute resolution.
+On the financial side, **subscriptions** tracks Stripe subscription lifecycle (active, past_due, canceled) with period boundaries and cancellation flags. The **credits** table maintains per-user credit balance with `planId` as the source of truth — updated exclusively by Stripe webhooks to prevent desynchronization. The **usage_log** table provides a granular audit trail of every operation with token counts and credit consumption.
+
+The **usage_events** table provides tamper-resistant usage counters that are independent of conversation/message deletion. Events are recorded for each message sent and conversation started, ensuring that deleting chat history does not reset consumption limits. This table is the authoritative source for plan limit enforcement.
 
 ### 5.2 Index Strategy
 
@@ -164,6 +165,7 @@ On the financial side, **subscriptions** tracks Stripe subscription lifecycle (a
 | subscriptions | COMPOSITE | userId, status | Active subscription lookup |
 | credits | UNIQUE | userId | Single credit record per user |
 | usage_log | COMPOSITE | userId, createdAt | Usage history with date filtering |
+| usage_events | COMPOSITE | userId, eventType, createdAt | Usage counter queries with date filtering |
 
 ---
 
@@ -182,9 +184,13 @@ The billing system follows the **Stripe Checkout Session** pattern. The frontend
 | Event | Backend Action |
 |---|---|
 | `checkout.session.completed` | Create/update subscription, reset credits to plan allocation, link Stripe customer ID |
-| `customer.subscription.updated` | Sync subscription status (active, past_due, canceled) |
-| `customer.subscription.deleted` | Downgrade to free tier, reset credits to 50 |
-| `invoice.payment_failed` | Mark subscription as `past_due`, notify owner |
+| `customer.subscription.created` | Sync new subscription, resolve plan by price amount |
+| `customer.subscription.updated` | Sync subscription status, handle upgrade/downgrade between plans |
+| `customer.subscription.deleted` | Downgrade to free tier, reset credits to 50, record account event |
+| `invoice.payment_succeeded` | Confirm payment, update subscription period |
+| `invoice.payment_failed` | Mark subscription as `past_due`, record account event |
+
+Plan resolution uses a multi-strategy approach: first by Stripe Price ID cache, then by price amount matching (`getPlanByPriceAmount`), ensuring resilience against Stripe configuration changes. The webhook handler is idempotent — duplicate events are handled via `upsertSubscription` with `onDuplicateKeyUpdate`.
 
 ### 6.3 Three-Layer Consumption Control
 
@@ -192,7 +198,7 @@ The credit system implements defense-in-depth with three independent enforcement
 
 **Layer 1 — Rate Limiting (anti-flood):** An in-memory `Map<userId, timestamp[]>` tracks message timestamps per user. Requests exceeding 20/minute receive a `429 Too Many Requests` response. The map is garbage-collected every 5 minutes to prevent memory leaks. Admin users bypass this layer.
 
-**Layer 2 — Plan Quotas (business logic):** Before each LLM invocation, the system queries `getTodayMessageCount()` and `getMonthConversationCount()` against the user's plan limits. This prevents unnecessary API costs by rejecting messages before they reach the LLM. Admin users bypass this layer.
+**Layer 2 — Plan Quotas (business logic):** Before each LLM invocation, the system queries daily message count and monthly conversation count from `usage_events` against the user's plan limits. This prevents unnecessary API costs by rejecting messages before they reach the LLM. Admin users bypass this layer.
 
 **Layer 3 — Credit Debit (metering):** After each successful response, token consumption is estimated (~4 characters per token + 50 tokens per tool call) and debited from the user's credit balance. The debit is logged to `usage_log` for audit purposes.
 
@@ -200,7 +206,7 @@ The credit system implements defense-in-depth with three independent enforcement
 
 ## 7. Security Architecture
 
-The codebase has passed a full production security audit (see [SECURITY_AUDIT.md](SECURITY_AUDIT.md)):
+The codebase has passed a production security audit (see [SECURITY_AUDIT.md](SECURITY_AUDIT.md)):
 
 **Secret Management:** All sensitive values are injected via environment variables at runtime. The `.gitignore` excludes `.env*` files. Frontend code only accesses `VITE_`-prefixed variables (public keys by design). Server-side secrets (`STRIPE_SECRET_KEY`, `JWT_SECRET`, `DATABASE_URL`, `BUILT_IN_FORGE_API_KEY`) never reach the client bundle.
 
@@ -208,11 +214,39 @@ The codebase has passed a full production security audit (see [SECURITY_AUDIT.md
 
 **Webhook Integrity:** Stripe webhooks are verified using `stripe.webhooks.constructEvent()` with the webhook signing secret before any event processing.
 
-**Code Execution Sandbox:** The `execute_code` tool runs user-provided code in `/tmp` with a 30-second timeout and 50KB output limit. For self-hosted deployments, Docker-based sandboxing is recommended (see [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)).
+**Code Execution:** The `execute_code` tool runs user-provided code in `/tmp` with a 30-second timeout and 50KB output limit. The deployment platform provides additional process-level isolation. A dedicated sandbox environment (Docker-based) is planned for future versions to provide stronger isolation guarantees.
+
+**HTTPS Only:** All communications are encrypted in transit.
 
 ---
 
-## 8. Architectural Decisions Record (ADR)
+## 8. Integrations
+
+### 8.1 Active Integrations (Production)
+
+| Integration | Purpose | Implementation |
+|---|---|---|
+| **Stripe** | Subscriptions, checkout, webhooks, customer portal | `server/stripeRoutes.ts` |
+| **Manus Forge API** | LLM inference (Gemini 2.5 Flash) | `server/_core/llm.ts` |
+| **Manus OAuth** | User authentication | `server/_core/oauth.ts` |
+| **S3-compatible storage** | File and artifact storage | `server/storage.ts` |
+| **Manus Image Service** | AI image generation | `server/_core/imageGeneration.ts` |
+
+### 8.2 Planned Integrations (Roadmap)
+
+The following integrations are part of the product roadmap. Scaffold code exists in `server/integrations/` as a preparatory structure, but these connectors are **not active in production flows**:
+
+| Integration | Purpose | Target Version |
+|---|---|---|
+| **Zabbix** | Infrastructure monitoring — pull host status, alerts, and metrics into agent context | v5.0 |
+| **Wazuh** | SIEM — security event correlation, threat detection alerts | v5.0 |
+| **Prometheus/Grafana** | Observability — metrics queries, dashboard data for infrastructure analysis | v5.0 |
+
+When activated, these connectors will allow the agent to query real monitoring data during the reasoning loop, enabling diagnostics grounded in actual infrastructure state rather than relying solely on external probes (DNS, SSL, HTTP checks).
+
+---
+
+## 9. Architectural Decisions Record (ADR)
 
 ### ADR-001: tRPC over REST
 
@@ -226,42 +260,51 @@ The codebase has passed a full production security audit (see [SECURITY_AUDIT.md
 
 **Context:** The ORM must generate predictable SQL and support pure SQL migrations for production database management. **Decision:** Use Drizzle ORM. **Consequence:** SQL-like query API, lighter runtime (~50KB vs Prisma's ~2MB), pure `.sql` migration files that can be reviewed and applied manually. Trade-off: Smaller ecosystem and community compared to Prisma.
 
-### ADR-004: Hybrid LLM Architecture
+### ADR-004: Cloud-First LLM with On-Premise Roadmap
 
-**Context:** General-purpose cloud LLMs lack domain-specific knowledge for deep network analysis. **Decision:** Implement a routing layer that dispatches to cloud LLM gateway (Manus Forge API) for general queries and on-premise GPU cluster (Qwen2.5-72B-Infra) for specialized infrastructure analysis. **Consequence:** Best-of-both-worlds: low latency and cost for simple queries, deep domain expertise for complex analysis. Trade-off: Operational complexity of maintaining on-premise GPU infrastructure.
+**Context:** The product needs reliable LLM inference from day one, while building toward domain-specialized models that require dedicated hardware. **Decision:** Launch with Manus Forge API (managed cloud inference) as the sole LLM provider. Design the LLM wrapper (`server/_core/llm.ts`) to be provider-agnostic, enabling future addition of on-premise inference endpoints without changes to the agent loop or tool calling logic. **Consequence:** Fast time-to-market with production-grade inference. The architecture supports adding local model endpoints when the on-premise infrastructure is ready. Trade-off: Current dependency on a single external API provider for all inference.
 
 ### ADR-005: Credit-Based Billing over Per-Request Pricing
 
 **Context:** Users need predictable monthly costs while the platform needs to prevent abuse. **Decision:** Implement a credit system with monthly allocation per plan tier. **Consequence:** Users get a clear budget, the platform has three layers of consumption control, and the billing model is simple to communicate. Trade-off: Credit estimation is approximate (~4 chars/token), which may slightly over- or under-charge individual requests.
 
+### ADR-006: Independent Usage Counters (usage_events)
+
+**Context:** Plan limit enforcement based on counting conversations/messages in the main tables is vulnerable to manipulation — users could delete conversations to reset their counters. **Decision:** Implement a separate `usage_events` table that records each message sent and conversation started as immutable events. Plan limits are enforced against this table, not against the conversation/message tables. **Consequence:** Deleting chat history does not affect usage limits. Counters are tamper-resistant and provide an accurate audit trail. Trade-off: Additional write per message and slightly more complex query logic.
+
 ---
 
-## 9. Deployment Topology
+## 10. Deployment Topology
 
 ### Current (Production)
 
 ```
-[Cloudflare CDN] → [debuga.ai] → [Cloud Platform]
-                                    ├── Express Server (Node.js)
-                                    ├── TiDB Database
-                                    ├── S3 Storage
-                                    └── Forge API (Multi-Model Gateway)
+[Cloudflare CDN] → [debuga.ai / www.debuga.ai]
+                        │
+                        ▼
+                  [Cloud Platform]
+                    ├── Express Server (Node.js)
+                    ├── TiDB Database
+                    ├── S3 Storage
+                    └── Manus Forge API (LLM Inference)
 ```
 
-### Self-Hosted (Future)
+### Planned: Self-Hosted / Enterprise (Roadmap v7.0)
 
 ```
-[Cloudflare CDN] → [debuga.ai] → [Docker Compose]
-                                    ├── app (Node.js container)
-                                    ├── db (MySQL 8.0)
-                                    ├── redis (session cache)
-                                    └── sandbox (code execution)
-                                  [On-Premise GPU Cluster]
-                                    ├── vLLM / TGI inference server
-                                    └── 16x RTX 3090 (3 servers)
+[Reverse Proxy] → [debuga.ai]
+                      │
+                      ▼
+                [Docker Compose]
+                  ├── app (Node.js container)
+                  ├── db (MySQL 8.0)
+                  ├── sandbox (isolated code execution)
+                  └── [Optional: On-Premise GPU]
+                        ├── vLLM / TGI inference server
+                        └── Fine-tuned models (Qwen, Mistral, Llama)
 ```
 
-Self-hosting documentation is available upon request for Enterprise customers.
+The self-hosted deployment is planned for Enterprise customers who require data sovereignty and on-premise inference. Documentation will be published when this capability reaches production readiness.
 
 ---
 
