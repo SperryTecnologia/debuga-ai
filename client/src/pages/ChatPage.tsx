@@ -556,56 +556,74 @@ function StepIndicator({ step }: { step: StepEvent }) {
   );
 }
 
-// requiredPlan: minimum plan needed to use the card's tools
-// "free" = chat only (no tools), "starter" = basic tools, "pro" = all tools
-const SUGGESTED_PROMPTS: Array<{
+// Card modes:
+// - "demo": controlled example available to Free users (safe targets, pre-defined prompts)
+// - "full": full access available to Starter/Pro users (custom targets)
+// requiredPlanForFull: minimum plan needed for full/custom usage
+type SuggestedPrompt = {
   icon: LucideIcon;
   title: string;
-  prompt: string;
-  requiredPlan: "free" | "starter" | "pro";
+  demoPrompt: string;
+  demoBadge: string;
+  fullPromptHint: string;
+  requiredPlanForFull: "starter" | "pro";
   toolsUsed: string[];
-}> = [
+};
+
+const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
+  {
+    icon: Server,
+    title: "Diagnóstico DNS",
+    demoPrompt: "Faça um diagnóstico DNS do domínio github.com consultando registros A, MX, TXT e NS. Execute cada consulta separadamente se necessário e apresente um resumo objetivo.",
+    demoBadge: "Demo",
+    fullPromptHint: "Nos planos Starter e Pro, use qualquer domínio.",
+    requiredPlanForFull: "starter",
+    toolsUsed: ["dns_lookup"],
+  },
   {
     icon: Globe,
     title: "Navegar em Site",
-    prompt: "Acesse https://example.com, leia o conteúdo principal e resuma o que o site apresenta.",
-    requiredPlan: "starter",
+    demoPrompt: "Acesse https://example.com, leia o conteúdo principal e resuma o que o site apresenta.",
+    demoBadge: "Demo",
+    fullPromptHint: "Nos planos Starter e Pro, navegue em qualquer URL.",
+    requiredPlanForFull: "starter",
     toolsUsed: ["web_fetch"],
   },
   {
     icon: Shield,
     title: "Auditoria de Segurança",
-    prompt: "Faça uma auditoria passiva e segura de https://example.com verificando HTTPS, certificado SSL, headers de segurança e DNS público. Não execute scan invasivo.",
-    requiredPlan: "starter",
+    demoPrompt: "Faça uma auditoria passiva e segura de https://example.com verificando HTTPS, certificado SSL, headers de segurança e DNS público. Não execute scan invasivo.",
+    demoBadge: "Demo",
+    fullPromptHint: "Nos planos Starter e Pro, audite qualquer domínio.",
+    requiredPlanForFull: "starter",
     toolsUsed: ["ssl_check", "http_check", "dns_lookup"],
-  },
-  {
-    icon: Terminal,
-    title: "Sandbox de Código",
-    prompt: "Execute um script Python seguro que valida se '192.168.0.1' é um endereço IPv4 válido usando a biblioteca padrão ipaddress e mostre informações sobre a rede.",
-    requiredPlan: "pro",
-    toolsUsed: ["execute_code"],
-  },
-  {
-    icon: Network,
-    title: "Scan de Portas",
-    prompt: "Verifique de forma segura apenas as portas 80 e 443 de example.com e explique o resultado.",
-    requiredPlan: "pro",
-    toolsUsed: ["port_scan"],
-  },
-  {
-    icon: Server,
-    title: "Diagnóstico DNS",
-    prompt: "Faça um diagnóstico DNS do domínio github.com consultando registros A, MX, TXT e NS. Execute cada consulta separadamente se necessário e apresente um resumo objetivo.",
-    requiredPlan: "starter",
-    toolsUsed: ["dns_lookup"],
   },
   {
     icon: ImageIcon,
     title: "Gerar Diagrama",
-    prompt: "Gere um diagrama simples de arquitetura com usuário, firewall, servidor web, banco de dados e serviço de monitoramento.",
-    requiredPlan: "pro",
+    demoPrompt: "Gere um diagrama simples de arquitetura com usuário, firewall, servidor web, banco de dados e serviço de monitoramento.",
+    demoBadge: "Demo",
+    fullPromptHint: "No plano Pro, crie diagramas personalizados.",
+    requiredPlanForFull: "pro",
     toolsUsed: ["generate_image"],
+  },
+  {
+    icon: Network,
+    title: "Scan de Portas",
+    demoPrompt: "Verifique de forma segura apenas as portas 80 e 443 de example.com e explique o resultado.",
+    demoBadge: "Demo segura",
+    fullPromptHint: "No plano Pro, escaneie qualquer alvo e portas.",
+    requiredPlanForFull: "pro",
+    toolsUsed: ["port_scan"],
+  },
+  {
+    icon: Terminal,
+    title: "Sandbox de Código",
+    demoPrompt: "Execute um script Python seguro que valida se '192.168.0.1' é um endereço IPv4 válido usando a biblioteca padrão ipaddress e mostre informações sobre a rede.",
+    demoBadge: "Demo segura",
+    fullPromptHint: "No plano Pro, execute código personalizado.",
+    requiredPlanForFull: "pro",
+    toolsUsed: ["execute_code"],
   },
 ];
 
@@ -626,6 +644,7 @@ export default function ChatPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; message: string; planId: string } | null>(null);
+  const [showDemoUpgradeCTA, setShowDemoUpgradeCTA] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
   const [searchQuery, setSearchQuery] = useState("");
@@ -1778,7 +1797,7 @@ export default function ChatPage() {
                       Olá! Sou o <span className="terminal-glow text-primary">debuga.ai</span>
                     </h2>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Seu agente autônomo de TI, Segurança e DevOps. Navego em sites, executo código em sandbox, escaneio portas, verifico SSL/DNS e muito mais.
+                      Comece com exemplos guiados e veja o debuga.ai em ação. Faça upgrade para usar seus próprios domínios, servidores e ferramentas avançadas.
                     </p>
                   </div>
                 </div>
@@ -1787,51 +1806,38 @@ export default function ChatPage() {
                     const userPlan = usageQuery.data?.planId || "free";
                     const planHierarchy: Record<string, number> = { free: 0, starter: 1, pro: 2, enterprise: 3 };
                     const userLevel = planHierarchy[userPlan] ?? 0;
-                    const requiredLevel = planHierarchy[item.requiredPlan] ?? 0;
-                    const isLocked = userLevel < requiredLevel;
-                    const requiredPlanLabel = item.requiredPlan === "starter" ? "Starter" : item.requiredPlan === "pro" ? "Pro" : "";
+                    const requiredLevel = planHierarchy[item.requiredPlanForFull] ?? 0;
+                    const isDemoMode = userLevel < requiredLevel;
 
                     return (
                       <button
                         key={i}
                         onClick={() => {
-                          if (isLocked) {
-                            setUpgradeModal({
-                              open: true,
-                              message: `A ferramenta "${item.title}" requer o plano ${requiredPlanLabel} ou superior. Faça upgrade para usar este recurso.`,
-                              planId: item.requiredPlan,
-                            });
-                          } else {
-                            handleSendMessage(item.prompt);
+                          handleSendMessage(item.demoPrompt);
+                          if (isDemoMode) {
+                            setTimeout(() => setShowDemoUpgradeCTA(true), 2000);
                           }
                         }}
                         disabled={isStreaming}
-                        className={cn(
-                          "group flex items-start gap-3 p-4 rounded-xl border transition-all text-left relative",
-                          isLocked
-                            ? "border-border/50 bg-card/50 opacity-75 hover:opacity-90 hover:border-primary/20 cursor-pointer"
-                            : "border-border bg-card hover:bg-accent hover:border-primary/30"
-                        )}
+                        className="group flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left relative"
                       >
-                        <div className={cn(
-                          "p-2 rounded-lg shrink-0 transition-colors",
-                          isLocked
-                            ? "bg-muted text-muted-foreground"
-                            : "bg-primary/10 text-primary group-hover:bg-primary/20"
-                        )}>
+                        <div className="p-2 rounded-lg shrink-0 transition-colors bg-primary/10 text-primary group-hover:bg-primary/20">
                           <item.icon className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-medium font-mono text-foreground">{item.title}</p>
-                            {isLocked && (
-                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 whitespace-nowrap flex items-center gap-1">
-                                <Lock className="w-2.5 h-2.5" />
-                                {requiredPlanLabel}
+                            {isDemoMode && (
+                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 whitespace-nowrap flex items-center gap-1">
+                                <Activity className="w-2.5 h-2.5" />
+                                {item.demoBadge}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.prompt}</p>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.demoPrompt}</p>
+                          {isDemoMode && (
+                            <p className="text-[10px] text-primary/60 mt-1.5 font-mono">{item.fullPromptHint}</p>
+                          )}
                         </div>
                       </button>
                     );
@@ -2096,18 +2102,9 @@ export default function ChatPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-3">
-            {upgradeModal?.planId === "free" && (
-              <>
-                <p className="text-sm text-muted-foreground">
-                  Faça upgrade para o <strong className="text-foreground">Starter</strong> (R$49,90/mês) ou <strong className="text-foreground">Pro</strong> (R$149,90/mês) para continuar usando o debuga.ai.
-                </p>
-              </>
-            )}
-            {upgradeModal?.planId === "starter" && (
-              <p className="text-sm text-muted-foreground">
-                Faça upgrade para o <strong className="text-foreground">Pro</strong> (R$149,90/mês) para mensagens e conversas ilimitadas, ferramentas avançadas e muito mais.
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              Faça upgrade para continuar usando o debuga.ai com todos os recursos.
+            </p>
           </div>
           <DialogFooter className="flex gap-2 sm:gap-2">
             <Button variant="ghost" onClick={() => setUpgradeModal(null)} className="font-mono text-sm">
@@ -2116,6 +2113,30 @@ export default function ChatPage() {
             <Button onClick={() => { setUpgradeModal(null); setLocation("/pricing"); }} className="font-mono text-sm gap-2">
               <Crown className="w-4 h-4" />
               Ver Planos
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Demo Upgrade CTA */}
+      <Dialog open={showDemoUpgradeCTA} onOpenChange={setShowDemoUpgradeCTA}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <ArrowUpCircle className="w-5 h-5 text-primary" />
+              Gostou do resultado?
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
+              Faça upgrade para usar com seus próprios domínios, servidores e scripts.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:gap-2">
+            <Button variant="ghost" onClick={() => setShowDemoUpgradeCTA(false)} className="font-mono text-sm">
+              Continuar testando
+            </Button>
+            <Button onClick={() => { setShowDemoUpgradeCTA(false); setLocation("/pricing"); }} className="font-mono text-sm gap-2">
+              <Crown className="w-4 h-4" />
+              Fazer Upgrade
             </Button>
           </DialogFooter>
         </DialogContent>
