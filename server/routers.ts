@@ -24,6 +24,7 @@ import {
   resetCreditsIfNeeded,
   recordMessageSent,
   recordConversationStarted,
+  getRecentActivity,
 } from "./db";
 import { PLANS } from "./products";
 import { invokeLLM } from "./_core/llm";
@@ -149,7 +150,36 @@ export const appRouter = router({
     usageHistory: protectedProcedure
       .input(z.object({ limit: z.number().min(1).max(100).optional() }))
       .query(async ({ ctx, input }) => {
-        return getUsageLogs(ctx.user.id, input.limit || 50);
+        const limit = input.limit || 30;
+        // Primary: usage_events (real, tamper-proof data)
+        const activity = await getRecentActivity(ctx.user.id, limit);
+        if (activity.length > 0) {
+          return activity.map((e) => ({
+            id: e.id,
+            eventType: e.eventType,
+            conversationId: e.conversationId,
+            periodKey: e.periodKey,
+            createdAt: e.createdAt,
+            // Friendly descriptions
+            description: e.eventType === "message_sent"
+              ? "Mensagem enviada"
+              : e.eventType === "conversation_started"
+              ? "Nova conversa iniciada"
+              : e.eventType === "plan_upgraded"
+              ? "Plano atualizado"
+              : e.eventType === "plan_downgraded"
+              ? "Plano rebaixado para Gratuito"
+              : e.eventType === "subscription_activated"
+              ? "Assinatura ativada"
+              : e.eventType === "subscription_canceled"
+              ? "Assinatura cancelada"
+              : e.eventType,
+            toolName: null,
+            tokensUsed: 0,
+          }));
+        }
+        // Fallback: usage_log (legacy, may be empty if streaming failed)
+        return getUsageLogs(ctx.user.id, limit);
       }),
 
     // Get user profile info

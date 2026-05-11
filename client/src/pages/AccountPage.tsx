@@ -401,12 +401,12 @@ export default function AccountPage() {
                 </div>
               </motion.div>
 
-              {/* Usage History */}
+              {/* Atividade Recente */}
               <motion.div variants={fadeInUp}>
                 <div className="rounded-2xl border border-border/50 bg-card/30 p-6">
                   <div className="flex items-center gap-3 mb-5">
                     <TrendingUp className="w-5 h-5 text-primary" />
-                    <h2 className="text-lg font-bold">Histórico de Uso</h2>
+                    <h2 className="text-lg font-bold">Atividade Recente</h2>
                   </div>
 
                   {historyLoading ? (
@@ -414,15 +414,30 @@ export default function AccountPage() {
                       <Loader2 className="w-6 h-6 animate-spin text-primary" />
                     </div>
                   ) : usageHistory && usageHistory.length > 0 ? (
-                    <div className="space-y-2">
-                      {usageHistory.map((log) => (
+                    <div className="space-y-1">
+                      {usageHistory.map((log: any) => (
                         <div
                           key={log.id}
                           className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-muted/30 transition-colors"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                              {log.toolName ? (
+                            <div className={cn(
+                              "w-8 h-8 rounded-lg flex items-center justify-center",
+                              log.eventType === "message_sent" ? "bg-blue-500/10" :
+                              log.eventType === "conversation_started" ? "bg-emerald-500/10" :
+                              log.eventType === "subscription_activated" || log.eventType === "plan_upgraded" ? "bg-amber-500/10" :
+                              log.eventType === "subscription_canceled" || log.eventType === "plan_downgraded" ? "bg-red-500/10" :
+                              "bg-muted"
+                            )}>
+                              {log.eventType === "message_sent" ? (
+                                <MessageSquare className="w-4 h-4 text-blue-400" />
+                              ) : log.eventType === "conversation_started" ? (
+                                <Zap className="w-4 h-4 text-emerald-400" />
+                              ) : log.eventType === "subscription_activated" || log.eventType === "plan_upgraded" ? (
+                                <Crown className="w-4 h-4 text-amber-400" />
+                              ) : log.eventType === "subscription_canceled" || log.eventType === "plan_downgraded" ? (
+                                <ArrowLeft className="w-4 h-4 text-red-400" />
+                              ) : log.toolName ? (
                                 <Activity className="w-4 h-4 text-muted-foreground" />
                               ) : (
                                 <MessageSquare className="w-4 h-4 text-muted-foreground" />
@@ -430,16 +445,27 @@ export default function AccountPage() {
                             </div>
                             <div>
                               <p className="text-sm font-medium">
-                                {log.description || log.toolName || "Interação com IA"}
+                                {log.description || log.eventType || "Interação com IA"}
                               </p>
                               <p className="text-[10px] text-muted-foreground font-mono">
                                 {formatDate(log.createdAt)}
                               </p>
                             </div>
                           </div>
-                          {log.tokensUsed > 0 && (
-                            <span className="text-xs font-mono text-muted-foreground">
-                              {log.tokensUsed.toLocaleString("pt-BR")} tokens
+                          {log.eventType && (
+                            <span className={cn(
+                              "text-[10px] font-mono px-2 py-0.5 rounded-full",
+                              log.eventType === "message_sent" ? "bg-blue-500/10 text-blue-400" :
+                              log.eventType === "conversation_started" ? "bg-emerald-500/10 text-emerald-400" :
+                              log.eventType === "subscription_activated" || log.eventType === "plan_upgraded" ? "bg-amber-500/10 text-amber-400" :
+                              "bg-muted text-muted-foreground"
+                            )}>
+                              {log.eventType === "message_sent" ? "msg" :
+                               log.eventType === "conversation_started" ? "conv" :
+                               log.eventType === "subscription_activated" ? "upgrade" :
+                               log.eventType === "plan_downgraded" ? "downgrade" :
+                               log.eventType === "subscription_canceled" ? "cancel" :
+                               log.eventType}
                             </span>
                           )}
                         </div>
@@ -449,10 +475,10 @@ export default function AccountPage() {
                     <div className="text-center py-8">
                       <FolderOpen className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                       <p className="text-sm text-muted-foreground">
-                        Nenhum registro de uso ainda
+                        Nenhum registro de atividade ainda
                       </p>
                       <p className="text-xs text-muted-foreground/60 mt-1">
-                        Comece a usar o debuga.ai para ver seu histórico aqui
+                        Comece a usar o debuga.ai para ver sua atividade aqui
                       </p>
                     </div>
                   )}

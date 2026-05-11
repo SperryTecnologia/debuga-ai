@@ -529,6 +529,61 @@ export async function getUsageLogs(userId: number, limit = 50) {
     .limit(limit);
 }
 
+/**
+ * Get recent activity from usage_events table.
+ * Returns real usage data that cannot be manipulated by deleting conversations.
+ * Includes: messages sent, conversations started, and account events (plan changes, etc.)
+ */
+export async function getRecentActivity(userId: number, limit = 30) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const events = await db
+    .select()
+    .from(usageEvents)
+    .where(eq(usageEvents.userId, userId))
+    .orderBy(desc(usageEvents.createdAt))
+    .limit(limit);
+
+  return events.map((e) => ({
+    id: e.id,
+    eventType: e.eventType,
+    conversationId: e.conversationId,
+    periodKey: e.periodKey,
+    createdAt: e.createdAt,
+  }));
+}
+
+/**
+ * Record an account-level event (plan change, subscription activated/canceled, etc.)
+ * These events appear in the user's activity history.
+ */
+export async function recordAccountEvent(
+  userId: number,
+  eventType: string,
+  description?: string
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const now = new Date();
+  const periodKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  await db.insert(usageEvents).values({
+    userId,
+    eventType,
+    periodKey,
+    conversationId: null,
+  });
+
+  // Also log in usage_log for richer description
+  await db.insert(usageLog).values({
+    userId,
+    tokensUsed: 0,
+    description: description || eventType,
+  });
+}
+
 export async function getUsageStats(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

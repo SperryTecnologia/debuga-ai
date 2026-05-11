@@ -10,6 +10,7 @@ import {
   getActiveSubscription,
   updateCreditsPlan,
   getOrCreateCredits,
+  recordAccountEvent,
 } from "./db";
 import { PLANS, getPlanByPriceId, getPlanByPriceAmount, cachePriceIdToPlan } from "./products";
 
@@ -171,6 +172,8 @@ export function registerStripeRoutes(app: Express) {
               await getOrCreateCredits(uid, resolvedPlanId);
               await updateCreditsPlan(uid, resolvedPlanId);
               console.log(`[Stripe Webhook] User ${uid} upgraded to plan: ${resolvedPlanId}`);
+              // Record account event for activity history
+              await recordAccountEvent(uid, "subscription_activated", `Assinatura ${resolvedPlanId} ativada`);
             }
             break;
           }
@@ -233,6 +236,7 @@ export function registerStripeRoutes(app: Express) {
               } else if (sub.status === "canceled" || sub.status === "unpaid" || sub.status === "incomplete_expired") {
                 // Downgrade to free
                 await updateCreditsPlan(user.id, "free");
+                await recordAccountEvent(user.id, "plan_downgraded", `Plano rebaixado para Gratuito (${sub.status})`);
                 console.log(`[Stripe Webhook] User ${user.id} downgraded to free (status: ${sub.status})`);
               }
               // past_due: keep current plan but mark subscription status
@@ -249,6 +253,7 @@ export function registerStripeRoutes(app: Express) {
             const deletedUser = await getUserByStripeCustomerId(deletedCustomerId);
             if (deletedUser) {
               await updateCreditsPlan(deletedUser.id, "free");
+              await recordAccountEvent(deletedUser.id, "subscription_canceled", "Assinatura cancelada");
               console.log(`[Stripe Webhook] User ${deletedUser.id} downgraded to free (subscription deleted)`);
             }
             break;

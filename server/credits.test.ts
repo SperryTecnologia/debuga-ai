@@ -48,7 +48,8 @@ describe("account.credits", () => {
   });
 
   it("returns free plan for users without subscription", async () => {
-    const ctx = createAuthContext();
+    // Use a userId that has no subscription in the database
+    const ctx = createAuthContext({ id: 99999 });
     const caller = appRouter.createCaller(ctx);
 
     const result = await caller.account.credits();
@@ -119,7 +120,8 @@ describe("db helpers - credits", () => {
   it("getOrCreateCredits creates credits for new user", async () => {
     const { getOrCreateCredits } = await import("./db");
 
-    const creds = await getOrCreateCredits(1, "free");
+    // Use a fresh userId to avoid conflicts with real data
+    const creds = await getOrCreateCredits(99998, "free");
     expect(creds).toBeDefined();
     expect(creds!.planId).toBe("free");
     expect(creds!.totalCredits).toBeGreaterThanOrEqual(0);
@@ -164,7 +166,8 @@ describe("account.usage", () => {
   });
 
   it("returns free plan for user without subscription", async () => {
-    const ctx = createAuthContext();
+    // Use a userId that has no subscription in the database
+    const ctx = createAuthContext({ id: 99997 });
     const caller = appRouter.createCaller(ctx);
 
     const result = await caller.account.usage();
