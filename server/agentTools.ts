@@ -698,19 +698,196 @@ export type ToolResult = {
   result: any;
 };
 
+// ── Argument validation helpers ──
+const TOOL_REQUIRED_ARGS: Record<string, string[]> = {
+  generate_image: ["prompt"],
+  execute_code: ["code"],
+  dns_lookup: ["domain"],
+  ssl_check: ["hostname"],
+  http_check: ["url"],
+  whois_lookup: ["domain"],
+  web_fetch: ["url"],
+  port_scan: ["host"],
+};
+
+const TOOL_DEFAULTS: Record<string, Record<string, any>> = {
+  dns_lookup: { recordType: "ALL" },
+  ssl_check: { port: 443 },
+  http_check: {},
+  web_fetch: { extract: "full" },
+  port_scan: { ports: "80,443" },
+  execute_code: { language: "python" },
+  generate_image: {},
+  whois_lookup: {},
+};
+
+const FRIENDLY_TOOL_NAMES: Record<string, string> = {
+  generate_image: "Geração de Imagem",
+  execute_code: "Execução de Código",
+  dns_lookup: "Consulta DNS",
+  ssl_check: "Verificação SSL",
+  http_check: "Verificação HTTP",
+  whois_lookup: "Consulta WHOIS",
+  web_fetch: "Navegação Web",
+  port_scan: "Scan de Portas",
+};
+
+function tryParseJSON(str: string): any | null {
+  // Try normal parse first
+  try {
+    return JSON.parse(str);
+  } catch {
+    // noop
+  }
+  // Try to repair common LLM JSON issues: trailing commas, unquoted keys, etc.
+  try {
+    // Remove trailing commas before } or ]
+    const cleaned = str.replace(/,\s*([}\]])/g, "$1");
+    return JSON.parse(cleaned);
+  } catch {
+    // noop
+  }
+  // Try wrapping in braces if it looks like key-value pairs
+  try {
+    if (!str.trim().startsWith("{")) {
+      return JSON.parse(`{${str}}`);
+    }
+  } catch {
+    // noop
+  }
+  return null;
+}
+
+function validateDomain(domain: string): string | null {
+  const cleaned = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim();
+  if (!cleaned || cleaned.length < 3 || !cleaned.includes(".")) {
+    return null;
+  }
+  return cleaned;
+}
+
+function validateUrl(url: string): string | null {
+  try {
+    const u = new URL(url.startsWith("http") ? url : `https://${url}`);
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
+function validateToolArgs(name: string, args: any): { valid: boolean; args: any; error?: string } {
+  const required = TOOL_REQUIRED_ARGS[name] || [];
+  const defaults = TOOL_DEFAULTS[name] || {};
+  const merged = { ...defaults, ...args };
+
+  // Check required arguments
+  for (const key of required) {
+    if (!merged[key] || (typeof merged[key] === "string" && merged[key].trim() === "")) {
+      const friendlyName = FRIENDLY_TOOL_NAMES[name] || name;
+      return {
+        valid: false,
+        args: merged,
+        error: `A ferramenta ${friendlyName} precisa do parâmetro "${key}" para funcionar. Tente novamente informando os dados necessários.`,
+      };
+    }
+  }
+
+  // Validate domain-based arguments
+  if (merged.domain) {
+    const valid = validateDomain(merged.domain);
+    if (!valid) {
+      return {
+        valid: false,
+        args: merged,
+        error: `O domínio "${merged.domain}" não parece ser válido. Informe um domínio como "example.com" ou "github.com".`,
+      };
+    }
+    merged.domain = valid;
+  }
+
+  if (merged.hostname) {
+    const valid = validateDomain(merged.hostname);
+    if (!valid) {
+      return {
+        valid: false,
+        args: merged,
+        error: `O hostname "${merged.hostname}" não parece ser válido. Informe um hostname como "example.com".`,
+      };
+    }
+    merged.hostname = valid;
+  }
+
+  if (merged.host) {
+    const valid = validateDomain(merged.host);
+    if (!valid) {
+      return {
+        valid: false,
+        args: merged,
+        error: `O host "${merged.host}" não parece ser válido. Informe um host como "example.com" ou "192.168.1.1".`,
+      };
+    }
+    merged.host = valid;
+  }
+
+  // Validate URL-based arguments
+  if (merged.url) {
+    const valid = validateUrl(merged.url);
+    if (!valid) {
+      return {
+        valid: false,
+        args: merged,
+        error: `A URL "${merged.url}" não é válida. Informe uma URL completa como "https://example.com".`,
+      };
+    }
+    merged.url = valid;
+  }
+
+  // Validate DNS record type
+  if (name === "dns_lookup" && merged.recordType) {
+    const validTypes = ["A", "AAAA", "MX", "TXT", "NS", "CNAME", "SOA", "ALL"];
+    if (!validTypes.includes(merged.recordType.toUpperCase())) {
+      merged.recordType = "ALL"; // Default to ALL if invalid
+    } else {
+      merged.recordType = merged.recordType.toUpperCase();
+    }
+  }
+
+  return { valid: true, args: merged };
+}
+
 export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
   const { name, arguments: argsStr } = toolCall.function;
+  const friendlyName = FRIENDLY_TOOL_NAMES[name] || name;
   let args: any;
 
-  try {
-    args = JSON.parse(argsStr);
-  } catch {
+  // Parse arguments with repair attempts
+  args = tryParseJSON(argsStr);
+  if (!args) {
+    console.error(`[Tool] JSON parse failed for ${name}:`, argsStr);
     return {
       toolCallId: toolCall.id,
       name,
-      result: { error: "Argumentos inválidos" },
+      result: {
+        error: `Não foi possível processar os parâmetros da ferramenta ${friendlyName}. Tente reformular sua solicitação.`,
+        _internal: "JSON parse failed",
+      },
     };
   }
+
+  // Validate required arguments and sanitize inputs
+  const validation = validateToolArgs(name, args);
+  if (!validation.valid) {
+    console.warn(`[Tool] Validation failed for ${name}:`, validation.error);
+    return {
+      toolCallId: toolCall.id,
+      name,
+      result: {
+        error: validation.error,
+        _internal: "Validation failed",
+      },
+    };
+  }
+  args = validation.args;
 
   try {
     let result: any;
@@ -741,15 +918,37 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
         result = await executePortScan(args);
         break;
       default:
-        result = { error: `Ferramenta desconhecida: ${name}` };
+        result = { error: `Ferramenta "${name}" não está disponível. Verifique as ferramentas disponíveis no seu plano.` };
     }
 
     return { toolCallId: toolCall.id, name, result };
   } catch (error: any) {
+    // Friendly error messages for common failure scenarios
+    const msg = error.message || "";
+    let friendlyError: string;
+
+    if (msg.includes("ETIMEDOUT") || msg.includes("ENETUNREACH") || msg.includes("timeout") || msg.includes("Timeout")) {
+      friendlyError = `O alvo externo não respondeu dentro do tempo limite. Isso pode ocorrer por instabilidade, bloqueio ou lentidão do serviço. Tente novamente ou informe outro domínio.`;
+    } else if (msg.includes("ENOTFOUND") || msg.includes("getaddrinfo")) {
+      friendlyError = `Não foi possível resolver o domínio informado. Verifique se o domínio está correto e tente novamente.`;
+    } else if (msg.includes("ECONNREFUSED")) {
+      friendlyError = `A conexão foi recusada pelo servidor de destino. O serviço pode estar indisponível ou bloqueando conexões externas.`;
+    } else if (msg.includes("ECONNRESET") || msg.includes("socket hang up")) {
+      friendlyError = `A conexão foi interrompida pelo servidor de destino. Tente novamente em alguns instantes.`;
+    } else if (msg.includes("certificate") || msg.includes("SSL") || msg.includes("TLS")) {
+      friendlyError = `Houve um problema com o certificado SSL/TLS do servidor. Isso pode indicar uma configuração incorreta no destino.`;
+    } else {
+      friendlyError = `Ocorreu um erro ao executar ${friendlyName}. Tente novamente ou reformule sua solicitação.`;
+    }
+
+    console.error(`[Tool] Error executing ${name}:`, error.message);
     return {
       toolCallId: toolCall.id,
       name,
-      result: { error: `Erro ao executar ${name}: ${error.message}` },
+      result: {
+        error: friendlyError,
+        _internal: msg, // For internal logging only, not shown to user
+      },
     };
   }
 }

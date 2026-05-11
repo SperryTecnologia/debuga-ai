@@ -191,13 +191,16 @@ function ToolResultCard({ name, result }: { name: string; result: any }) {
   const Icon = display.icon;
 
   if (result?.error) {
+    // Filter out internal debug info - only show user-friendly message
+    const errorMessage = typeof result.error === "string" ? result.error : "Ocorreu um erro inesperado. Tente novamente.";
+    // Don't show _internal field to user
     return (
-      <div className="my-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+      <div className="my-3 rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4">
         <div className="flex items-center gap-2 mb-2">
-          <Icon className={cn("w-4 h-4", display.color)} />
-          <span className="font-mono text-xs font-medium text-destructive">{display.label} - Erro</span>
+          <AlertTriangle className="w-4 h-4 text-yellow-500" />
+          <span className="font-mono text-xs font-medium text-yellow-500">{display.label}</span>
         </div>
-        <p className="text-xs text-destructive/80 font-mono">{result.error}</p>
+        <p className="text-xs text-yellow-200/80 leading-relaxed">{errorMessage}</p>
       </div>
     );
   }
@@ -552,13 +555,57 @@ function StepIndicator({ step }: { step: StepEvent }) {
   );
 }
 
-const SUGGESTED_PROMPTS = [
-  { icon: Globe, title: "Navegar em Site", prompt: "Acesse o site https://www.gov.br/anatel e me diga quais são as últimas notícias e regulamentações publicadas" },
-  { icon: Shield, title: "Auditoria de Segurança", prompt: "Faça uma auditoria completa do domínio google.com: verifique SSL, DNS, headers HTTP e portas abertas" },
-  { icon: Terminal, title: "Sandbox de Código", prompt: "Execute um script Python que faça port scan nas portas 80, 443 e 8080 do host github.com e analise os resultados" },
-  { icon: Network, title: "Scan de Portas", prompt: "Escaneie as portas do servidor cloudflare.com e identifique quais serviços estão expostos" },
-  { icon: Server, title: "Diagnóstico DNS", prompt: "Faça uma consulta DNS completa do domínio github.com e analise os registros MX, TXT e NS" },
-  { icon: ImageIcon, title: "Gerar Diagrama", prompt: "Gere uma imagem de um diagrama de arquitetura de rede corporativa com firewall, DMZ e segmentação" },
+// requiredPlan: minimum plan needed to use the card's tools
+// "free" = chat only (no tools), "starter" = basic tools, "pro" = all tools
+const SUGGESTED_PROMPTS: Array<{
+  icon: LucideIcon;
+  title: string;
+  prompt: string;
+  requiredPlan: "free" | "starter" | "pro";
+  toolsUsed: string[];
+}> = [
+  {
+    icon: Globe,
+    title: "Navegar em Site",
+    prompt: "Acesse https://example.com, leia o conteúdo principal e resuma o que o site apresenta.",
+    requiredPlan: "starter",
+    toolsUsed: ["web_fetch"],
+  },
+  {
+    icon: Shield,
+    title: "Auditoria de Segurança",
+    prompt: "Faça uma auditoria passiva e segura de https://example.com verificando HTTPS, certificado SSL, headers de segurança e DNS público. Não execute scan invasivo.",
+    requiredPlan: "starter",
+    toolsUsed: ["ssl_check", "http_check", "dns_lookup"],
+  },
+  {
+    icon: Terminal,
+    title: "Sandbox de Código",
+    prompt: "Execute um script Python seguro que valida se '192.168.0.1' é um endereço IPv4 válido usando a biblioteca padrão ipaddress e mostre informações sobre a rede.",
+    requiredPlan: "pro",
+    toolsUsed: ["execute_code"],
+  },
+  {
+    icon: Network,
+    title: "Scan de Portas",
+    prompt: "Verifique de forma segura apenas as portas 80 e 443 de example.com e explique o resultado.",
+    requiredPlan: "pro",
+    toolsUsed: ["port_scan"],
+  },
+  {
+    icon: Server,
+    title: "Diagnóstico DNS",
+    prompt: "Faça um diagnóstico DNS do domínio github.com consultando registros A, MX, TXT e NS. Execute cada consulta separadamente se necessário e apresente um resumo objetivo.",
+    requiredPlan: "starter",
+    toolsUsed: ["dns_lookup"],
+  },
+  {
+    icon: ImageIcon,
+    title: "Gerar Diagrama",
+    prompt: "Gere um diagrama simples de arquitetura com usuário, firewall, servidor web, banco de dados e serviço de monitoramento.",
+    requiredPlan: "pro",
+    toolsUsed: ["generate_image"],
+  },
 ];
 
 export default function ChatPage() {
@@ -1725,22 +1772,59 @@ export default function ChatPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {SUGGESTED_PROMPTS.map((item, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleSendMessage(item.prompt)}
-                      disabled={isStreaming}
-                      className="group flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left"
-                    >
-                      <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0 group-hover:bg-primary/20 transition-colors">
-                        <item.icon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium font-mono text-foreground">{item.title}</p>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.prompt}</p>
-                      </div>
-                    </button>
-                  ))}
+                  {SUGGESTED_PROMPTS.map((item, i) => {
+                    const userPlan = usageQuery.data?.planId || "free";
+                    const planHierarchy: Record<string, number> = { free: 0, starter: 1, pro: 2, enterprise: 3 };
+                    const userLevel = planHierarchy[userPlan] ?? 0;
+                    const requiredLevel = planHierarchy[item.requiredPlan] ?? 0;
+                    const isLocked = userLevel < requiredLevel;
+                    const requiredPlanLabel = item.requiredPlan === "starter" ? "Starter" : item.requiredPlan === "pro" ? "Pro" : "";
+
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          if (isLocked) {
+                            setUpgradeModal({
+                              open: true,
+                              message: `A ferramenta "${item.title}" requer o plano ${requiredPlanLabel} ou superior. Faça upgrade para usar este recurso.`,
+                              planId: item.requiredPlan,
+                            });
+                          } else {
+                            handleSendMessage(item.prompt);
+                          }
+                        }}
+                        disabled={isStreaming}
+                        className={cn(
+                          "group flex items-start gap-3 p-4 rounded-xl border transition-all text-left relative",
+                          isLocked
+                            ? "border-border/50 bg-card/50 opacity-75 hover:opacity-90 hover:border-primary/20 cursor-pointer"
+                            : "border-border bg-card hover:bg-accent hover:border-primary/30"
+                        )}
+                      >
+                        <div className={cn(
+                          "p-2 rounded-lg shrink-0 transition-colors",
+                          isLocked
+                            ? "bg-muted text-muted-foreground"
+                            : "bg-primary/10 text-primary group-hover:bg-primary/20"
+                        )}>
+                          <item.icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium font-mono text-foreground">{item.title}</p>
+                            {isLocked && (
+                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 whitespace-nowrap flex items-center gap-1">
+                                <Lock className="w-2.5 h-2.5" />
+                                {requiredPlanLabel}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.prompt}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
