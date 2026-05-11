@@ -356,7 +356,7 @@ O cluster de GPUs proprietário opera em uma rede isolada com:
 | Critério | debuga.ai | ChatGPT | GitHub Copilot | Ferramentas SIEM |
 |---|---|---|---|---|
 | Especialização em TI/Infra | Nativa | Genérica | Código apenas | Alertas apenas |
-| LLM Proprietária | Sim (16x 3090) | Não | Não | Não |
+| LLM Proprietária | Sim Fork | Sim | Não | Não |
 | Análise TCP/IP | Profunda (L3-L7) | Superficial | Não | Parcial (L7) |
 | Execução de código | Sandbox isolada | Limitada | Não | Não |
 | Port scan / SSL check | Sim | Não | Não | Parcial |
