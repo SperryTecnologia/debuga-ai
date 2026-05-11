@@ -33,23 +33,124 @@ All LLM inference in the current production deployment is handled through the **
 
 The LLM wrapper is designed to be provider-agnostic. Changing the underlying model requires only updating the endpoint configuration — no changes to the agent loop, tool calling, or streaming logic.
 
-### 2.2 Planned: Multi-Model Routing (Roadmap v5.0)
+### 2.2 Hybrid LLM Inference Architecture
 
-The architecture is designed to support a routing layer that dispatches queries to different models based on complexity, domain specificity, and latency requirements. This layer is not yet implemented. When active, it will enable:
+The debuga.ai inference layer is designed as a **hybrid architecture** that combines cloud API providers (production) with local/on-premise inference (lab/research). The current production deployment uses a single cloud provider, while the local inference path is being validated through the public **debuga.ai LLM Stack** repositories.
+
+#### Hybrid Inference Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        AGENT LOOP                                  │
+│  server/streamRoute.ts → assembles context + tool defs              │
+│  Sends {messages, tools, stream:true} to LLM Wrapper                │
+└───────────────────────────────────┬─────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                  LLM WRAPPER (server/_core/llm.ts)                   │
+│  Provider-agnostic interface: invokeLLM({messages, tools, ...})      │
+│  Handles: streaming, tool_call parsing, error normalization          │
+└─────────────────┬─────────────────────────────────────┬─────────────────┘
+                  │                                     │
+    ┌─────────────▼───────────────┐     ┌─────────▼─────────────────┐
+    │  CLOUD PROVIDER (Prod)     │     │  LOCAL INFERENCE (Lab)      │
+    │  ────────────────────── │     │  ─────────────────────── │
+    │  Manus Forge API           │     │  debuga-llm-gateway         │
+    │  (Gemini 2.5 Flash)        │     │  (OpenAI-compatible API)    │
+    │                            │     │           │                  │
+    │  • Reasoning + tool call   │     │           ▼                  │
+    │  • Streaming completions   │     │  ┌──────────────────┐  │
+    │  • Production SLA          │     │  │ debuga-vllm-     │  │
+    │                            │     │  │ engine           │  │
+    └────────────────────────────┘     │  │ (vLLM + CUDA 12) │  │
+                                       │  └─────────┬────────┘  │
+                                       │            │              │
+                                       │            ▼              │
+                                       │  ┌──────────────────┐  │
+                                       │  │ debuga-qwen-     │  │
+                                       │  │ coder-lab        │  │
+                                       │  │                  │  │
+                                       │  │ Models:          │  │
+                                       │  │ • Qwen-Coder 7B  │  │
+                                       │  │ • Qwen-Coder 14B │  │
+                                       │  │ • Qwen-Coder 32B │  │
+                                       │  │                  │  │
+                                       │  │ Benchmarks:      │  │
+                                       │  │ • DevOps         │  │
+                                       │  │ • Security       │  │
+                                       │  │ • Network        │  │
+                                       │  └──────────────────┘  │
+                                       └───────────────────────────┘
+```
+
+#### Component Responsibilities
+
+| Component | Layer | Status | Responsibility |
+|---|---|---|---|
+| `server/_core/llm.ts` | LLM Wrapper | **Production** | Provider-agnostic interface; routes requests to the active provider endpoint |
+| Manus Forge API | Cloud Provider | **Production** | Managed inference gateway; currently serves Gemini 2.5 Flash |
+| `debuga-llm-gateway` | Local Gateway | Lab/Research | OpenAI-compatible routing layer with cloud/local fallback |
+| `debuga-vllm-engine` | Inference Engine | Lab/Research | vLLM serving configurations (Docker + CUDA 12, Prometheus metrics) |
+| `debuga-qwen-coder-lab` | Model Evaluation | Lab/Research | Qwen-Coder benchmarks for DevOps, security, and network domains |
+
+#### Request Flow (Production)
+
+```
+Agent Loop → invokeLLM() → Manus Forge API → Gemini 2.5 Flash
+                                   │
+                                   ▼
+                          Streamed completion
+                          (text or tool_call)
+```
+
+#### Request Flow (Planned Hybrid — Roadmap v5.0–v6.0)
+
+```
+Agent Loop → invokeLLM() → debuga-llm-gateway (Router)
+                                   │
+                          ┌───────┼───────────────┐
+                          ▼        ▼                ▼
+                     Cloud API   vLLM Local     Fallback
+                     (speed)     (sovereignty)  (resilience)
+```
+
+The routing decision will be based on three factors:
+
+- **Query complexity** — Simple tool-calling queries route to cloud API (optimized for speed and cost); complex multi-step diagnostics route to specialized local models with deeper domain knowledge.
+- **Data sensitivity** — Queries involving customer infrastructure data (logs, configs, topology) route to local inference to avoid sending sensitive data to external APIs.
+- **Availability** — If the primary provider is unavailable, the gateway falls back to the secondary provider automatically.
+
+### 2.3 Multi-Model Routing (Roadmap v5.0)
+
+The routing layer within `debuga-llm-gateway` will dispatch queries to different models based on complexity, domain specificity, and latency requirements. This layer is currently a community skeleton and not yet active in production. When deployed, it will enable:
 
 - **Simple queries** (general IT support, tool calling) → cloud API models optimized for speed and cost
-- **Complex analysis** (multi-step diagnostics, security correlation) → specialized models with deeper domain knowledge
+- **Complex analysis** (multi-step diagnostics, security correlation) → specialized local models with deeper domain knowledge
 - **Batch workloads** (report generation, bulk analysis) → cost-optimized inference paths
 
-### 2.3 Planned: On-Premise Inference (Roadmap v6.0)
+### 2.4 On-Premise Inference (Roadmap v6.0)
 
-The long-term strategy includes deploying dedicated GPU infrastructure for serving open-source models fine-tuned on IT infrastructure and network security datasets. This will enable:
+The long-term strategy includes deploying GPU infrastructure for serving open-source models fine-tuned on IT infrastructure and network security datasets. The technical research and benchmarks are being conducted in the public **debuga.ai LLM Stack** repositories. This will enable:
 
 - **Data sovereignty** — Sensitive infrastructure data processed locally without leaving the customer's network
-- **Domain-specialized models** — Fine-tuned models (e.g., Qwen2.5, Mistral, Llama variants) optimized for network analysis, log correlation, and infrastructure reasoning
+- **Domain-specialized models** — Fine-tuned models (Qwen-Coder, Mistral, Llama variants) optimized for network analysis, log correlation, and infrastructure reasoning
 - **Reduced API dependency** — Lower operational costs and elimination of third-party API rate limits for high-volume deployments
 
-The planned serving stack includes vLLM or TGI with tensor parallelism across multiple GPUs. Hardware specifications and deployment guides will be published when this capability reaches production.
+The planned serving stack uses vLLM with CUDA 12 and tensor parallelism across multiple GPUs. Hardware requirements and deployment configurations are documented in the `debuga-vllm-engine` repository.
+
+### 2.5 debuga.ai LLM Stack (Public Repositories)
+
+The hybrid inference strategy is documented and validated through a set of public repositories:
+
+| Repository | Purpose | Key Contents |
+|---|---|---|
+| [debuga-llm-stack](https://github.com/SperryTecnologia/debuga-llm-stack) | Central documentation and architecture | Architecture diagrams, strategy overview, integration guide |
+| [debuga-qwen-coder-lab](https://github.com/SperryTecnologia/debuga-qwen-coder-lab) | Model evaluation for IT/security domain | 3 JSONL benchmark datasets (DevOps, security, network), evaluation scripts, result reports |
+| [debuga-vllm-engine](https://github.com/SperryTecnologia/debuga-vllm-engine) | vLLM serving configurations | Dockerfile (CUDA 12), docker-compose (vLLM + Prometheus + Grafana), YAML configs for 7B/14B/32B |
+| [debuga-llm-gateway](https://github.com/SperryTecnologia/debuga-llm-gateway) | OpenAI-compatible gateway skeleton | TypeScript gateway with cloud/vLLM providers, fallback routing, SSE streaming, health aggregation |
+
+> **Note:** The public LLM stack is a documentation, lab, and technical research initiative. It does not represent production SaaS code, does not contain internal prompts, customer data, or business rules. The debuga.ai production may include additional integrations and policies not published.
 
 ---
 
@@ -260,9 +361,9 @@ When activated, these connectors will allow the agent to query real monitoring d
 
 **Context:** The ORM must generate predictable SQL and support pure SQL migrations for production database management. **Decision:** Use Drizzle ORM. **Consequence:** SQL-like query API, lighter runtime (~50KB vs Prisma's ~2MB), pure `.sql` migration files that can be reviewed and applied manually. Trade-off: Smaller ecosystem and community compared to Prisma.
 
-### ADR-004: Cloud-First LLM with On-Premise Roadmap
+### ADR-004: Hybrid LLM Strategy (Cloud + Local)
 
-**Context:** The product needs reliable LLM inference from day one, while building toward domain-specialized models that require dedicated hardware. **Decision:** Launch with Manus Forge API (managed cloud inference) as the sole LLM provider. Design the LLM wrapper (`server/_core/llm.ts`) to be provider-agnostic, enabling future addition of on-premise inference endpoints without changes to the agent loop or tool calling logic. **Consequence:** Fast time-to-market with production-grade inference. The architecture supports adding local model endpoints when the on-premise infrastructure is ready. Trade-off: Current dependency on a single external API provider for all inference.
+**Context:** The product needs reliable LLM inference from day one, while building toward domain-specialized models that require dedicated hardware. **Decision:** Launch with Manus Forge API (managed cloud inference) as the sole production LLM provider. Design the LLM wrapper (`server/_core/llm.ts`) to be provider-agnostic. Validate the local inference path through the public debuga.ai LLM Stack (vLLM + Qwen-Coder benchmarks + OpenAI-compatible gateway skeleton). **Consequence:** Fast time-to-market with production-grade inference. The architecture supports adding local model endpoints when the on-premise infrastructure is validated. The public LLM Stack provides transparency and community engagement around the hybrid strategy. Trade-off: Current dependency on a single external API provider for all production inference; local path is lab-only.
 
 ### ADR-005: Credit-Based Billing over Per-Request Pricing
 
@@ -299,12 +400,14 @@ When activated, these connectors will allow the agent to query real monitoring d
                   ├── app (Node.js container)
                   ├── db (MySQL 8.0)
                   ├── sandbox (isolated code execution)
-                  └── [Optional: On-Premise GPU]
-                        ├── vLLM / TGI inference server
-                        └── Fine-tuned models (Qwen, Mistral, Llama)
+                  └── [On-Premise GPU Cluster]
+                        ├── debuga-llm-gateway (router)
+                        ├── debuga-vllm-engine (inference)
+                        ├── Prometheus + Grafana (monitoring)
+                        └── Models: Qwen-Coder, Mistral, Llama
 ```
 
-The self-hosted deployment is planned for Enterprise customers who require data sovereignty and on-premise inference. Documentation will be published when this capability reaches production readiness.
+The self-hosted deployment is planned for Enterprise customers who require data sovereignty and on-premise inference. The infrastructure components (vLLM engine, gateway, monitoring) are being validated through the public debuga.ai LLM Stack. Documentation will be published when this capability reaches production readiness.
 
 ---
 
