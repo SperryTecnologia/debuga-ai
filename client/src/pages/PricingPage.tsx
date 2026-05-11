@@ -55,7 +55,7 @@ const PLANS: PlanDisplay[] = [
     features: [
       "5 mensagens por dia",
       "3 conversas por mês",
-      "Análise básica de TI",
+      "Chat com IA especialista em TI",
       "Respostas com IA generativa",
     ],
     cta: "Começar Grátis",
@@ -71,9 +71,9 @@ const PLANS: PlanDisplay[] = [
     features: [
       "100 mensagens por dia",
       "30 conversas por mês",
-      "Análise de segurança básica",
-      "Scripts de automação",
-      "Histórico de 30 dias",
+      "Ferramentas: DNS, SSL, HTTP, WHOIS",
+      "Navegação autônoma em sites",
+      "Geração de scripts (sem execução)",
       "Suporte por email",
     ],
     cta: "Assinar Starter",
@@ -88,11 +88,11 @@ const PLANS: PlanDisplay[] = [
     features: [
       "Mensagens ilimitadas",
       "Conversas ilimitadas",
-      "Análise avançada de segurança",
-      "Integração Zabbix, Wazuh, Prometheus",
-      "Geração de relatórios PDF",
+      "Todas as ferramentas (port scan, execução de código)",
+      "Geração de imagens e diagramas",
       "Histórico completo",
       "Suporte prioritário via chat",
+      "Integrações sob configuração (em breve)",
     ],
     popular: true,
     highlight: true,
@@ -108,13 +108,12 @@ const PLANS: PlanDisplay[] = [
     priceYearly: 4799.00,
     features: [
       "Tudo do Pro incluído",
-      "API dedicada com SLA",
-      "Sandbox Docker para scripts",
-      "Integração NetBox e CMDB",
-      "SSO / SAML / LDAP",
-      "Relatórios de compliance",
+      "Implantação sob projeto",
+      "Integrações customizadas (Zabbix, Wazuh, etc.)",
+      "SSO / SAML / LDAP (sob projeto)",
       "Gerente de conta dedicado",
       "Treinamento da equipe",
+      "SLA personalizado",
     ],
     cta: "Falar com Vendas",
   },
@@ -431,39 +430,39 @@ export default function PricingPage() {
                   <td className="p-4 text-center font-mono">Ilimitado</td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-muted-foreground">Análise de segurança</td>
-                  <td className="p-4 text-center">Básica</td>
-                  <td className="p-4 text-center">Básica</td>
-                  <td className="p-4 text-center text-primary">Avançada</td>
-                  <td className="p-4 text-center">Avançada</td>
-                </tr>
-                <tr>
-                  <td className="p-4 text-muted-foreground">Integrações (Zabbix, Wazuh...)</td>
+                  <td className="p-4 text-muted-foreground">Ferramentas de rede (DNS, SSL, HTTP)</td>
                   <td className="p-4 text-center text-muted-foreground/50">—</td>
-                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-muted-foreground">Relatórios PDF</td>
+                  <td className="p-4 text-muted-foreground">Port scan e execução de código</td>
                   <td className="p-4 text-center text-muted-foreground/50">—</td>
                   <td className="p-4 text-center text-muted-foreground/50">—</td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="p-4 text-muted-foreground">API dedicada</td>
-                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-muted-foreground">Geração de imagens/diagramas</td>
                   <td className="p-4 text-center text-muted-foreground/50">—</td>
                   <td className="p-4 text-center text-muted-foreground/50">—</td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
+                  <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="p-4 text-muted-foreground">Integrações customizadas</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center text-muted-foreground/50">—</td>
+                  <td className="p-4 text-center text-muted-foreground/50 text-xs">Em breve</td>
+                  <td className="p-4 text-center text-xs">Sob projeto</td>
                 </tr>
                 <tr>
                   <td className="p-4 text-muted-foreground">SSO / SAML</td>
                   <td className="p-4 text-center text-muted-foreground/50">—</td>
                   <td className="p-4 text-center text-muted-foreground/50">—</td>
                   <td className="p-4 text-center text-muted-foreground/50">—</td>
-                  <td className="p-4 text-center"><Check className="w-4 h-4 text-primary mx-auto" /></td>
+                  <td className="p-4 text-center text-xs">Sob projeto</td>
                 </tr>
                 <tr>
                   <td className="p-4 text-muted-foreground">Suporte</td>

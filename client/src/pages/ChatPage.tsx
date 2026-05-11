@@ -2,7 +2,16 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -555,6 +564,8 @@ export default function ChatPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; message: string; planId: string } | null>(null);
+  const [, setLocation] = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -837,7 +848,14 @@ export default function ChatPage() {
           convId = conv.id;
           setActiveConversationId(convId);
           utils.chat.listConversations.invalidate();
-        } catch {
+        } catch (err: any) {
+          // Handle monthly conversation limit
+          const errMsg = err?.message || err?.data?.message || "";
+          if (errMsg.includes("limite") || errMsg.includes("Fa\u00e7a upgrade")) {
+            setUpgradeModal({ open: true, message: errMsg, planId: "free" });
+          } else {
+            toast.error("Erro ao criar conversa. Tente novamente.");
+          }
           return;
         }
       }
@@ -882,7 +900,28 @@ export default function ChatPage() {
           signal: controller.signal,
         });
 
-        if (!response.ok || !response.body) throw new Error("Stream failed");
+        if (!response.ok || !response.body) {
+          // Handle 402 (limit reached) with upgrade modal
+          if (response.status === 402) {
+            try {
+              const errData = await response.json();
+              const planId = errData.planId || "free";
+              const msg = errData.error || "Você atingiu o limite do seu plano.";
+              setUpgradeModal({ open: true, message: msg, planId });
+              // Remove the user message we optimistically added
+              setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
+            } catch {
+              setUpgradeModal({ open: true, message: "Você atingiu o limite do seu plano. Faça upgrade para continuar.", planId: "free" });
+            }
+            return;
+          }
+          if (response.status === 429) {
+            toast.error("Muitas mensagens em pouco tempo. Aguarde um momento.");
+            setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
+            return;
+          }
+          throw new Error("Stream failed");
+        }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -1653,6 +1692,44 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <Dialog open={!!upgradeModal?.open} onOpenChange={(open) => !open && setUpgradeModal(null)}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Crown className="w-5 h-5 text-primary" />
+              Limite atingido
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
+              {upgradeModal?.message}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            {upgradeModal?.planId === "free" && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Faça upgrade para o <strong className="text-foreground">Starter</strong> (R$49,90/mês) ou <strong className="text-foreground">Pro</strong> (R$149,90/mês) para continuar usando o debuga.ai.
+                </p>
+              </>
+            )}
+            {upgradeModal?.planId === "starter" && (
+              <p className="text-sm text-muted-foreground">
+                Faça upgrade para o <strong className="text-foreground">Pro</strong> (R$149,90/mês) para mensagens e conversas ilimitadas, ferramentas avançadas e muito mais.
+              </p>
+            )}
+          </div>
+          <DialogFooter className="flex gap-2 sm:gap-2">
+            <Button variant="ghost" onClick={() => setUpgradeModal(null)} className="font-mono text-sm">
+              Fechar
+            </Button>
+            <Button onClick={() => { setUpgradeModal(null); setLocation("/pricing"); }} className="font-mono text-sm gap-2">
+              <Crown className="w-4 h-4" />
+              Ver Planos
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

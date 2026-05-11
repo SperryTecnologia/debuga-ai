@@ -15,6 +15,7 @@ function createAuthContext(overrides: Partial<AuthenticatedUser> = {}): TrpcCont
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
+    stripeCustomerId: null,
     ...overrides,
   };
 
@@ -135,7 +136,8 @@ describe("chat router - authenticated", () => {
   });
 
   it("can create a new conversation", async () => {
-    const ctx = createAuthContext();
+    // Use admin role to bypass plan limits (this test validates router wiring, not limits)
+    const ctx = createAuthContext({ role: "admin" });
     const caller = appRouter.createCaller(ctx);
 
     const conv = await caller.chat.createConversation({});

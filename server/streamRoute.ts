@@ -12,10 +12,28 @@ import {
   getActiveSubscription,
   getTodayMessageCount,
   getMonthConversationCount,
+  resetCreditsIfNeeded,
 } from "./db";
 import { AGENT_TOOLS, executeToolCall } from "./agentTools";
-import { PLANS } from "./products";
-import type { ToolCall } from "./_core/llm";
+import { PLANS, type Plan } from "./products";
+import type { Tool, ToolCall } from "./_core/llm";
+
+// ── Feature-gating: tools available per plan tier ──
+const BASIC_TOOLS = ["dns_lookup", "ssl_check", "http_check", "whois_lookup", "web_fetch"];
+const PRO_TOOLS = [...BASIC_TOOLS, "port_scan", "generate_image", "execute_code"];
+
+function getToolsForPlan(plan: Plan): Tool[] | null {
+  if (plan.id === "free") {
+    // Free: no tools
+    return null;
+  }
+  if (plan.id === "starter") {
+    // Starter: basic network tools only
+    return AGENT_TOOLS.filter(t => BASIC_TOOLS.includes(t.function.name));
+  }
+  // Pro & Enterprise: all tools
+  return AGENT_TOOLS;
+}
 
 const SYSTEM_PROMPT = `Você é o **debuga.ai**, um agente autônomo especializado em Infraestrutura de TI, Segurança da Informação, DevOps e Telecomunicações. Você foi desenvolvido pela Sperry Tecnologia.
 
@@ -122,7 +140,8 @@ function sendSSE(res: Response, data: any) {
 async function streamLLMResponse(
   messages: any[],
   res: Response,
-  useTools: boolean = true
+  tools: Tool[] | null,
+  maxTokens: number = 32768
 ): Promise<{
   content: string;
   toolCalls: ToolCall[];
@@ -133,11 +152,11 @@ async function streamLLMResponse(
     model: "gemini-2.5-flash",
     messages,
     stream: true,
-    max_tokens: 32768,
+    max_tokens: maxTokens,
   };
 
-  if (useTools) {
-    body.tools = AGENT_TOOLS;
+  if (tools && tools.length > 0) {
+    body.tools = tools;
     body.tool_choice = "auto";
   }
 
@@ -254,6 +273,11 @@ export function registerStreamRoute(app: Express) {
       const plan = await getUserPlan(user.id);
       const isAdmin = user.role === "admin";
 
+      // Reset credits if monthly cycle has passed
+      if (!isAdmin) {
+        await resetCreditsIfNeeded(user.id);
+      }
+
       if (!isAdmin) {
         // Check daily message limit
         const todayMessages = await getTodayMessageCount(user.id);
@@ -357,11 +381,17 @@ export function registerStreamRoute(app: Express) {
       let totalTokensEstimate = 0;
       console.log("[Stream] Starting agent loop for conversation:", conversationId);
 
+      // Determine tools available for this plan
+      const planTools = isAdmin ? AGENT_TOOLS : getToolsForPlan(plan);
+      const maxTokens = plan.limits.maxTokensPerMessage;
+
       while (iteration < maxIterations) {
         iteration++;
 
+        // Only allow tools in first 3 iterations to prevent infinite loops
+        const iterationTools = iteration <= 3 ? planTools : null;
         const { content: responseContent, toolCalls, finishReason } =
-          await streamLLMResponse(llmMessages, res, iteration <= 3);
+          await streamLLMResponse(llmMessages, res, iterationTools, maxTokens);
 
         finalContent += responseContent;
         // Estimate tokens: ~4 chars per token (rough estimate for billing)

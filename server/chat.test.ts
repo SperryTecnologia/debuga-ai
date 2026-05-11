@@ -74,6 +74,19 @@ vi.mock("./db", () => {
     upsertSubscription: vi.fn(),
     getSubscriptionByStripeId: vi.fn(),
     updateSubscriptionStatus: vi.fn(),
+    getMonthConversationCount: vi.fn(async () => 0),
+    getTodayMessageCount: vi.fn(async () => 0),
+    resetCreditsIfNeeded: vi.fn(async () => undefined),
+    getOrCreateCredits: vi.fn(async () => ({
+      id: 1,
+      userId: 1,
+      totalCredits: 50,
+      usedCredits: 0,
+      planId: "free",
+      resetAt: new Date(Date.now() + 86400000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
   };
 });
 

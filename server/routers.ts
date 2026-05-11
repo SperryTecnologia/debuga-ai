@@ -17,11 +17,29 @@ import {
   getOrCreateCredits,
   getUsageStats,
   getUsageLogs,
+  getMonthConversationCount,
+  getTodayMessageCount,
+  resetCreditsIfNeeded,
 } from "./db";
 import { PLANS } from "./products";
 import { invokeLLM } from "./_core/llm";
 import type { Message as LLMMessage } from "./_core/llm";
 import { ENV } from "./_core/env";
+import { TRPCError } from "@trpc/server";
+
+// Helper: resolve user's plan from subscription (same logic as streamRoute)
+async function getUserPlan(userId: number) {
+  const sub = await getActiveSubscription(userId);
+  if (!sub || !sub.stripePriceId) {
+    return PLANS.find((p) => p.id === "free")!;
+  }
+  const creds = await getOrCreateCredits(userId, "free");
+  if (creds && creds.planId !== "free") {
+    const plan = PLANS.find((p) => p.id === creds.planId);
+    if (plan) return plan;
+  }
+  return PLANS.find((p) => p.id === "starter")!;
+}
 
 const SYSTEM_PROMPT = `Você é o **debuga.ai**, um agente autônomo especializado em Infraestrutura de TI, Segurança da Informação, DevOps e Telecomunicações. Você foi desenvolvido pela Sperry Tecnologia.
 
@@ -128,10 +146,21 @@ export const appRouter = router({
       return listConversations(ctx.user.id);
     }),
 
-    // Create a new conversation
+    // Create a new conversation (with monthly limit check)
     createConversation: protectedProcedure
       .input(z.object({ title: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
+        const isAdmin = ctx.user.role === "admin";
+        if (!isAdmin) {
+          const plan = await getUserPlan(ctx.user.id);
+          const monthConversations = await getMonthConversationCount(ctx.user.id);
+          if (monthConversations >= plan.limits.conversationsPerMonth) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: `Você atingiu o limite de ${plan.limits.conversationsPerMonth} conversas por mês do plano ${plan.name}. Faça upgrade para continuar.`,
+            });
+          }
+        }
         return createConversation(ctx.user.id, input.title);
       }),
 
@@ -194,7 +223,31 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         // Verify ownership
         const conv = await getConversation(input.conversationId, ctx.user.id);
-        if (!conv) throw new Error("Conversation not found");
+        if (!conv) throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
+
+        // Plan limit validation
+        const isAdmin = ctx.user.role === "admin";
+        if (!isAdmin) {
+          const plan = await getUserPlan(ctx.user.id);
+          // Reset credits if needed
+          await resetCreditsIfNeeded(ctx.user.id);
+          // Check daily message limit
+          const todayMessages = await getTodayMessageCount(ctx.user.id);
+          if (todayMessages >= plan.limits.messagesPerDay) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: `Você atingiu o limite de ${plan.limits.messagesPerDay} mensagens por dia do plano ${plan.name}. Faça upgrade para continuar.`,
+            });
+          }
+          // Check credits
+          const creds = await getOrCreateCredits(ctx.user.id, plan.id);
+          if (creds && creds.usedCredits >= creds.totalCredits && plan.id === "free") {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Seus créditos gratuitos acabaram. Assine um plano para continuar usando o debuga.ai.",
+            });
+          }
+        }
 
         // Save user message
         const userMsg = await addMessage({

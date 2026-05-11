@@ -31,7 +31,7 @@ export const PLANS: Plan[] = [
     features: [
       "5 mensagens por dia",
       "3 conversas por mês",
-      "Análise básica de TI",
+      "Chat com IA especialista em TI",
       "Respostas com IA generativa",
     ],
     limits: {
@@ -53,9 +53,9 @@ export const PLANS: Plan[] = [
     features: [
       "100 mensagens por dia",
       "30 conversas por mês",
-      "Análise de segurança básica",
-      "Scripts de automação",
-      "Histórico de 30 dias",
+      "Ferramentas: DNS, SSL, HTTP, WHOIS",
+      "Navegação autônoma em sites",
+      "Geração de scripts (sem execução)",
       "Suporte por email",
     ],
     limits: {
@@ -76,11 +76,11 @@ export const PLANS: Plan[] = [
     features: [
       "Mensagens ilimitadas",
       "Conversas ilimitadas",
-      "Análise avançada de segurança",
-      "Integração Zabbix, Wazuh, Prometheus",
-      "Geração de relatórios PDF",
+      "Todas as ferramentas (port scan, execução de código)",
+      "Geração de imagens e diagramas",
       "Histórico completo",
       "Suporte prioritário via chat",
+      "Integrações sob configuração (em breve)",
     ],
     limits: {
       messagesPerDay: 999999,
@@ -100,13 +100,12 @@ export const PLANS: Plan[] = [
     description: "Para empresas com necessidades avançadas de TI e compliance",
     features: [
       "Tudo do Pro incluído",
-      "API dedicada com SLA",
-      "Sandbox Docker para scripts",
-      "Integração NetBox e CMDB",
-      "SSO / SAML / LDAP",
-      "Relatórios de compliance",
+      "Implantação sob projeto",
+      "Integrações customizadas (Zabbix, Wazuh, etc.)",
+      "SSO / SAML / LDAP (sob projeto)",
       "Gerente de conta dedicado",
       "Treinamento da equipe",
+      "SLA personalizado",
     ],
     limits: {
       messagesPerDay: 999999,

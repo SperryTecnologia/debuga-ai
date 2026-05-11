@@ -1,4 +1,4 @@
-import { eq, desc, and, asc, sql, gte } from "drizzle-orm";
+import { eq, desc, and, asc, sql, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, conversations, messages, subscriptions, credits, usageLog, type InsertConversation, type InsertMessage, type InsertSubscription, type InsertCredits, type InsertUsageLog } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -304,6 +304,37 @@ export async function updateCreditsUsage(userId: number, tokensUsed: number) {
     .update(credits)
     .set({ usedCredits: sql`${credits.usedCredits} + ${tokensUsed}` })
     .where(eq(credits.userId, userId));
+}
+
+/**
+ * Check if credits need to be reset (monthly cycle).
+ * If resetAt has passed, reset usedCredits to 0 and set next resetAt.
+ * Returns the (possibly updated) credits row.
+ */
+export async function resetCreditsIfNeeded(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const now = new Date();
+  const rows = await db.select().from(credits).where(
+    and(
+      eq(credits.userId, userId),
+      lte(credits.resetAt, now)
+    )
+  ).limit(1);
+
+  if (rows[0]) {
+    // Reset credits and set next reset date
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    nextMonth.setDate(1);
+    nextMonth.setHours(0, 0, 0, 0);
+
+    await db
+      .update(credits)
+      .set({ usedCredits: 0, resetAt: nextMonth })
+      .where(eq(credits.userId, userId));
+  }
 }
 
 export async function updateCreditsPlan(userId: number, planId: string) {
