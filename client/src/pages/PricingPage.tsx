@@ -161,11 +161,6 @@ export default function PricingPage() {
       return;
     }
 
-    if (!user) {
-      window.location.href = getLoginUrl("/pricing");
-      return;
-    }
-
     if (planId === "enterprise") {
       const msg = encodeURIComponent(
         "Olá! Tenho interesse no plano Enterprise do debuga.ai. " +
@@ -174,6 +169,11 @@ export default function PricingPage() {
       );
       window.open(`https://wa.me/555137374357?text=${msg}`, "_blank");
       toast.info("Redirecionando para o WhatsApp da equipe comercial...");
+      return;
+    }
+
+    if (!user) {
+      window.location.href = getLoginUrl("/pricing");
       return;
     }
 
