@@ -118,3 +118,4 @@
 - [x] Validar fluxo Stripe end-to-end: fix bug currentPeriodEnd timestamp inválido no webhook
 - [x] Redirecionar "Falar com Vendas" (Enterprise) para WhatsApp com mensagem contextual
 - [x] Diferenciar botões: "Entrar" → login, "Começar" → /pricing, CTA final → "Ver Planos"
+- [x] Traduzir README.md principal para português BR (público-alvo brasileiro)
