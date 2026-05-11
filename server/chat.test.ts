@@ -77,6 +77,9 @@ vi.mock("./db", () => {
     getMonthConversationCount: vi.fn(async () => 0),
     getTodayMessageCount: vi.fn(async () => 0),
     resetCreditsIfNeeded: vi.fn(async () => undefined),
+    recordMessageSent: vi.fn(async () => undefined),
+    recordConversationStarted: vi.fn(async () => undefined),
+    hasConversationMessages: vi.fn(async () => false),
     getOrCreateCredits: vi.fn(async () => ({
       id: 1,
       userId: 1,
@@ -87,6 +90,15 @@ vi.mock("./db", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
+    getUsageStats: vi.fn(async () => ({
+      totalTokens: 0,
+      todayTokens: 0,
+      totalConversations: 0,
+      totalMessages: 0,
+      todayMessages: 0,
+      monthConversations: 0,
+    })),
+    getUsageLogs: vi.fn(async () => []),
   };
 });
 

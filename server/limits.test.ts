@@ -48,6 +48,18 @@ vi.mock("./db", async (importOriginal) => {
     }),
     getMessages: vi.fn().mockResolvedValue([]),
     listConversations: vi.fn().mockResolvedValue([]),
+    recordMessageSent: vi.fn().mockResolvedValue(undefined),
+    recordConversationStarted: vi.fn().mockResolvedValue(undefined),
+    hasConversationMessages: vi.fn().mockResolvedValue(false),
+    getUsageStats: vi.fn().mockResolvedValue({
+      totalTokens: 0,
+      todayTokens: 0,
+      totalConversations: 0,
+      totalMessages: 0,
+      todayMessages: 0,
+      monthConversations: 0,
+    }),
+    getUsageLogs: vi.fn().mockResolvedValue([]),
   };
 });
 
@@ -71,6 +83,7 @@ function createUserContext(role: "user" | "admin" = "user"): TrpcContext {
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
+    stripeCustomerId: null,
   };
   return {
     user,
@@ -89,28 +102,30 @@ describe("Plan Limits - createConversation", () => {
     vi.clearAllMocks();
   });
 
-  it("allows creating conversation when under limit", async () => {
+  it("allows creating conversation regardless of limit (limit checked on first message)", async () => {
     const { getMonthConversationCount } = await import("./db");
-    (getMonthConversationCount as any).mockResolvedValue(2); // under 3 limit
+    (getMonthConversationCount as any).mockResolvedValue(100); // way over limit
 
     const ctx = createUserContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.chat.createConversation({});
 
+    // createConversation never blocks - limit is checked on sendMessage
     expect(result).toBeDefined();
     expect(result.id).toBe(1);
   });
 
-  it("blocks creating conversation when at monthly limit for free plan", async () => {
-    const { getMonthConversationCount } = await import("./db");
-    (getMonthConversationCount as any).mockResolvedValue(3); // at limit
+  it("blocks FIRST message when monthly conversation limit is reached", async () => {
+    const { getMonthConversationCount, getMessages } = await import("./db");
+    (getMonthConversationCount as any).mockResolvedValue(3); // at limit for free
+    (getMessages as any).mockResolvedValue([]); // first message in conversation
 
     const ctx = createUserContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.chat.createConversation({})).rejects.toThrow(
-      /limite.*3.*conversas/i
-    );
+    await expect(
+      caller.chat.sendMessage({ conversationId: 1, content: "hello" })
+    ).rejects.toThrow(/limite.*3.*conversas/i);
   });
 
   it("admin bypasses conversation limit", async () => {
@@ -132,8 +147,12 @@ describe("Plan Limits - sendMessage", () => {
   });
 
   it("blocks sending message when daily limit reached for free plan", async () => {
-    const { getTodayMessageCount, getConversation } = await import("./db");
+    const { getTodayMessageCount, getConversation, getMessages, getMonthConversationCount } = await import("./db");
     (getTodayMessageCount as any).mockResolvedValue(5); // at limit for free
+    (getMonthConversationCount as any).mockResolvedValue(0);
+    (getMessages as any).mockResolvedValue([
+      { id: 1, conversationId: 1, role: "user", content: "prev", createdAt: new Date() },
+    ]); // not first message
     (getConversation as any).mockResolvedValue({
       id: 1,
       userId: 1,
@@ -153,8 +172,12 @@ describe("Plan Limits - sendMessage", () => {
   });
 
   it("blocks sending message when credits exhausted for free plan", async () => {
-    const { getTodayMessageCount, getConversation, getOrCreateCredits } = await import("./db");
+    const { getTodayMessageCount, getConversation, getOrCreateCredits, getMessages, getMonthConversationCount } = await import("./db");
     (getTodayMessageCount as any).mockResolvedValue(2); // under daily limit
+    (getMonthConversationCount as any).mockResolvedValue(0);
+    (getMessages as any).mockResolvedValue([
+      { id: 1, conversationId: 1, role: "user", content: "prev", createdAt: new Date() },
+    ]); // not first message
     (getConversation as any).mockResolvedValue({
       id: 1,
       userId: 1,

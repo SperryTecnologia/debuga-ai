@@ -1,6 +1,6 @@
 import { eq, desc, and, asc, sql, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, conversations, messages, subscriptions, credits, usageLog, type InsertConversation, type InsertMessage, type InsertSubscription, type InsertCredits, type InsertUsageLog } from "../drizzle/schema";
+import { InsertUser, users, conversations, messages, subscriptions, credits, usageLog, usageEvents, type InsertConversation, type InsertMessage, type InsertSubscription, type InsertCredits, type InsertUsageLog, type InsertUsageEvent } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -355,48 +355,131 @@ export async function updateCreditsPlan(userId: number, planId: string) {
     .where(eq(credits.userId, userId));
 }
 
-// ── Usage Counters ──
+// ── Usage Counters (Independent - cannot be bypassed by deleting chats) ──
 
+/**
+ * Get today's message count from usage_events table.
+ * This is independent of whether messages/conversations still exist.
+ */
 export async function getTodayMessageCount(userId: number): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const periodKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   const result = await db
     .select({ count: sql<number>`COUNT(*)` })
-    .from(messages)
+    .from(usageEvents)
     .where(
       and(
-        eq(messages.role, "user"),
-        gte(messages.createdAt, today),
-        sql`${messages.conversationId} IN (SELECT id FROM conversations WHERE userId = ${userId})`
+        eq(usageEvents.userId, userId),
+        eq(usageEvents.eventType, "message_sent"),
+        eq(usageEvents.periodKey, periodKey)
       )
     );
 
   return Number(result[0]?.count || 0);
 }
 
+/**
+ * Get this month's conversation count from usage_events table.
+ * Only counts conversations where at least one message was sent.
+ * Independent of whether conversations still exist.
+ */
 export async function getMonthConversationCount(userId: number): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const firstOfMonth = new Date();
-  firstOfMonth.setDate(1);
-  firstOfMonth.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const periodKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   const result = await db
     .select({ count: sql<number>`COUNT(*)` })
-    .from(conversations)
+    .from(usageEvents)
     .where(
       and(
-        eq(conversations.userId, userId),
-        gte(conversations.createdAt, firstOfMonth)
+        eq(usageEvents.userId, userId),
+        eq(usageEvents.eventType, "conversation_started"),
+        eq(usageEvents.periodKey, periodKey)
       )
     );
 
   return Number(result[0]?.count || 0);
+}
+
+/**
+ * Record a "message_sent" usage event. Called every time a user sends a message.
+ */
+export async function recordMessageSent(userId: number, conversationId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const today = new Date();
+  const periodKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  await db.insert(usageEvents).values({
+    userId,
+    eventType: "message_sent",
+    conversationId,
+    periodKey,
+  });
+}
+
+/**
+ * Record a "conversation_started" usage event.
+ * Called when the FIRST message is sent in a conversation.
+ * Checks if this conversation was already counted to avoid double-counting.
+ */
+export async function recordConversationStarted(userId: number, conversationId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const now = new Date();
+  const periodKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  // Check if this conversation was already recorded
+  const existing = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(usageEvents)
+    .where(
+      and(
+        eq(usageEvents.userId, userId),
+        eq(usageEvents.eventType, "conversation_started"),
+        eq(usageEvents.conversationId, conversationId)
+      )
+    );
+
+  if (Number(existing[0]?.count || 0) === 0) {
+    await db.insert(usageEvents).values({
+      userId,
+      eventType: "conversation_started",
+      conversationId,
+      periodKey,
+    });
+  }
+}
+
+/**
+ * Check if a conversation has any messages recorded in usage_events.
+ * Used to determine if creating a conversation consumed a limit slot.
+ */
+export async function hasConversationMessages(userId: number, conversationId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(usageEvents)
+    .where(
+      and(
+        eq(usageEvents.userId, userId),
+        eq(usageEvents.eventType, "conversation_started"),
+        eq(usageEvents.conversationId, conversationId)
+      )
+    );
+
+  return Number(result[0]?.count || 0) > 0;
 }
 
 // ── Usage Log ──
@@ -423,7 +506,7 @@ export async function getUsageStats(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Total tokens used
+  // Total tokens used (from usage_log - not affected by deletion)
   const totalResult = await db
     .select({ total: sql<number>`COALESCE(SUM(${usageLog.tokensUsed}), 0)` })
     .from(usageLog)
@@ -437,24 +520,52 @@ export async function getUsageStats(userId: number) {
     .from(usageLog)
     .where(and(eq(usageLog.userId, userId), gte(usageLog.createdAt, today)));
 
-  // Total conversations
-  const convResult = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(conversations)
-    .where(eq(conversations.userId, userId));
+  // Real usage from independent counters (usage_events)
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const dayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
-  // Total messages
-  const msgResult = await db
+  // Total conversations this month (from usage_events)
+  const monthConvResult = await db
     .select({ count: sql<number>`COUNT(*)` })
-    .from(messages)
+    .from(usageEvents)
     .where(
-      sql`${messages.conversationId} IN (SELECT id FROM conversations WHERE userId = ${userId})`
+      and(
+        eq(usageEvents.userId, userId),
+        eq(usageEvents.eventType, "conversation_started"),
+        eq(usageEvents.periodKey, monthKey)
+      )
+    );
+
+  // Total messages today (from usage_events)
+  const todayMsgResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(usageEvents)
+    .where(
+      and(
+        eq(usageEvents.userId, userId),
+        eq(usageEvents.eventType, "message_sent"),
+        eq(usageEvents.periodKey, dayKey)
+      )
+    );
+
+  // Total messages all time (from usage_events)
+  const totalMsgResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(usageEvents)
+    .where(
+      and(
+        eq(usageEvents.userId, userId),
+        eq(usageEvents.eventType, "message_sent")
+      )
     );
 
   return {
     totalTokens: Number(totalResult[0]?.total || 0),
     todayTokens: Number(todayResult[0]?.total || 0),
-    totalConversations: Number(convResult[0]?.count || 0),
-    totalMessages: Number(msgResult[0]?.count || 0),
+    totalConversations: Number(monthConvResult[0]?.count || 0),
+    totalMessages: Number(totalMsgResult[0]?.count || 0),
+    todayMessages: Number(todayMsgResult[0]?.count || 0),
+    monthConversations: Number(monthConvResult[0]?.count || 0),
   };
 }

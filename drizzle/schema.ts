@@ -83,3 +83,21 @@ export const usageLog = mysqlTable("usage_log", {
 
 export type UsageLog = typeof usageLog.$inferSelect;
 export type InsertUsageLog = typeof usageLog.$inferInsert;
+
+/**
+ * usage_events: Contadores de uso independentes do histórico visível.
+ * Não pode ser burlado por exclusão de conversas/mensagens.
+ * - "conversation_started": quando primeira mensagem é enviada em uma conversa
+ * - "message_sent": cada mensagem enviada pelo usuário
+ */
+export const usageEvents = mysqlTable("usage_events", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  eventType: varchar("eventType", { length: 50 }).notNull(),
+  conversationId: int("conversationId"),
+  periodKey: varchar("periodKey", { length: 20 }).notNull(), // "2026-05" for monthly, "2026-05-11" for daily
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UsageEvent = typeof usageEvents.$inferSelect;
+export type InsertUsageEvent = typeof usageEvents.$inferInsert;

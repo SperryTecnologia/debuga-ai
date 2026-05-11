@@ -13,6 +13,8 @@ import {
   getTodayMessageCount,
   getMonthConversationCount,
   resetCreditsIfNeeded,
+  recordMessageSent,
+  recordConversationStarted,
 } from "./db";
 import { AGENT_TOOLS, executeToolCall } from "./agentTools";
 import { PLANS, type Plan } from "./products";
@@ -292,17 +294,21 @@ export function registerStreamRoute(app: Express) {
           return;
         }
 
-        // Check monthly conversation limit
-        const monthConversations = await getMonthConversationCount(user.id);
-        if (monthConversations > plan.limits.conversationsPerMonth) {
-          res.status(402).json({
-            error: `Você atingiu o limite de ${plan.limits.conversationsPerMonth} conversas por mês do plano ${plan.name}. Faça upgrade para continuar.`,
-            code: "MONTHLY_CONV_LIMIT_REACHED",
-            limit: plan.limits.conversationsPerMonth,
-            used: monthConversations,
-            planId: plan.id,
-          });
-          return;
+        // Check monthly conversation limit (only if this is the first message in conversation)
+        const existingMsgs = await getMessages(conversationId);
+        const isFirstUserMsg = existingMsgs.filter(m => m.role === "user").length === 0;
+        if (isFirstUserMsg) {
+          const monthConversations = await getMonthConversationCount(user.id);
+          if (monthConversations >= plan.limits.conversationsPerMonth) {
+            res.status(402).json({
+              error: `Você atingiu o limite de ${plan.limits.conversationsPerMonth} conversas por mês do plano ${plan.name}. Faça upgrade para continuar.`,
+              code: "MONTHLY_CONV_LIMIT_REACHED",
+              limit: plan.limits.conversationsPerMonth,
+              used: monthConversations,
+              planId: plan.id,
+            });
+            return;
+          }
         }
 
         // Check credits
@@ -323,6 +329,10 @@ export function registerStreamRoute(app: Express) {
         res.status(404).json({ error: "Conversation not found" });
         return;
       }
+
+      // Record usage events (independent counters - cannot be bypassed by deleting chats)
+      await recordMessageSent(user.id, conversationId);
+      await recordConversationStarted(user.id, conversationId);
 
       // Save user message
       await addMessage({ conversationId, role: "user", content });

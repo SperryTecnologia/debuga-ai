@@ -20,6 +20,8 @@ import {
   getMonthConversationCount,
   getTodayMessageCount,
   resetCreditsIfNeeded,
+  recordMessageSent,
+  recordConversationStarted,
 } from "./db";
 import { PLANS } from "./products";
 import { invokeLLM } from "./_core/llm";
@@ -146,21 +148,12 @@ export const appRouter = router({
       return listConversations(ctx.user.id);
     }),
 
-    // Create a new conversation (with monthly limit check)
+    // Create a new conversation
+    // NOTE: Monthly conversation limit is checked when the FIRST message is sent,
+    // not when the conversation is created. Empty conversations don't count.
     createConversation: protectedProcedure
       .input(z.object({ title: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
-        const isAdmin = ctx.user.role === "admin";
-        if (!isAdmin) {
-          const plan = await getUserPlan(ctx.user.id);
-          const monthConversations = await getMonthConversationCount(ctx.user.id);
-          if (monthConversations >= plan.limits.conversationsPerMonth) {
-            throw new TRPCError({
-              code: "FORBIDDEN",
-              message: `Você atingiu o limite de ${plan.limits.conversationsPerMonth} conversas por mês do plano ${plan.name}. Faça upgrade para continuar.`,
-            });
-          }
-        }
         return createConversation(ctx.user.id, input.title);
       }),
 
@@ -231,6 +224,18 @@ export const appRouter = router({
           const plan = await getUserPlan(ctx.user.id);
           // Reset credits if needed
           await resetCreditsIfNeeded(ctx.user.id);
+
+          // Check monthly conversation limit (only for first message in conversation)
+          const monthConversations = await getMonthConversationCount(ctx.user.id);
+          const existingMessages = await getMessages(input.conversationId);
+          const isFirstMessage = existingMessages.filter(m => m.role === "user").length === 0;
+          if (isFirstMessage && monthConversations >= plan.limits.conversationsPerMonth) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: `Você atingiu o limite de ${plan.limits.conversationsPerMonth} conversas por mês do plano ${plan.name}. Faça upgrade para continuar.`,
+            });
+          }
+
           // Check daily message limit
           const todayMessages = await getTodayMessageCount(ctx.user.id);
           if (todayMessages >= plan.limits.messagesPerDay) {
@@ -249,6 +254,10 @@ export const appRouter = router({
           }
         }
 
+        // Record usage events BEFORE saving message (independent counters)
+        await recordMessageSent(ctx.user.id, input.conversationId);
+        await recordConversationStarted(ctx.user.id, input.conversationId);
+
         // Save user message
         const userMsg = await addMessage({
           conversationId: input.conversationId,
@@ -256,13 +265,13 @@ export const appRouter = router({
           content: input.content,
         });
 
-        // Get conversation history for context
-        const history = await getMessages(input.conversationId);
+        // Get conversation history for context (re-fetch after adding user message)
+        const fullHistory = await getMessages(input.conversationId);
 
         // Build LLM messages
         const llmMessages: LLMMessage[] = [
           { role: "system", content: SYSTEM_PROMPT },
-          ...history.map((m) => ({
+          ...fullHistory.map((m) => ({
             role: m.role as "user" | "assistant" | "system",
             content: m.content,
           })),
@@ -285,7 +294,7 @@ export const appRouter = router({
         });
 
         // Auto-title on first message
-        if (history.length <= 1) {
+        if (fullHistory.length <= 2) {
           try {
             const titleResult = await invokeLLM({
               messages: [
