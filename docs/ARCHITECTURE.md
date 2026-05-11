@@ -1,223 +1,270 @@
-# debuga.ai — Documentação de Arquitetura
+# debuga.ai — System Architecture
 
-**Versão:** 1.0  
-**Data:** Maio 2026  
-**Autor:** Sperry Tecnologia
-
----
-
-## 1. Visão Geral
-
-O debuga.ai é uma plataforma SaaS construída sobre uma arquitetura de três camadas (frontend, backend, serviços externos) com foco em **type-safety end-to-end** via tRPC e **streaming em tempo real** via Server-Sent Events (SSE). O diferencial arquitetural é o **Agent Loop** — um sistema de iteração autônoma que permite ao agente de IA decidir e executar ferramentas de forma encadeada.
-
-### Diagrama de Arquitetura
-
-![Arquitetura do Sistema](/manus-storage/architecture-diagram_692ac45c.png)
+**Version:** 2.0  
+**Date:** May 2026  
+**Author:** Sperry Tecnologia  
+**Audience:** Senior developers, technical leads, and infrastructure architects
 
 ---
 
-## 2. Camada de Frontend
+## 1. High-Level Overview
 
-### 2.1 Stack
+debuga.ai is a production SaaS platform built on a **three-tier architecture** (client, application server, external services) with two distinctive design choices: **end-to-end type safety** via tRPC (eliminating API contract drift) and **real-time streaming** via Server-Sent Events (keeping the transport layer simple and HTTP/2-native). The architectural centerpiece is the **Agent Loop** — an autonomous reasoning-action-observation cycle that allows the AI to chain tool executions without human intervention.
 
-O frontend é construído com **React 19** e **Tailwind CSS 4**, utilizando componentes do **shadcn/ui** para consistência visual. A comunicação com o backend ocorre por dois canais distintos:
+### System Architecture Diagram
 
-| Canal | Protocolo | Uso |
-|---|---|---|
-| tRPC Client | HTTP/JSON (via fetch) | CRUD de conversas, account, subscription |
-| SSE Consumer | Server-Sent Events | Streaming de respostas do agente em tempo real |
+![System Architecture](/manus-storage/architecture-diagram_692ac45c.png)
 
-### 2.2 Páginas Principais
-
-| Página | Rota | Descrição |
-|---|---|---|
-| Home | `/` | Landing page com hero, recursos, integrações |
-| Chat | `/chat` | Interface de chat com sidebar de conversas |
-| Pricing | `/pricing` | Planos de assinatura com toggle mensal/anual |
-| Account | `/account` | Dashboard com créditos, uso, perfil |
-| Login | `/login` | Redirecionamento para OAuth |
-
-### 2.3 Gerenciamento de Estado
-
-O estado da aplicação é gerenciado por três mecanismos complementares. O **tRPC React Query** cuida do cache de dados do servidor com invalidação automática, enquanto o **React Context** gerencia o estado de autenticação global via `useAuth()`. Para o streaming do chat, o estado local dos componentes é utilizado com `useState` e `useRef` para controlar o buffer de SSE.
+The system follows a clear separation of concerns. The React SPA communicates with the Express backend through two channels: tRPC for structured CRUD operations and SSE for real-time agent streaming. The backend orchestrates LLM inference (hybrid cloud + on-premise), tool execution, billing enforcement, and data persistence.
 
 ---
 
-## 3. Camada de Backend
+## 2. Hybrid LLM Inference Layer
 
-### 3.1 Stack
+The most significant architectural decision is the **dual-inference topology** that combines cloud API calls with on-premise GPU inference:
 
-O backend roda em **Node.js** com **Express 4** como servidor HTTP e **tRPC 11** como camada de RPC tipada. O **Drizzle ORM** gerencia o acesso ao banco de dados MySQL/TiDB com migrações versionadas.
+### 2.1 Cloud Path (Primary)
 
-### 3.2 Módulos do Servidor
+General-purpose queries, tool calling orchestration, and conversational responses are routed to **Google Gemini 2.5 Flash** via the Forge API proxy. This path optimizes for latency and cost on standard IT support queries. The LLM wrapper (`server/_core/llm.ts`) abstracts the provider, making it trivial to swap to OpenAI, Anthropic, or any OpenAI-compatible endpoint.
 
-| Módulo | Arquivo | Responsabilidade |
-|---|---|---|
-| Auth | `server/_core/oauth.ts` | OAuth 2.0, sessões JWT |
-| tRPC Router | `server/routers.ts` | Procedures tipadas (auth, chat, account, subscription) |
-| Stream | `server/streamRoute.ts` | SSE streaming + agent loop + rate limiting |
-| Stripe | `server/stripeRoutes.ts` | Checkout, webhooks, portal do cliente |
-| DB | `server/db.ts` | Query helpers (Drizzle) |
-| Tools | `server/tools.ts` | Ferramentas do agente (8 tools) |
-| Products | `server/products.ts` | Definição de planos e limites |
-| LLM | `server/_core/llm.ts` | Wrapper para API de LLM |
+### 2.2 On-Premise Path (Specialized)
+
+Deep infrastructure analysis workloads are routed to a proprietary fine-tuned model running on dedicated hardware:
+
+| Component | Specification |
+|---|---|
+| **GPU Cluster** | 16x NVIDIA RTX 3090 (24GB VRAM each, 384GB total) |
+| **Servers** | 3x 4U rack-mount dedicated AI servers |
+| **Model** | Custom fork fine-tuned on IT infrastructure, network security, and telecom datasets |
+| **Inference** | vLLM / TGI serving with tensor parallelism across GPUs |
+| **Interconnect** | NVLink where available, PCIe Gen4 x16 fallback |
+
+The on-premise model excels at tasks that require domain-specific knowledge not well-represented in general-purpose LLM training data:
+
+**Deep TCP/IP Analysis (L3–L7):** The model performs packet-level reasoning across the full OSI stack. At Layer 3, it analyzes IP header anomalies, TTL manipulation patterns, and fragmentation attacks. At Layer 4, it identifies TCP session hijacking indicators, SYN flood signatures, and connection state machine violations. At Layer 7, it performs Deep Packet Inspection (DPI) for protocol-specific threats including HTTP request smuggling, DNS tunneling, and TLS fingerprint analysis (JA3/JA3S hashing).
+
+**Network Security Correlation:** The model cross-references heterogeneous data sources — firewall logs (iptables, pfSense), IDS/IPS alerts (Snort, Suricata), NetFlow/sFlow records, and SNMP traps — to construct attack timelines and identify root causes. It understands the temporal relationships between events that indicate lateral movement, privilege escalation, or data exfiltration.
+
+**Infrastructure-Aware Reasoning:** Unlike general-purpose models, the fine-tuned model understands BGP routing tables, OSPF adjacency databases, VLAN topologies, and can reason about complex failure modes such as asymmetric routing, MTU black holes, spanning tree loops, and DHCP scope exhaustion.
+
+### 2.3 Routing Logic
+
+The inference router evaluates each incoming request against three criteria:
+
+1. **Query complexity** — Simple lookups go to cloud; multi-step analysis goes to on-premise
+2. **Domain specificity** — Network packet analysis, firewall rule evaluation → on-premise
+3. **Latency requirements** — Real-time tool calling → cloud; batch analysis → on-premise
 
 ---
 
-## 4. Agent Loop — Núcleo do Sistema
+## 3. Frontend Architecture
 
-O Agent Loop é o componente central que diferencia o debuga.ai de chatbots convencionais. Ele implementa um ciclo de **raciocínio-ação-observação** com até 5 iterações por mensagem.
+### 3.1 Technology Choices
 
-### Diagrama de Fluxo do Agente
+The frontend is a React 19 SPA styled with Tailwind CSS 4 and shadcn/ui components. The design language follows a **dark terminal aesthetic** (black background, green accent palette) that resonates with the target audience of IT professionals and security engineers.
 
-![Fluxo do Agente](/manus-storage/agent-flow_6eac4770.png)
+Communication with the backend occurs through two distinct channels:
 
-### 4.1 Funcionamento
-
-Quando o usuário envia uma mensagem, o sistema primeiro verifica rate limiting (20 msgs/min), créditos disponíveis e limites do plano (mensagens/dia, conversas/mês). Se todas as verificações passam, a mensagem é salva no banco e o contexto da conversa é enviado ao LLM.
-
-O LLM pode responder de duas formas: com texto direto (resposta final) ou com uma **tool call** (solicitação de execução de ferramenta). No segundo caso, o sistema executa a ferramenta solicitada, retorna o resultado ao LLM, e o ciclo recomeça. Este processo se repete por até 5 iterações, permitindo que o agente resolva problemas complexos que exigem múltiplas consultas encadeadas.
-
-### 4.2 Ferramentas Disponíveis
-
-| Ferramenta | Função | Timeout | Exemplo de Uso |
+| Channel | Protocol | Purpose | Library |
 |---|---|---|---|
-| `execute_code` | Executa Python/Bash em sandbox | 30s | Gerar scripts de automação |
-| `port_scan` | Escaneia portas TCP | 30s | Auditoria de segurança |
-| `dns_lookup` | Consulta registros DNS | 10s | Diagnóstico de resolução |
-| `ssl_check` | Verifica certificados SSL/TLS | 10s | Detectar expiração |
-| `http_check` | Analisa headers HTTP | 10s | Verificar segurança web |
-| `whois_lookup` | Consulta WHOIS de domínio | 10s | Investigar propriedade |
-| `web_fetch` | Acessa e extrai conteúdo web | 15s | Consultar documentação |
-| `generate_image` | Gera imagens via IA | 20s | Criar diagramas |
+| tRPC Client | HTTP/JSON (fetch) | CRUD operations (conversations, account, subscriptions) | `@trpc/react-query` |
+| SSE Consumer | Server-Sent Events | Real-time agent response streaming | Native `EventSource` |
 
-### 4.3 Streaming SSE
+### 3.2 Route Structure
 
-As respostas são transmitidas em tempo real via Server-Sent Events. O formato dos eventos é:
+| Route | Component | Auth Required | Description |
+|---|---|---|---|
+| `/` | `Home.tsx` | No | Landing page with hero, features, integrations, pricing |
+| `/chat` | `ChatPage.tsx` | Yes | Chat interface with conversation sidebar |
+| `/pricing` | `PricingPage.tsx` | No | Subscription plans with Stripe checkout |
+| `/account` | `AccountPage.tsx` | Yes | User dashboard with credits, usage metrics, profile |
+
+### 3.3 State Management
+
+State is managed through three complementary mechanisms. **tRPC React Query** handles server data caching with automatic invalidation on mutations. **React Context** (`useAuth()`) provides global authentication state. **Local component state** (`useState` + `useRef`) manages the SSE streaming buffer for real-time chat rendering.
+
+---
+
+## 4. Agent Loop — Core Engine
+
+The Agent Loop is the architectural centerpiece that transforms debuga.ai from a chatbot into an autonomous agent. It implements a **ReAct-style** [1] reasoning-action-observation cycle with up to 5 iterations per user message.
+
+### Agent Flow Diagram
+
+![Agent Flow](/manus-storage/agent-flow_6eac4770.png)
+
+### 4.1 Execution Flow
+
+When a user sends a message, the system executes a pre-flight check pipeline before invoking the LLM:
+
+1. **Rate limit check** — 20 msgs/min per user (in-memory Map with 5-min cleanup interval)
+2. **Plan limit check** — Daily message count and monthly conversation count against plan quotas
+3. **Credit balance check** — Sufficient credits remaining for at least one response
+4. **Context assembly** — Conversation history + system prompt + tool definitions
+
+If all checks pass, the message is persisted to the database and the assembled context is sent to the LLM. The LLM responds with either a **text completion** (final answer) or a **tool call** (action request). In the tool call case, the system executes the requested tool, appends the result to the context, and re-invokes the LLM. This cycle repeats for up to 5 iterations, enabling complex multi-step diagnostics.
+
+### 4.2 Tool Registry
+
+| Tool | Implementation | Timeout | Output Limit |
+|---|---|---|---|
+| `execute_code` | `child_process.exec` in `/tmp` sandbox | 30s | 50KB |
+| `port_scan` | TCP socket connection attempts | 30s | — |
+| `dns_lookup` | `dns.promises.resolve` (Node.js native) | 10s | — |
+| `ssl_check` | `tls.connect` with certificate extraction | 10s | — |
+| `http_check` | `fetch` with header analysis | 10s | — |
+| `whois_lookup` | WHOIS protocol query | 10s | — |
+| `web_fetch` | `fetch` + HTML parsing | 15s | 50KB |
+| `generate_image` | Internal ImageService API | 20s | — |
+
+### 4.3 SSE Event Protocol
+
+Responses are streamed to the client via Server-Sent Events with typed event names:
 
 ```
 event: token
-data: {"content": "texto parcial"}
+data: {"content": "partial text chunk"}
 
 event: tool_start
-data: {"name": "dns_lookup", "args": {"domain": "example.com"}}
+data: {"name": "dns_lookup", "args": {"domain": "example.com", "type": "A"}}
 
 event: tool_result
-data: {"name": "dns_lookup", "result": "..."}
+data: {"name": "dns_lookup", "result": "...resolved records..."}
 
 event: done
 data: {"tokensUsed": 1234, "creditsUsed": 5}
+
+event: error
+data: {"message": "Rate limit exceeded", "code": "RATE_LIMITED"}
 ```
 
 ---
 
-## 5. Modelo de Dados
+## 5. Data Model
 
-### Diagrama ER
+### Entity-Relationship Diagram
 
-![Modelo de Dados](/manus-storage/data-model_6469cf06.png)
+![Data Model](/manus-storage/data-model_6469cf06.png)
 
-### 5.1 Tabelas
+### 5.1 Schema Design
 
-A tabela **users** armazena o cadastro com suporte a múltiplos métodos de login (OAuth), roles para controle de acesso (admin/user), e referência ao Stripe customer ID para billing. A tabela **conversations** mantém o histórico de conversas com funcionalidades de pin e archive. Cada conversa contém múltiplas **messages** que registram o role (user/assistant/system), o conteúdo, tool calls em JSON, e contagem de tokens.
+The database schema follows a **normalized design** with 6 tables managed by Drizzle ORM. All tables use auto-incrementing integer primary keys and UTC timestamps.
 
-No lado financeiro, **subscriptions** rastreia as assinaturas Stripe com status, período e flag de cancelamento. A tabela **credits** mantém o saldo de créditos por usuário com planId como source of truth (atualizado pelo webhook do Stripe). Por fim, **usage_log** registra cada operação com detalhes de tokens e créditos consumidos para auditoria e analytics.
+The **users** table stores OAuth accounts with role-based access control (`admin` | `user`). The `stripeCustomerId` field links to the Stripe customer object for billing operations. The **conversations** table supports pin and archive functionality with soft-delete semantics. Each conversation contains multiple **messages** that store the role (user/assistant/system/tool), content, serialized tool calls as JSON, and token count for billing.
 
-### 5.2 Índices e Performance
+On the financial side, **subscriptions** tracks Stripe subscription lifecycle (active, past_due, canceled) with period boundaries and cancellation flags. The **credits** table maintains per-user credit balance with `planId` as the source of truth — updated exclusively by Stripe webhooks to prevent desynchronization. The **usage_log** table provides a granular audit trail of every operation with token counts and credit consumption for analytics and dispute resolution.
 
-| Tabela | Índice | Colunas |
-|---|---|---|
-| users | PRIMARY | id |
-| users | UNIQUE | openId |
-| conversations | INDEX | userId, createdAt |
-| messages | INDEX | conversationId, createdAt |
-| subscriptions | INDEX | userId, status |
-| credits | UNIQUE | userId |
-| usage_log | INDEX | userId, createdAt |
+### 5.2 Index Strategy
+
+| Table | Index | Columns | Purpose |
+|---|---|---|---|
+| users | UNIQUE | openId | OAuth identity lookup |
+| conversations | COMPOSITE | userId, createdAt | User conversation listing (sorted) |
+| messages | COMPOSITE | conversationId, createdAt | Message pagination within conversation |
+| subscriptions | COMPOSITE | userId, status | Active subscription lookup |
+| credits | UNIQUE | userId | Single credit record per user |
+| usage_log | COMPOSITE | userId, createdAt | Usage history with date filtering |
 
 ---
 
-## 6. Sistema de Billing
+## 6. Billing Architecture
 
-### Diagrama de Fluxo de Pagamento
+### Payment Flow Diagram
 
-![Fluxo de Billing](/manus-storage/billing-flow_bb4de0de.png)
+![Billing Flow](/manus-storage/billing-flow_bb4de0de.png)
 
-### 6.1 Fluxo de Checkout
+### 6.1 Checkout Flow
 
-O fluxo de pagamento segue o padrão Stripe Checkout Session. O frontend solicita ao backend a criação de uma sessão de checkout, que inclui metadata com user_id e plan_id. O Stripe redireciona o usuário para a página de pagamento, e após a conclusão, envia um webhook `checkout.session.completed` ao backend.
+The billing system follows the **Stripe Checkout Session** pattern. The frontend requests a checkout session from the backend, which creates it with metadata linking the session to the authenticated user (`client_reference_id`, `metadata.user_id`). The user is redirected to Stripe's hosted checkout page, and upon completion, Stripe sends a webhook to the backend.
 
-### 6.2 Webhooks Processados
+### 6.2 Webhook Event Handling
 
-| Evento | Ação |
+| Event | Backend Action |
 |---|---|
-| `checkout.session.completed` | Cria subscription, atualiza créditos para o plano |
-| `customer.subscription.updated` | Atualiza status da subscription |
-| `customer.subscription.deleted` | Cancela subscription, downgrade para free |
-| `invoice.payment_failed` | Marca subscription como past_due |
+| `checkout.session.completed` | Create/update subscription, reset credits to plan allocation, link Stripe customer ID |
+| `customer.subscription.updated` | Sync subscription status (active, past_due, canceled) |
+| `customer.subscription.deleted` | Downgrade to free tier, reset credits to 50 |
+| `invoice.payment_failed` | Mark subscription as `past_due`, notify owner |
 
-### 6.3 Sistema de Créditos
+### 6.3 Three-Layer Consumption Control
 
-O sistema de créditos opera em três camadas de proteção:
+The credit system implements defense-in-depth with three independent enforcement layers:
 
-1. **Rate Limiting** (camada 1): Máximo 20 mensagens por minuto por usuário, implementado em memória com cleanup automático a cada 5 minutos. Protege contra abuso e flood.
+**Layer 1 — Rate Limiting (anti-flood):** An in-memory `Map<userId, timestamp[]>` tracks message timestamps per user. Requests exceeding 20/minute receive a `429 Too Many Requests` response. The map is garbage-collected every 5 minutes to prevent memory leaks. Admin users bypass this layer.
 
-2. **Limites de Plano** (camada 2): Antes de processar cada mensagem, o sistema verifica se o usuário não excedeu o limite de mensagens/dia e conversas/mês do seu plano. Administradores bypass todos os limites.
+**Layer 2 — Plan Quotas (business logic):** Before each LLM invocation, the system queries `getTodayMessageCount()` and `getMonthConversationCount()` against the user's plan limits. This prevents unnecessary API costs by rejecting messages before they reach the LLM. Admin users bypass this layer.
 
-3. **Créditos** (camada 3): Após cada resposta, o sistema calcula o consumo de tokens (estimativa: ~4 caracteres por token + 50 tokens por tool call) e debita do saldo de créditos do usuário.
-
----
-
-## 7. Segurança
-
-### 7.1 Autenticação e Autorização
-
-A autenticação utiliza OAuth 2.0 com sessões JWT assinadas pelo `JWT_SECRET`. O tRPC oferece dois tipos de procedures: `publicProcedure` (sem autenticação) e `protectedProcedure` (requer sessão válida). O contexto `ctx.user` é injetado automaticamente em procedures protegidas.
-
-### 7.2 Isolamento de Dados
-
-Todas as queries de dados são filtradas pelo `userId` do contexto autenticado. Não existe endpoint que permita acessar dados de outro usuário. A execução de código no sandbox é isolada e não tem acesso ao sistema host.
-
-### 7.3 Proteção de API
-
-O rate limiting em memória (20 msgs/min) protege contra flood. O Stripe webhook verifica assinatura criptográfica antes de processar eventos. Todas as comunicações são via HTTPS.
+**Layer 3 — Credit Debit (metering):** After each successful response, token consumption is estimated (~4 characters per token + 50 tokens per tool call) and debited from the user's credit balance. The debit is logged to `usage_log` for audit purposes.
 
 ---
 
-## 8. Testes
+## 7. Security Architecture
 
-O projeto possui 60 testes automatizados distribuídos em 5 arquivos:
+The codebase has passed a full production security audit (see [SECURITY_AUDIT.md](SECURITY_AUDIT.md)):
 
-| Arquivo | Testes | Cobertura |
-|---|---|---|
-| `auth.logout.test.ts` | 1 | Fluxo de logout |
-| `chat.test.ts` | 19 | CRUD de conversas, mensagens |
-| `tools.test.ts` | 20 | Execução de ferramentas (DNS, SSL, HTTP, port scan) |
-| `subscription.test.ts` | 10 | Status de assinatura, planos, pricing |
-| `credits.test.ts` | 10 | Créditos, limites, contadores |
+**Secret Management:** All sensitive values are injected via environment variables at runtime. The `.gitignore` excludes `.env*` files. Frontend code only accesses `VITE_`-prefixed variables (public keys by design). Server-side secrets (`STRIPE_SECRET_KEY`, `JWT_SECRET`, `DATABASE_URL`, `BUILT_IN_FORGE_API_KEY`) never reach the client bundle.
 
-Os testes utilizam **Vitest** e criam contextos mock para simular usuários autenticados sem depender de banco de dados externo para testes unitários.
+**Authentication:** OAuth 2.0 with JWT session cookies signed by `JWT_SECRET`. The tRPC layer provides `publicProcedure` and `protectedProcedure` abstractions. All data queries are scoped to `ctx.user.id` from the authenticated session (IDOR-safe by construction).
+
+**Webhook Integrity:** Stripe webhooks are verified using `stripe.webhooks.constructEvent()` with the webhook signing secret before any event processing.
+
+**Code Execution Sandbox:** The `execute_code` tool runs user-provided code in `/tmp` with a 30-second timeout and 50KB output limit. For self-hosted deployments, Docker-based sandboxing is recommended (see [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)).
 
 ---
 
-## 9. Decisões Arquiteturais
+## 8. Architectural Decisions Record (ADR)
 
-### 9.1 Por que tRPC em vez de REST?
+### ADR-001: tRPC over REST
 
-O tRPC elimina a necessidade de definir contratos de API manualmente. Os tipos fluem do backend para o frontend automaticamente, reduzindo bugs de integração e acelerando o desenvolvimento. A combinação com Superjson permite retornar objetos Drizzle diretamente (incluindo `Date`).
+**Context:** The application requires tight frontend-backend type coupling for rapid iteration. **Decision:** Use tRPC 11 with Superjson serialization. **Consequence:** Zero API contract files, compile-time type checking across the stack, native `Date`/`BigInt` serialization. Trade-off: tRPC is less suitable for public API consumption (addressed in v6.0 roadmap with REST API layer).
 
-### 9.2 Por que SSE em vez de WebSocket?
+### ADR-002: SSE over WebSocket
 
-SSE é unidirecional (servidor → cliente), o que é suficiente para streaming de respostas do agente. É mais simples de implementar, funciona nativamente com HTTP/2, e não requer bibliotecas adicionais como Socket.io. Para o caso de uso do debuga.ai (streaming de texto), SSE é a escolha ideal.
+**Context:** The streaming requirement is unidirectional (server → client). **Decision:** Use Server-Sent Events instead of WebSocket. **Consequence:** Simpler implementation, native HTTP/2 multiplexing, no Socket.io dependency, automatic reconnection built into the `EventSource` API. Trade-off: No bidirectional communication (not needed for this use case).
 
-### 9.3 Por que Drizzle em vez de Prisma?
+### ADR-003: Drizzle over Prisma
 
-Drizzle oferece queries SQL-like com type-safety, é mais leve que Prisma, e gera migrações SQL puras que podem ser aplicadas diretamente. A integração com tRPC via Superjson é nativa.
+**Context:** The ORM must generate predictable SQL and support pure SQL migrations for production database management. **Decision:** Use Drizzle ORM. **Consequence:** SQL-like query API, lighter runtime (~50KB vs Prisma's ~2MB), pure `.sql` migration files that can be reviewed and applied manually. Trade-off: Smaller ecosystem and community compared to Prisma.
 
-### 9.4 Por que Gemini 2.5 Flash?
+### ADR-004: Hybrid LLM Architecture
 
-O Gemini 2.5 Flash oferece o melhor custo-benefício para o caso de uso do debuga.ai: respostas rápidas, suporte nativo a tool calling, e preço acessível. A arquitetura permite trocar o provedor de LLM facilmente alterando apenas o módulo `server/_core/llm.ts`.
+**Context:** General-purpose cloud LLMs lack domain-specific knowledge for deep network analysis. **Decision:** Implement a routing layer that dispatches to cloud LLM (Gemini) for general queries and on-premise GPU cluster for specialized infrastructure analysis. **Consequence:** Best-of-both-worlds: low latency and cost for simple queries, deep domain expertise for complex analysis. Trade-off: Operational complexity of maintaining on-premise GPU infrastructure.
+
+### ADR-005: Credit-Based Billing over Per-Request Pricing
+
+**Context:** Users need predictable monthly costs while the platform needs to prevent abuse. **Decision:** Implement a credit system with monthly allocation per plan tier. **Consequence:** Users get a clear budget, the platform has three layers of consumption control, and the billing model is simple to communicate. Trade-off: Credit estimation is approximate (~4 chars/token), which may slightly over- or under-charge individual requests.
 
 ---
 
-*Documento técnico — Sperry Tecnologia © 2026*
+## 9. Deployment Topology
+
+### Current (Manus Hosting)
+
+```
+[Cloudflare CDN] → [debuga.ai] → [Manus Platform]
+                                    ├── Express Server (Node.js)
+                                    ├── TiDB Database
+                                    ├── S3 Storage
+                                    └── Forge API (LLM Proxy)
+```
+
+### Self-Hosted (Future)
+
+```
+[Cloudflare CDN] → [debuga.ai] → [Docker Compose]
+                                    ├── app (Node.js container)
+                                    ├── db (MySQL 8.0)
+                                    ├── redis (session cache)
+                                    └── sandbox (code execution)
+                                  [On-Premise GPU Cluster]
+                                    ├── vLLM / TGI inference server
+                                    └── 16x RTX 3090 (3 servers)
+```
+
+See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for detailed self-hosting instructions.
+
+---
+
+*Technical Architecture Document — Sperry Tecnologia © 2026*
+
+[1]: https://arxiv.org/abs/2210.03629 "ReAct: Synergizing Reasoning and Acting in Language Models"

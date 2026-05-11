@@ -100,9 +100,9 @@
 - [ ] Avaliar e adicionar APIs extras para agregar valor ao produto
 - [ ] Sistema de cupons/códigos para alunos do curso Open Infra Pro
 - [x] Whitepaper bilíngue (PT-BR + EN) do projeto debuga.ai
-- [x] README.md profissional para repositório Git
+- [x] README.md profissional para repositório Git (v2.0 — nível senior, LLM híbrida, ADRs)
 - [x] Guia de migração para hosting próprio com Google OAuth
-- [x] Documentação de arquitetura com diagramas (4 diagramas: arquitetura, agent flow, data model, billing flow)
+- [x] Documentação de arquitetura com diagramas (v2.0 — LLM híbrida, ADRs, deployment topology)
 - [x] Auditoria de segurança completa: verificar exposição de API keys, secrets, dados sensíveis (APROVADO)
 - [x] Revisão do fluxo de pagamento: assinatura, créditos, limites, upgrade de plano
 - [x] Atualizar whitepapers com LLM própria (16 GPUs 3090, 3 servidores rack 4U)
