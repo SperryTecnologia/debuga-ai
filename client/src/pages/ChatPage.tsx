@@ -622,6 +622,8 @@ export default function ChatPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; message: string; planId: string } | null>(null);
   const [showCardUpgradeCTA, setShowCardUpgradeCTA] = useState(false);
+  const lastRequestBlockedRef = useRef(false);
+  const ctaTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
   const [searchQuery, setSearchQuery] = useState("");
@@ -991,6 +993,9 @@ export default function ChatPage() {
         if (!response.ok || !response.body) {
           // Handle 402 (limit reached) with upgrade modal
           if (response.status === 402) {
+            lastRequestBlockedRef.current = true;
+            if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
+            setShowCardUpgradeCTA(false);
             try {
               const errData = await response.json();
               const planId = errData.planId || "free";
@@ -1004,6 +1009,9 @@ export default function ChatPage() {
             return;
           }
           if (response.status === 429) {
+            lastRequestBlockedRef.current = true;
+            if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
+            setShowCardUpgradeCTA(false);
             toast.error("Muitas mensagens em pouco tempo. Aguarde um momento.");
             setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
             return;
@@ -1089,6 +1097,9 @@ export default function ChatPage() {
           setMessages((prev) => [...prev, assistantMsg]);
         }
       } catch (err: any) {
+        lastRequestBlockedRef.current = true;
+        if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
+        setShowCardUpgradeCTA(false);
         if (err.name !== "AbortError") {
           console.error("Stream error:", err);
           const errorMsg: ChatMessage = {
@@ -1787,13 +1798,18 @@ export default function ChatPage() {
                       <button
                         key={i}
                         onClick={() => {
+                          lastRequestBlockedRef.current = false;
+                          if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
                           handleSendMessage(item.prompt);
-                          // Show CTA after card execution for Free users (only if limit modal won't show)
+                          // Show CTA after card execution for Free users only if request succeeds
                           if (!isPaidPlan) {
-                            setTimeout(() => {
-                              setShowCardUpgradeCTA((prev) => prev); // will be set only if no upgradeModal
-                              setShowCardUpgradeCTA(true);
-                            }, 3000);
+                            ctaTimeoutRef.current = setTimeout(() => {
+                              ctaTimeoutRef.current = null;
+                              // Only show CTA if request was NOT blocked and no upgrade modal is open
+                              if (!lastRequestBlockedRef.current && !upgradeModal?.open) {
+                                setShowCardUpgradeCTA(true);
+                              }
+                            }, 5000);
                           }
                         }}
                         disabled={isStreaming}
@@ -2062,17 +2078,12 @@ export default function ChatPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
               <Crown className="w-5 h-5 text-primary" />
-              Limite atingido
+              Limite do plano atingido
             </DialogTitle>
             <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
-              {upgradeModal?.message}
+              Você atingiu o limite gratuito de uso. Faça upgrade para continuar usando o debuga.ai com mais mensagens, conversas e recursos técnicos.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Faça upgrade para continuar usando o debuga.ai com todos os recursos.
-            </p>
-          </div>
           <DialogFooter className="flex gap-2 sm:gap-2">
             <Button variant="ghost" onClick={() => setUpgradeModal(null)} className="font-mono text-sm">
               Fechar
