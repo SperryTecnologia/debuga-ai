@@ -115,3 +115,5 @@
 - [x] Remover mensagem sandbox/4242 da PricingPage (produção)
 - [x] Remover console.log do ComponentShowcase.tsx
 - [x] Revisão completa de código para produção: zero conteúdo dev-only visível ao usuário
+- [x] Validar fluxo Stripe end-to-end: fix bug currentPeriodEnd timestamp inválido no webhook
+- [x] Redirecionar "Falar com Vendas" (Enterprise) para WhatsApp com mensagem contextual

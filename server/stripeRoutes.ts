@@ -74,12 +74,17 @@ export function registerStripeRoutes(app: Express) {
               const sub = await stripe.subscriptions.retrieve(session.subscription as string);
               if (userId) {
                 const uid = parseInt(userId);
+                // Stripe API v2025 may return current_period_end in different formats
+                const periodEndRaw = (sub as any).current_period_end;
+                const periodEndMs = periodEndRaw && periodEndRaw > 0
+                  ? periodEndRaw * 1000
+                  : Date.now() + 30 * 24 * 60 * 60 * 1000; // fallback: 30 days from now
                 await upsertSubscription({
                   userId: uid,
                   stripeSubscriptionId: sub.id,
                   stripePriceId: sub.items.data[0]?.price.id || "",
                   status: sub.status,
-                  currentPeriodEnd: new Date(((sub as any).current_period_end || 0) * 1000),
+                  currentPeriodEnd: new Date(periodEndMs),
                   cancelAtPeriodEnd: (sub as any).cancel_at_period_end ? 1 : 0,
                 });
 
@@ -100,12 +105,16 @@ export function registerStripeRoutes(app: Express) {
             const user = await getUserByStripeCustomerId(customerId);
 
             if (user) {
+              const updPeriodEndRaw = sub.current_period_end;
+              const updPeriodEndMs = updPeriodEndRaw && updPeriodEndRaw > 0
+                ? updPeriodEndRaw * 1000
+                : Date.now() + 30 * 24 * 60 * 60 * 1000;
               await upsertSubscription({
                 userId: user.id,
                 stripeSubscriptionId: sub.id,
                 stripePriceId: sub.items?.data?.[0]?.price?.id || "",
                 status: sub.status,
-                currentPeriodEnd: new Date((sub.current_period_end || 0) * 1000),
+                currentPeriodEnd: new Date(updPeriodEndMs),
                 cancelAtPeriodEnd: sub.cancel_at_period_end ? 1 : 0,
               });
 

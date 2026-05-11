@@ -167,7 +167,13 @@ export default function PricingPage() {
     }
 
     if (planId === "enterprise") {
-      toast.info("Entre em contato: contato@sperrytecnologia.com.br");
+      const msg = encodeURIComponent(
+        "Olá! Tenho interesse no plano Enterprise do debuga.ai. " +
+        "Gostaria de saber mais sobre API dedicada com SLA, integrações avançadas (NetBox, CMDB, SSO/SAML/LDAP) " +
+        "e treinamento para minha equipe. Podem me ajudar?"
+      );
+      window.open(`https://wa.me/555137374357?text=${msg}`, "_blank");
+      toast.info("Redirecionando para o WhatsApp da equipe comercial...");
       return;
     }
 
