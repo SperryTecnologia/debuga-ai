@@ -29,11 +29,13 @@ O debuga.ai opera sobre uma **arquitetura de inferência híbrida** que combina 
 
 | Camada | Infraestrutura | Função |
 |---|---|---|
-| **LLM Cloud** | Google Gemini 2.5 Flash (via API) | Inferência primária para consultas gerais, tool calling, streaming |
-| **LLM On-Premise** | Fork customizado — 16x NVIDIA RTX 3090 GPUs | Análise profunda, inspeção de pacotes TCP/IP, modelos especializados de TI |
+| **LLM Cloud** | Manus Forge API (gateway multi-modelo) | Inferência primária para consultas gerais, tool calling, streaming |
+| **LLM On-Premise** | Qwen2.5-72B-Infra (fine-tuned) — 16x NVIDIA RTX 3090 GPUs | Análise profunda, inspeção de pacotes TCP/IP, modelos especializados de TI |
 | **Hardware** | 3x servidores rack-mount 4U (dedicados para IA) | Inferência de baixa latência para cargas de segurança de rede |
 
-O cluster on-premise executa um modelo proprietário fine-tuned (fork) otimizado para:
+A camada cloud utiliza o **Manus Forge API** — um gateway inteligente que roteia requisições entre múltiplos provedores de LLM (Claude, GPT-4o, Gemini) com balanceamento automático de carga, failover e otimização de custo por tipo de consulta.
+
+O cluster on-premise executa o **Qwen2.5-72B-Infra** — um fork fine-tuned do Qwen2.5-72B otimizado para:
 
 - **Análise profunda de TCP/IP** — Inspeção de pacotes da Camada 3 até a Camada 7, detecção de anomalias de protocolo, classificação de padrões de tráfego e DPI (Deep Packet Inspection) para identificação de payloads maliciosos, indicadores de movimentação lateral e padrões de comunicação C2.
 - **Correlação de segurança de rede** — Cruzamento de logs de firewall, alertas IDS/IPS, dados NetFlow e traps SNMP para construir timelines de ataque e identificar causas raiz que modelos em nuvem não detectam por falta de dados de treinamento específicos do domínio.
@@ -222,7 +224,8 @@ pnpm test
 | Camada de API | tRPC sobre REST | Type-safety ponta a ponta, zero arquivos de contrato, Superjson para Date/BigInt nativos |
 | Streaming | SSE sobre WebSocket | Unidirecional (server→client) é suficiente; mais simples, nativo HTTP/2, sem dependência Socket.io |
 | ORM | Drizzle sobre Prisma | API SQL-like, runtime mais leve, migrações SQL puras, melhor integração com tRPC |
-| LLM Primário | Gemini 2.5 Flash | Melhor relação custo/performance para tool calling; arquitetura agnóstica de provedor (troca via `llm.ts`) |
+| LLM Gateway | Manus Forge API | Gateway multi-modelo com roteamento inteligente; failover automático entre provedores (Claude, GPT-4o, Gemini) |
+| LLM On-Premise | Qwen2.5-72B-Infra | Fork fine-tuned para domínio de TI/segurança; inferência local de baixa latência para análises profundas |
 | Pagamentos | Stripe | PCI-compliant, suporte a BRL, webhooks de ciclo de vida, códigos promocionais |
 
 ---
