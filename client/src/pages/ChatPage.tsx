@@ -50,6 +50,7 @@ import {
   Shield,
   Server,
   Wifi,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -638,6 +639,7 @@ export default function ChatPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const chatAreaRef = useRef<HTMLDivElement>(null);
+  const [mobileExamplesOpen, setMobileExamplesOpen] = useState(false);
 
   // tRPC queries
   const conversationsQuery = trpc.chat.listConversations.useQuery(undefined, { enabled: !!user });
@@ -1787,18 +1789,76 @@ export default function ChatPage() {
           {messages.length === 0 && !activeConversationId ? (
             <div className="h-full flex flex-col items-center justify-center px-3 md:px-6 overflow-x-hidden">
               <div className="max-w-2xl w-full space-y-6 md:space-y-8">
-                <div className="text-center space-y-4">
-                  <img src={AVATAR_AGENT} alt="debuga.ai Agent" className="w-20 h-20 rounded-2xl mx-auto shadow-lg shadow-primary/10" />
+                <div className="text-center space-y-3 md:space-y-4">
+                  <img src={AVATAR_AGENT} alt="debuga.ai Agent" className="w-16 h-16 md:w-20 md:h-20 rounded-2xl mx-auto shadow-lg shadow-primary/10" />
                   <div>
-                    <h2 className="text-xl font-bold font-mono">
+                    <h2 className="text-lg md:text-xl font-bold font-mono">
                       Olá! Sou o <span className="terminal-glow text-primary">debuga.ai</span>
                     </h2>
-                    <p className="text-sm text-muted-foreground mt-2">
+                    {/* Mobile: cleaner subtitle encouraging typing */}
+                    <p className="text-sm text-muted-foreground mt-2 md:hidden">
+                      Descreva seu problema ou escolha um exemplo guiado.
+                    </p>
+                    {/* Desktop: original subtitle */}
+                    <p className="text-sm text-muted-foreground mt-2 hidden md:block">
                       Escolha um exemplo abaixo para ver o debuga.ai em ação com consultas reais.
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-1">
+
+                {/* Mobile: accordion toggle for examples */}
+                <div className="md:hidden px-1">
+                  <button
+                    onClick={() => setMobileExamplesOpen(!mobileExamplesOpen)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-border bg-card hover:bg-accent transition-all font-mono text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", mobileExamplesOpen && "rotate-180")} />
+                    {mobileExamplesOpen ? "Ocultar exemplos" : "Ver exemplos guiados"}
+                  </button>
+                </div>
+
+                {/* Mobile: collapsible compact list */}
+                {mobileExamplesOpen && (
+                  <div className="flex flex-col gap-2 px-1 md:hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    {SUGGESTED_PROMPTS.map((item, i) => {
+                      const userPlan = usageQuery.data?.planId || "free";
+                      const isPaidPlan = userPlan !== "free";
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            lastRequestBlockedRef.current = false;
+                            if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
+                            setMobileExamplesOpen(false);
+                            handleSendMessage(item.prompt);
+                            if (!isPaidPlan) {
+                              ctaTimeoutRef.current = setTimeout(() => {
+                                ctaTimeoutRef.current = null;
+                                if (!lastRequestBlockedRef.current && !upgradeModal?.open) {
+                                  setShowCardUpgradeCTA(true);
+                                }
+                              }, 5000);
+                            }
+                          }}
+                          disabled={isStreaming}
+                          className="group flex items-center gap-3 py-3 px-3 rounded-lg border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left"
+                        >
+                          <div className="p-1.5 rounded-md shrink-0 transition-colors bg-primary/10 text-primary group-hover:bg-primary/20">
+                            <item.icon className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium font-mono text-foreground leading-tight">{item.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
+                          </div>
+                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Desktop: original grid layout (unchanged) */}
+                <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-3 px-1">
                   {SUGGESTED_PROMPTS.map((item, i) => {
                     const userPlan = usageQuery.data?.planId || "free";
                     const isPaidPlan = userPlan !== "free";
@@ -1810,11 +1870,9 @@ export default function ChatPage() {
                           lastRequestBlockedRef.current = false;
                           if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
                           handleSendMessage(item.prompt);
-                          // Show CTA after card execution for Free users only if request succeeds
                           if (!isPaidPlan) {
                             ctaTimeoutRef.current = setTimeout(() => {
                               ctaTimeoutRef.current = null;
-                              // Only show CTA if request was NOT blocked and no upgrade modal is open
                               if (!lastRequestBlockedRef.current && !upgradeModal?.open) {
                                 setShowCardUpgradeCTA(true);
                               }
