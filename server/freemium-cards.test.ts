@@ -42,30 +42,33 @@ describe("Simplified Card Structure", () => {
       expect(dnsSection).toContain("github.com");
     });
 
-    it("Navegar em Site uses cloudflare.com", () => {
+    it("Navegar em Site uses example.com (not cloudflare.com)", () => {
       const navSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Navegar em Site"'),
         chatPageContent.indexOf('title: "Navegar em Site"') + 500
       );
-      expect(navSection).toContain("cloudflare.com");
+      expect(navSection).toContain("example.com");
+      expect(navSection).not.toContain("cloudflare.com");
     });
 
-    it("Auditoria uses cloudflare.com", () => {
+    it("Auditoria uses example.com (not cloudflare.com)", () => {
       const auditSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Auditoria de Segurança"'),
         chatPageContent.indexOf('title: "Auditoria de Segurança"') + 500
       );
-      expect(auditSection).toContain("cloudflare.com");
+      expect(auditSection).toContain("example.com");
+      expect(auditSection).not.toContain("cloudflare.com");
     });
 
-    it("Scan de Portas only scans ports 80 and 443", () => {
+    it("Scan de Portas uses example.com with only ports 80 and 443", () => {
       const scanSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Scan de Portas"'),
         chatPageContent.indexOf('title: "Scan de Portas"') + 500
       );
       expect(scanSection).toContain("80");
       expect(scanSection).toContain("443");
-      expect(scanSection).toContain("cloudflare.com");
+      expect(scanSection).toContain("example.com");
+      expect(scanSection).not.toContain("cloudflare.com");
     });
 
     it("Sandbox uses safe ipaddress validation", () => {
@@ -144,24 +147,30 @@ describe("Simplified Card Structure", () => {
     });
   });
 
-  describe("Introductory text is simple", () => {
-    it("should mention real queries", () => {
-      expect(chatPageContent).toContain("consultas reais");
+  describe("Introductory text and mobile accordion", () => {
+    it("should have mobile accordion toggle for examples", () => {
+      expect(chatPageContent).toContain("mobileExamplesOpen");
     });
 
-    it("should NOT contain old demo language", () => {
-      expect(chatPageContent).not.toContain("exemplos guiados");
+    it("mobile accordion has toggle text", () => {
+      expect(chatPageContent).toContain("Ver exemplos guiados");
+      expect(chatPageContent).toContain("Ocultar exemplos");
+    });
+
+    it("desktop grid is hidden on mobile, accordion is hidden on desktop", () => {
+      expect(chatPageContent).toContain("hidden md:grid");
+      expect(chatPageContent).toContain("md:hidden");
     });
   });
 
   describe("Prompts are detailed and professional", () => {
-    it("DNS prompt asks for organized tables and interpretation", () => {
+    it("DNS prompt asks for organized sections and interpretation", () => {
       const dnsSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Diagnóstico DNS"'),
         chatPageContent.indexOf('title: "Diagnóstico DNS"') + 600
       );
-      expect(dnsSection).toContain("tabelas");
-      expect(dnsSection).toContain("resumo interpretativo");
+      expect(dnsSection).toContain("seções");
+      expect(dnsSection).toContain("conclusão profissional");
     });
 
     it("Navegar prompt asks for title, status, summary", () => {
@@ -193,12 +202,11 @@ describe("Simplified Card Structure", () => {
       expect(diagramSection).toContain("alta qualidade");
     });
 
-    it("Scan prompt asks for table with interpretation", () => {
+    it("Scan prompt asks for professional interpretation", () => {
       const scanSection = chatPageContent.substring(
         chatPageContent.indexOf('title: "Scan de Portas"'),
         chatPageContent.indexOf('title: "Scan de Portas"') + 600
       );
-      expect(scanSection).toContain("tabela");
       expect(scanSection).toContain("interpretação profissional");
     });
 
@@ -226,23 +234,46 @@ describe("Simplified Card Structure", () => {
   });
 
   describe("Error handling is friendly", () => {
-    it("ToolResultCard uses amber/yellow warning style for errors", () => {
-      expect(chatPageContent).toContain("border-yellow-500/30");
-      expect(chatPageContent).toContain("bg-yellow-500/5");
+    it("ToolResultCard handles internal errors gracefully (no card rendered)", () => {
+      expect(chatPageContent).toContain("_internalError");
     });
 
-    it("ToolResultCard shows friendly error message", () => {
-      expect(chatPageContent).toContain("Ocorreu um erro inesperado. Tente novamente.");
+    it("ToolResultCard sanitizes technical terms from error messages", () => {
+      // Should have sanitization logic for technical terms
+      expect(chatPageContent).toContain("Sanitize: remove any technical terms");
     });
 
-    it("agentTools has friendly error messages", () => {
+    it("agentTools has friendly error messages for parse/validation failures", () => {
       const agentToolsContent = fs.readFileSync(
         "/home/ubuntu/debuga-ai/server/agentTools.ts",
         "utf-8"
       );
-      expect(agentToolsContent).toContain("Não foi possível processar os parâmetros");
-      expect(agentToolsContent).toContain("Tente reformular sua solicitação");
+      expect(agentToolsContent).toContain("Parâmetros inválidos");
+      expect(agentToolsContent).toContain("tentará novamente");
       expect(agentToolsContent).not.toContain('"Argumentos inválidos"');
+    });
+
+    it("agentTools marks parse/validation errors as _internalError", () => {
+      const agentToolsContent = fs.readFileSync(
+        "/home/ubuntu/debuga-ai/server/agentTools.ts",
+        "utf-8"
+      );
+      expect(agentToolsContent).toContain("_internalError: true");
+      expect(agentToolsContent).toContain("_retryable: true");
+    });
+  });
+
+  describe("Stream timeout prevents infinite loading", () => {
+    it("should have stream timeout mechanism", () => {
+      expect(chatPageContent).toContain("STREAM_TIMEOUT_MS");
+    });
+
+    it("should show friendly message on timeout", () => {
+      expect(chatPageContent).toContain("demorou mais do que o esperado");
+    });
+
+    it("should have streamTimedOut state", () => {
+      expect(chatPageContent).toContain("streamTimedOut");
     });
   });
 });

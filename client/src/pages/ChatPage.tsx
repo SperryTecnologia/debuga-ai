@@ -578,37 +578,37 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: Server,
     title: "Diagnóstico DNS",
-    prompt: "Faça um diagnóstico DNS completo do domínio github.com. Consulte registros A, MX, TXT e NS separadamente se necessário. Apresente os resultados organizados em tabelas, com resumo interpretativo e observações técnicas. Explique os resultados de forma clara e profissional.",
+    prompt: "Faça um diagnóstico DNS completo do domínio github.com. Consulte registros A, MX, TXT e NS separadamente se necessário. Organize os resultados em seções, explique a função de cada tipo de registro e apresente uma conclusão profissional.",
     description: "Consulta DNS completa com registros A, MX, TXT e NS",
   },
   {
     icon: Globe,
     title: "Navegar em Site",
-    prompt: "Analise o site https://www.cloudflare.com. Acesse a página, extraia o título, resumo do conteúdo principal, status HTTP, tempo de resposta se disponível e apresente um resumo profissional com observações relevantes.",
+    prompt: "Analise o site https://example.com. Acesse a página, extraia o título, status HTTP, resumo do conteúdo principal, tipo provável de conteúdo, links relevantes se existirem e apresente um resumo profissional. Se possível, informe também observações sobre estrutura HTML, tecnologias aparentes e limitações da análise.",
     description: "Análise completa de página web com status e resumo",
   },
   {
     icon: Shield,
     title: "Auditoria de Segurança",
-    prompt: "Faça uma auditoria passiva e segura de https://www.cloudflare.com. Verifique HTTPS, certificado SSL, headers HTTP básicos de segurança (HSTS, CSP, X-Frame-Options, X-Content-Type-Options), DNS público e apresente um checklist profissional com pontos positivos, pontos de atenção e conclusão. Não execute scan invasivo.",
+    prompt: "Faça uma auditoria passiva e segura de https://example.com. Verifique HTTPS/SSL quando aplicável, headers HTTP básicos, DNS público e pontos de atenção visíveis externamente. Não execute scan invasivo. Apresente um checklist profissional com pontos positivos, pontos de atenção e conclusão.",
     description: "Checklist de segurança passiva com SSL, headers e DNS",
   },
   {
     icon: ImageIcon,
     title: "Gerar Diagrama",
-    prompt: "Gere um diagrama profissional em alta qualidade de uma arquitetura segura com usuário, firewall, WAF, balanceador, servidor web, aplicação, banco de dados, backup e monitoramento. O visual deve ser limpo, moderno e adequado para apresentação técnica.",
+    prompt: "Gere um diagrama profissional em alta qualidade de uma arquitetura segura com usuário, firewall, WAF, balanceador, servidor web, aplicação, banco de dados, backup e monitoramento. O visual deve ser moderno, limpo, técnico e adequado para apresentação executiva.",
     description: "Diagrama de arquitetura profissional em alta qualidade",
   },
   {
     icon: Network,
     title: "Scan de Portas",
-    prompt: "Faça uma verificação segura apenas das portas 80 e 443 de cloudflare.com. Informe se as portas estão abertas, fechadas ou filtradas, apresente o resultado em tabela com host, portas analisadas e interpretação profissional.",
+    prompt: "Faça uma verificação segura e limitada apenas das portas 80 e 443 de example.com. Explique se as portas estão abertas, fechadas ou filtradas, e apresente uma interpretação profissional. Não realizar varredura agressiva.",
     description: "Verificação segura de portas com interpretação técnica",
   },
   {
     icon: Terminal,
     title: "Sandbox de Código",
-    prompt: "Execute um script Python seguro usando apenas biblioteca padrão para validar se 192.168.0.1 é um endereço IPv4 válido. Mostre o código, a saída e explique o resultado de forma clara.",
+    prompt: "Execute um script Python seguro usando apenas biblioteca padrão para validar se 192.168.0.1 é um endereço IPv4 válido com ipaddress. Mostre o código, a saída e explique o resultado.",
     description: "Execução segura de código Python com explicação",
   },
 ];
@@ -648,6 +648,8 @@ export default function ChatPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const chatAreaRef = useRef<HTMLDivElement>(null);
   const [mobileExamplesOpen, setMobileExamplesOpen] = useState(false);
+  const streamTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [streamTimedOut, setStreamTimedOut] = useState(false);
 
   // tRPC queries
   const conversationsQuery = trpc.chat.listConversations.useQuery(undefined, { enabled: !!user });
@@ -992,6 +994,19 @@ export default function ChatPage() {
       try {
         const controller = new AbortController();
         abortControllerRef.current = controller;
+        setStreamTimedOut(false);
+
+        // Stream timeout: 90s max without any data
+        const STREAM_TIMEOUT_MS = 90_000;
+        let lastDataAt = Date.now();
+        streamTimeoutRef.current = setInterval(() => {
+          if (Date.now() - lastDataAt > STREAM_TIMEOUT_MS) {
+            console.warn("[Stream] Timeout: no data received for 90s, aborting");
+            setStreamTimedOut(true);
+            controller.abort();
+            if (streamTimeoutRef.current) { clearInterval(streamTimeoutRef.current); streamTimeoutRef.current = null; }
+          }
+        }, 5_000);
 
         const response = await fetch("/api/chat/stream", {
           method: "POST",
@@ -1040,6 +1055,7 @@ export default function ChatPage() {
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
+          lastDataAt = Date.now(); // Reset timeout on each chunk
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
 
@@ -1110,7 +1126,17 @@ export default function ChatPage() {
         lastRequestBlockedRef.current = true;
         if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
         setShowCardUpgradeCTA(false);
-        if (err.name !== "AbortError") {
+        if (err.name === "AbortError" && streamTimedOut) {
+          // Timeout-triggered abort: show friendly message
+          const timeoutMsg: ChatMessage = {
+            id: Date.now() + 1,
+            role: "assistant",
+            content: "A análise demorou mais do que o esperado e foi interrompida. Isso pode ocorrer com alvos lentos ou instáveis. Tente novamente ou informe outro endereço.",
+            createdAt: new Date(),
+          };
+          setMessages((prev) => [...prev, timeoutMsg]);
+          setStreamTimedOut(false);
+        } else if (err.name !== "AbortError") {
           console.error("Stream error:", err);
           const errorMsg: ChatMessage = {
             id: Date.now() + 1,
@@ -1121,6 +1147,7 @@ export default function ChatPage() {
           setMessages((prev) => [...prev, errorMsg]);
         }
       } finally {
+        if (streamTimeoutRef.current) { clearInterval(streamTimeoutRef.current); streamTimeoutRef.current = null; }
         setIsStreaming(false);
         setStreamingContent("");
         setActiveSteps([]);
