@@ -13,7 +13,7 @@ debuga.ai is a production SaaS platform built on a **three-tier architecture** (
 
 ### System Architecture Diagram
 
-![System Architecture](/manus-storage/architecture-diagram_692ac45c.png)
+![System Architecture](/architecture-diagram.png)
 
 The system follows a clear separation of concerns. The React SPA communicates with the Express backend through two channels: tRPC for structured CRUD operations and SSE for real-time agent streaming. The backend orchestrates LLM inference (hybrid cloud + on-premise), tool execution, billing enforcement, and data persistence.
 
@@ -91,7 +91,7 @@ The Agent Loop is the architectural centerpiece that transforms debuga.ai from a
 
 ### Agent Flow Diagram
 
-![Agent Flow](/manus-storage/agent-flow_6eac4770.png)
+![Agent Flow](/agent-flow.png)
 
 ### 4.1 Execution Flow
 
@@ -144,7 +144,7 @@ data: {"message": "Rate limit exceeded", "code": "RATE_LIMITED"}
 
 ### Entity-Relationship Diagram
 
-![Data Model](/manus-storage/data-model_6469cf06.png)
+![Data Model](/data-model.png)
 
 ### 5.1 Schema Design
 
@@ -171,7 +171,7 @@ On the financial side, **subscriptions** tracks Stripe subscription lifecycle (a
 
 ### Payment Flow Diagram
 
-![Billing Flow](/manus-storage/billing-flow_bb4de0de.png)
+![Billing Flow](/billing-flow.png)
 
 ### 6.1 Checkout Flow
 
