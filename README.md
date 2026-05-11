@@ -15,7 +15,7 @@
 
 ## Visão Geral
 
-**debuga.ai** é uma plataforma SaaS em produção que entrega um agente autônomo de IA especializado em infraestrutura de TI, cibersegurança, DevOps e telecomunicações. Diferente de chatbots convencionais que apenas geram texto, o debuga.ai **executa ações reais**: roda código em ambientes sandboxed, escaneia portas abertas, verifica certificados SSL, consulta registros DNS e gera relatórios técnicos — tudo de forma autônoma, sem intervenção humana entre etapas.
+**debuga.ai** é uma plataforma SaaS em produção que entrega um agente autônomo de IA especializado em infraestrutura de TI, cibersegurança, DevOps e telecomunicações. Diferente de chatbots convencionais que apenas geram texto, o debuga.ai **executa ações reais**: roda código, escaneia portas, verifica certificados SSL, consulta registros DNS e gera relatórios técnicos — tudo de forma autônoma, sem intervenção humana entre etapas.
 
 O diferencial central é o **Agent Loop** — um ciclo de raciocínio-ação-observação que itera até 5 vezes por mensagem do usuário. O agente decide quais ferramentas invocar, interpreta resultados e encadeia operações para resolver problemas complexos de diagnóstico que exigem múltiplas consultas correlacionadas. Essa arquitetura é inspirada no paradigma ReAct [1] e traz capacidades agênticas para o domínio de operações de TI.
 
@@ -23,25 +23,33 @@ Desenvolvido e mantido pela **[Sperry Tecnologia](https://www.sperrytecnologia.c
 
 ---
 
-## Arquitetura LLM Híbrida
+## Estado Atual (v4.0 — Maio 2026)
 
-O debuga.ai opera sobre uma **arquitetura de inferência híbrida** que combina LLMs em nuvem com infraestrutura GPU proprietária on-premise:
+A versão atual do debuga.ai está em produção com as seguintes capacidades implementadas e funcionais:
 
-| Camada | Infraestrutura | Função |
+**Agente autônomo com 8 ferramentas de diagnóstico** — DNS lookup, SSL check, HTTP check, WHOIS lookup, port scan, web fetch, execução de código e geração de imagens. Todas as ferramentas são invocadas autonomamente pelo agente durante o loop de raciocínio.
+
+**Inferência via API cloud** — O agente utiliza o Manus Forge API como gateway de inferência, acessando modelos de linguagem de última geração (atualmente Gemini 2.5 Flash) para raciocínio, tool calling e geração de respostas em streaming.
+
+**Sistema de billing completo** — Integração com Stripe para assinaturas em BRL, com 4 planos (Free, Starter, Pro, Enterprise), webhooks de ciclo de vida, upgrade/downgrade automático e controle de consumo por mensagens diárias, conversas mensais e créditos.
+
+**Interface de chat estilo terminal** — UI em React 19 com tema escuro, streaming de respostas via SSE, sidebar de conversas com busca global, arquivamento, e steps do agente com ícones laterais.
+
+**Autenticação e segurança** — OAuth 2.0 com sessões JWT, rate limiting, isolamento de dados por usuário e verificação de assinatura em webhooks.
+
+---
+
+## Estratégia de IA
+
+A arquitetura do debuga.ai foi projetada para evoluir em camadas de inferência. O estado atual e a visão futura são:
+
+| Camada | Status | Descrição |
 |---|---|---|
-| **LLM Cloud** | Manus Forge API (gateway multi-modelo) | Inferência primária para consultas gerais, tool calling, streaming |
-| **LLM On-Premise** | Qwen2.5-72B-Infra (fine-tuned) — 16x NVIDIA RTX 3090 GPUs | Análise profunda, inspeção de pacotes TCP/IP, modelos especializados de TI |
-| **Hardware** | 3x servidores rack-mount 4U (dedicados para IA) | Inferência de baixa latência para cargas de segurança de rede |
+| **LLM via API Cloud** | **Em produção** | Manus Forge API como gateway de inferência. Atualmente utiliza Gemini 2.5 Flash para raciocínio, tool calling e streaming. |
+| **Roteamento multi-modelo** | Planejado | Camada de roteamento inteligente para direcionar consultas entre diferentes provedores e modelos com base em complexidade, domínio e latência. |
+| **Inferência on-premise** | Planejado | Infraestrutura GPU dedicada para modelos especializados em TI/segurança (Qwen, Mistral, Llama), reduzindo dependência de APIs externas e permitindo análises profundas com dados sensíveis. |
 
-A camada cloud utiliza o **Manus Forge API** — um gateway inteligente que roteia requisições entre múltiplos provedores de LLM (Claude, GPT-4o, Gemini) com balanceamento automático de carga, failover e otimização de custo por tipo de consulta.
-
-O cluster on-premise executa o **Qwen2.5-72B-Infra** — um fork fine-tuned do Qwen2.5-72B otimizado para:
-
-- **Análise profunda de TCP/IP** — Inspeção de pacotes da Camada 3 até a Camada 7, detecção de anomalias de protocolo, classificação de padrões de tráfego e DPI (Deep Packet Inspection) para identificação de payloads maliciosos, indicadores de movimentação lateral e padrões de comunicação C2.
-- **Correlação de segurança de rede** — Cruzamento de logs de firewall, alertas IDS/IPS, dados NetFlow e traps SNMP para construir timelines de ataque e identificar causas raiz que modelos em nuvem não detectam por falta de dados de treinamento específicos do domínio.
-- **Raciocínio ciente de infraestrutura** — O modelo compreende tabelas de roteamento BGP, adjacências OSPF, topologias VLAN e consegue raciocinar sobre falhas de segmentação de rede, incompatibilidades de MTU e problemas de roteamento assimétrico.
-
-A camada de roteamento decide qual modelo processa cada requisição com base na complexidade da consulta, latência necessária e especificidade do domínio. Consultas simples vão para o LLM em nuvem; análises profundas de infraestrutura são roteadas para o cluster on-premise.
+A estratégia de longo prazo prevê a adoção de modelos open-source fine-tuned para o domínio de infraestrutura de TI, servidos via vLLM ou TGI em hardware dedicado. Essa camada permitirá análises que exigem contexto especializado (correlação de logs, análise de tráfego, raciocínio sobre topologias de rede) sem enviar dados sensíveis para APIs externas.
 
 ---
 
@@ -58,7 +66,7 @@ A camada de roteamento decide qual modelo processa cada requisição com base na
 | Pagamentos | Stripe (BRL, assinaturas + webhooks) | Cobrança PCI-compliant com suporte a Real Brasileiro |
 | Armazenamento | S3-compatível | Object storage para artefatos gerados |
 | Autenticação | OAuth 2.0 + sessões JWT | Autenticação stateless com cookies assinados |
-| Testes | Vitest (60 testes automatizados) | Testes unitários rápidos com contextos mockados |
+| Testes | Vitest (236+ testes automatizados) | Testes unitários rápidos com contextos mockados |
 
 ---
 
@@ -68,7 +76,7 @@ O agente tem acesso a 8 ferramentas especializadas que invoca de forma autônoma
 
 | Ferramenta | Função | Timeout | Caso de Uso |
 |---|---|---|---|
-| `execute_code` | Execução sandboxed de Python/Bash | 30s | Scripts de automação, processamento de dados, geração de configs |
+| `execute_code` | Execução de Python/Bash | 30s | Scripts de automação, processamento de dados, geração de configs |
 | `port_scan` | Escaneamento de portas TCP em hosts remotos | 30s | Auditorias de segurança, descoberta de serviços, validação de firewall |
 | `dns_lookup` | Consultas DNS completas (A, AAAA, MX, NS, TXT, CNAME, SOA) | 10s | Diagnóstico de resolução DNS, verificação de servidores de e-mail |
 | `ssl_check` | Verificação de cadeia de certificados SSL/TLS | 10s | Detecção de expiração de certificados, validação de cadeia, análise de cifras |
@@ -104,42 +112,41 @@ A integração com Stripe gerencia sessões de checkout, webhooks de ciclo de vi
 
 ## Estrutura do Projeto
 
+O repositório contém aproximadamente 178 arquivos (excluindo `node_modules` e `dist`), organizados da seguinte forma:
+
 ```
 debuga-ai/
-├── client/                        # React 19 SPA
+├── client/                        # Frontend React 19 SPA
 │   ├── src/
-│   │   ├── pages/                 # Componentes de nível de rota
-│   │   │   ├── Home.tsx           # Landing page (hero, features, pricing)
-│   │   │   ├── ChatPage.tsx       # Interface de chat com sidebar de conversas
-│   │   │   ├── PricingPage.tsx    # Planos de assinatura com checkout Stripe
-│   │   │   └── AccountPage.tsx    # Dashboard do usuário (créditos, uso, perfil)
+│   │   ├── pages/                 # Componentes de nível de rota (7 páginas)
 │   │   ├── components/            # UI reutilizável + primitivos shadcn/ui
-│   │   ├── contexts/              # Contexto de auth (hook useAuth)
+│   │   ├── contexts/              # Contexto de autenticação (hook useAuth)
 │   │   ├── hooks/                 # Hooks React customizados
-│   │   ├── lib/trpc.ts            # Binding do cliente tRPC
+│   │   ├── lib/                   # Binding do cliente tRPC
 │   │   ├── App.tsx                # Definições de rotas e layout
 │   │   └── index.css              # Tema global (dark, paleta terminal verde)
 │   └── index.html
 ├── server/                        # Backend Node.js + Express
-│   ├── _core/                     # Internals do framework (OAuth, JWT, LLM, env)
-│   ├── routers.ts                 # Procedures tRPC (auth, chat, account, subscription)
+│   ├── _core/                     # Internals do framework (OAuth, JWT, LLM, env, storage)
+│   ├── integrations/              # Conectores para plataformas externas (em desenvolvimento)
+│   ├── routers.ts                 # Procedures tRPC (auth, chat, account, search)
 │   ├── db.ts                      # Helpers de query Drizzle
-│   ├── streamRoute.ts             # Streaming SSE + agent loop + rate limiting + consumo de créditos
+│   ├── streamRoute.ts             # Streaming SSE + agent loop + rate limiting + consumo
 │   ├── stripeRoutes.ts            # Checkout Stripe + handlers de webhook
-│   ├── agentTools.ts              # Implementações das ferramentas (port scan, DNS, SSL, etc.)
-│   ├── tools.ts                   # Definições de ferramentas e dispatcher
+│   ├── agentTools.ts              # Implementações das 8 ferramentas do agente
 │   ├── products.ts                # Definições de planos e preços
-│   ├── *.test.ts                  # Suítes de teste Vitest (60 testes)
-│   └── storage.ts                 # Helpers S3
-├── drizzle/                       # Schema do banco e migrações
-│   └── schema.ts                  # 6 tabelas: users, conversations, messages,
-│                                  #   subscriptions, credits, usage_log
-├── shared/                        # Tipos e constantes compartilhados
-├── docs/                          # Documentação técnica
-│   ├── WHITEPAPER_PT-BR.md        # Whitepaper (Português)
-│   ├── WHITEPAPER_EN.md           # Whitepaper (Inglês)
+│   ├── storage.ts                 # Helpers S3
+│   └── *.test.ts                  # 14 suítes de teste Vitest
+├── drizzle/                       # Schema do banco e migrações SQL
+│   └── schema.ts                  # 7 tabelas (users, conversations, messages,
+│                                  #   subscriptions, credits, usage_log, usage_events)
+├── shared/                        # Tipos e constantes compartilhados (client + server)
+├── docs/                          # Documentação técnica e materiais estratégicos
+│   ├── WHITEPAPER_PT-BR.md        # Whitepaper técnico (Português)
+│   ├── WHITEPAPER_EN.md           # Whitepaper técnico (Inglês)
 │   ├── ARCHITECTURE.md            # Arquitetura do sistema com diagramas
 │   └── SECURITY_AUDIT.md          # Relatório de auditoria de segurança
+├── patches/                       # Patches de dependências (wouter)
 └── todo.md                        # Rastreamento de features e bugs
 ```
 
@@ -147,7 +154,7 @@ debuga-ai/
 
 ## Modelo de Dados
 
-6 tabelas gerenciadas pelo Drizzle ORM com schema tipado:
+7 tabelas gerenciadas pelo Drizzle ORM com schema tipado:
 
 | Tabela | Propósito | Relações Principais |
 |---|---|---|
@@ -157,20 +164,42 @@ debuga-ai/
 | `subscriptions` | Estado da assinatura Stripe, período, flag de cancelamento | N:1 user |
 | `credits` | Saldo por usuário (total, usado, planId como source of truth) | 1:1 user |
 | `usage_log` | Trilha de auditoria por operação (tokens, créditos, conversa) | N:1 user |
+| `usage_events` | Contadores de uso independentes (mensagens, conversas, assinatura) | N:1 user |
 
 Todas as queries com escopo de usuário são filtradas por `ctx.user.id` da sessão JWT autenticada. Nenhum endpoint permite acesso cruzado de dados entre usuários (IDOR-safe por design).
 
 ---
 
+## Integrações Externas
+
+### Implementadas e em produção
+
+- **Stripe** — Checkout, assinaturas, webhooks de ciclo de vida, portal do cliente
+- **Manus Forge API** — Gateway de inferência LLM (Gemini 2.5 Flash)
+- **Manus OAuth** — Autenticação de usuários
+- **S3** — Armazenamento de artefatos gerados
+
+### Conectores planejados (roadmap)
+
+Os seguintes conectores estão em fase de planejamento ou desenvolvimento inicial. O código de integração existe como scaffold preparatório, mas **não está ativo nos fluxos de produção**:
+
+- **Zabbix** — Monitoramento de infraestrutura e alertas
+- **Wazuh** — SIEM e detecção de ameaças
+- **Prometheus/Grafana** — Métricas e dashboards de observabilidade
+
+Esses conectores fazem parte da estratégia de evolução do produto para se tornar um hub de operações de TI, integrando dados de múltiplas fontes no raciocínio do agente.
+
+---
+
 ## Segurança
 
-O código passou por uma auditoria completa de segurança para produção (veja [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md)):
+O código passou por uma auditoria de segurança para produção (veja [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md)):
 
 - **Zero secrets hardcoded** — Todos os valores sensíveis (chaves Stripe, JWT secret, URL do banco, chaves de API do LLM) são injetados via variáveis de ambiente em runtime.
 - **Isolamento do frontend** — Apenas variáveis com prefixo `VITE_` (chaves públicas) são acessíveis no bundle do navegador. Secrets do servidor nunca chegam ao cliente.
 - **Verificação de assinatura de webhook** — Webhooks do Stripe são verificados com `stripe.webhooks.constructEvent()` antes do processamento.
 - **Rate limiting** — 20 msgs/min por usuário com rastreamento in-memory e limpeza automática.
-- **Execução de código sandboxed** — A ferramenta `execute_code` roda em `/tmp` com timeout de 30s e limite de 50KB de output.
+- **Execução de código controlada** — A ferramenta `execute_code` roda em `/tmp` com timeout de 30s e limite de 50KB de output. O ambiente de deploy fornece isolamento adicional a nível de plataforma.
 - **Apenas HTTPS** — Todas as comunicações são criptografadas em trânsito.
 
 ---
@@ -178,16 +207,25 @@ O código passou por uma auditoria completa de segurança para produção (veja 
 ## Testes
 
 ```bash
-pnpm test    # 60 testes, ~4s de execução
+pnpm test    # 236+ testes, ~5s de execução
 ```
 
 | Suíte | Testes | Cobertura |
 |---|---|---|
-| `auth.logout.test.ts` | 1 | Fluxo de logout e limpeza de sessão |
+| `agentTools.test.ts` | 49 | Validação de argumentos, JSON repair, erros amigáveis, todas as 8 ferramentas |
 | `chat.test.ts` | 19 | CRUD de conversas, criação de mensagens, paginação |
-| `tools.test.ts` | 20 | Todas as 8 ferramentas do agente (DNS, SSL, HTTP, port scan, exec de código, etc.) |
+| `tools.test.ts` | 20 | Execução das ferramentas do agente (DNS, SSL, HTTP, port scan, etc.) |
 | `subscription.test.ts` | 10 | Status de assinatura, mapeamento de planos, precificação |
 | `credits.test.ts` | 10 | Saldo de créditos, limites de plano, contadores diários/mensais |
+| `stripe.test.ts` | 21 | Fluxos Stripe (checkout, webhook, upgrade, downgrade, cancelamento) |
+| `usage-counters.test.ts` | 12 | Contadores independentes anti-burla (usage_events) |
+| `archive.test.ts` | 10 | Arquivamento, desarquivamento, listagem de conversas |
+| `search.test.ts` | 17 | Busca global por título e conteúdo de mensagens |
+| `logout-flow.test.ts` | 23 | Fluxo de logout, invalidação de sessão, redirecionamento |
+| `freemium-cards.test.ts` | 29 | Cards de exemplo, prompts, feature-gating por plano |
+| `modal-cta.test.ts` | 15 | Empilhamento de modais, CTA pós-resultado, prioridade de upgrade |
+| `limits.test.ts` | Var. | Rate limiting, limites de plano, enforcement de cotas |
+| `auth.logout.test.ts` | 1 | Fluxo base de logout e limpeza de sessão |
 
 Os testes utilizam Vitest com contextos mockados para simular usuários autenticados sem dependências de banco de dados externo.
 
@@ -199,10 +237,6 @@ Os testes utilizam Vitest com contextos mockados para simular usuários autentic
 # Pré-requisitos: Node.js 22+, pnpm
 pnpm install
 
-# Configurar variáveis de ambiente
-cp .env.example .env
-# Edite .env com seu DATABASE_URL, chaves Stripe, etc.
-
 # Gerar migrações do banco de dados
 pnpm drizzle-kit generate
 
@@ -213,6 +247,31 @@ pnpm dev
 pnpm test
 ```
 
+### Variáveis de Ambiente
+
+As seguintes variáveis devem ser configuradas no ambiente de execução. Em produção, são injetadas automaticamente pela plataforma. Para desenvolvimento local, configure-as no painel de secrets ou via arquivo `.env`:
+
+| Variável | Descrição | Exemplo |
+|---|---|---|
+| `DATABASE_URL` | Connection string MySQL/TiDB | `mysql://user:pass@host:3306/db` |
+| `JWT_SECRET` | Secret para assinatura de cookies JWT | String aleatória longa |
+| `VITE_APP_ID` | ID da aplicação Manus OAuth | — |
+| `OAUTH_SERVER_URL` | URL base do servidor OAuth | `https://api.manus.im` |
+| `VITE_OAUTH_PORTAL_URL` | URL do portal de login | `https://manus.im/login` |
+| `OWNER_OPEN_ID` | OpenID do administrador do projeto | — |
+| `OWNER_NAME` | Nome do administrador | — |
+| `BUILT_IN_FORGE_API_URL` | URL do Manus Forge API (server) | `https://forge.manus.im` |
+| `BUILT_IN_FORGE_API_KEY` | Chave do Forge API (server-side) | — |
+| `VITE_FRONTEND_FORGE_API_URL` | URL do Forge API (frontend) | `https://forge.manus.im` |
+| `VITE_FRONTEND_FORGE_API_KEY` | Chave do Forge API (frontend) | — |
+| `STRIPE_SECRET_KEY` | Chave secreta do Stripe | `sk_test_...` |
+| `STRIPE_WEBHOOK_SECRET` | Secret do webhook Stripe | `whsec_...` |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Chave pública do Stripe | `pk_test_...` |
+| `VITE_APP_TITLE` | Título da aplicação | `debuga.ai` |
+| `VITE_APP_LOGO` | URL do logo (opcional) | — |
+| `VITE_ANALYTICS_ENDPOINT` | Endpoint de analytics (opcional) | — |
+| `VITE_ANALYTICS_WEBSITE_ID` | ID do site no analytics (opcional) | — |
+
 ---
 
 ## Decisões Arquiteturais
@@ -222,9 +281,21 @@ pnpm test
 | Camada de API | tRPC sobre REST | Type-safety ponta a ponta, zero arquivos de contrato, Superjson para Date/BigInt nativos |
 | Streaming | SSE sobre WebSocket | Unidirecional (server→client) é suficiente; mais simples, nativo HTTP/2, sem dependência Socket.io |
 | ORM | Drizzle sobre Prisma | API SQL-like, runtime mais leve, migrações SQL puras, melhor integração com tRPC |
-| LLM Gateway | Manus Forge API | Gateway multi-modelo com roteamento inteligente; failover automático entre provedores (Claude, GPT-4o, Gemini) |
-| LLM On-Premise | Qwen2.5-72B-Infra | Fork fine-tuned para domínio de TI/segurança; inferência local de baixa latência para análises profundas |
+| Inferência LLM | Manus Forge API | Gateway de inferência gerenciado; permite trocar modelos sem alterar código do agente |
 | Pagamentos | Stripe | PCI-compliant, suporte a BRL, webhooks de ciclo de vida, códigos promocionais |
+
+---
+
+## Limitações Conhecidas
+
+A versão atual do debuga.ai possui as seguintes limitações que estão sendo endereçadas progressivamente:
+
+- **Inferência exclusivamente via API cloud** — Toda a inferência LLM depende do Manus Forge API. Não há, no momento, inferência on-premise ou modelos proprietários em produção. A camada de roteamento multi-modelo está planejada para versões futuras.
+- **Conectores de observabilidade em desenvolvimento** — Os conectores para Zabbix, Wazuh, Prometheus e Grafana existem como scaffold preparatório no código, mas não estão ativos nos fluxos de produção. A integração real com essas plataformas faz parte do roadmap.
+- **Rate limiter in-memory** — O rate limiting é armazenado em memória do processo. Em caso de restart do servidor, os contadores são resetados. Uma solução persistente (Redis ou banco) está planejada.
+- **Execução de código sem sandbox dedicado** — A ferramenta `execute_code` roda no mesmo ambiente do servidor, com isolamento fornecido pela plataforma de deploy. Um sandbox dedicado (Docker/seccomp) está no roadmap de segurança.
+- **Método de pagamento** — Atualmente apenas cartão de crédito via Stripe. Suporte a PIX e Boleto está planejado.
+- **Documentação em alinhamento** — Alguns documentos técnicos (whitepaper, arquitetura) contêm referências a funcionalidades planejadas que ainda não estão implementadas. Estamos alinhando progressivamente a documentação ao estado real do código.
 
 ---
 
@@ -232,10 +303,22 @@ pnpm test
 
 | Versão | Timeline | Funcionalidades |
 |---|---|---|
-| **v4.0** (Atual) | Q2 2026 | Agente autônomo, 8 ferramentas, cobrança, créditos, LLM híbrido |
-| **v5.0** | Q3 2026 | OAuth multi-provedor (self-hosted), integração com APIs Zabbix/Wazuh, cupons educacionais |
-| **v6.0** | Q4 2026 | API REST pública, memória de longo prazo, marketplace de ferramentas |
-| **v7.0** | 2027 | Multi-tenancy, white-label, execução remota de agentes |
+| **v4.x** (Atual) | Q2 2026 | Agente autônomo com 8 ferramentas, billing Stripe, busca global, arquivamento, 236+ testes |
+| **v5.0** | Q3 2026 | Conectores Zabbix/Wazuh ativos, roteamento multi-modelo, PIX/Boleto via Stripe, cupons educacionais |
+| **v6.0** | Q4 2026 | Inferência on-premise via vLLM/TGI (Qwen, Mistral, Llama), API REST pública, memória de longo prazo |
+| **v7.0** | 2027 | Multi-tenancy, white-label, execução remota de agentes, marketplace de ferramentas |
+
+### Detalhamento do roadmap técnico
+
+**Inferência local (v6.0)** — Implantação de cluster GPU dedicado para servir modelos open-source fine-tuned para o domínio de TI/segurança via vLLM ou TGI. Objetivo: reduzir dependência de APIs externas, permitir análises com dados sensíveis sem envio para cloud, e habilitar modelos especializados (Qwen2.5, Mistral, Llama) otimizados para correlação de logs, análise de tráfego e raciocínio sobre topologias de rede.
+
+**Roteamento inteligente (v5.0)** — Camada de decisão que direciona consultas entre diferentes provedores e modelos com base em complexidade da query, especificidade do domínio e latência requerida.
+
+**Conectores de observabilidade (v5.0)** — Ativação dos conectores Zabbix, Wazuh e Prometheus/Grafana para que o agente possa consultar dados reais de monitoramento durante o loop de raciocínio.
+
+**Sandbox dedicado (v5.0–v6.0)** — Migração da ferramenta `execute_code` para execução em containers isolados (Docker) com limites de CPU, memória e rede, eliminando riscos de escape de ambiente.
+
+**Expansão enterprise/on-premise (v7.0)** — Versão self-hosted do debuga.ai para clientes que necessitam de controle total sobre dados e infraestrutura.
 
 ---
 
@@ -243,10 +326,12 @@ pnpm test
 
 | Documento | Idioma | Descrição |
 |---|---|---|
-| [Whitepaper](docs/WHITEPAPER_PT-BR.md) | PT-BR | Whitepaper técnico com análise de mercado, arquitetura, modelo de negócio |
+| [Whitepaper](docs/WHITEPAPER_PT-BR.md) | PT-BR | Whitepaper técnico com análise de mercado, arquitetura e modelo de negócio |
 | [Whitepaper](docs/WHITEPAPER_EN.md) | EN | Versão em inglês do whitepaper técnico |
-| [Arquitetura](docs/ARCHITECTURE.md) | PT-BR | Arquitetura detalhada com 4 diagramas renderizados |
+| [Arquitetura](docs/ARCHITECTURE.md) | PT-BR | Arquitetura detalhada com diagramas |
 | [Auditoria de Segurança](docs/SECURITY_AUDIT.md) | PT-BR | Relatório de auditoria de segurança para produção |
+
+> **Nota:** Alguns documentos técnicos podem conter referências a funcionalidades planejadas (roadmap) que ainda não estão implementadas na versão atual. Consulte a seção "Estado Atual" deste README para a lista precisa de capacidades em produção.
 
 ---
 
