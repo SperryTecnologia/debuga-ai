@@ -574,54 +574,54 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   {
     icon: Server,
     title: "Diagnóstico DNS",
-    demoPrompt: "Faça um diagnóstico DNS completo e profissional do domínio github.com. Consulte os registros A, AAAA, MX, TXT (incluindo SPF e DKIM), NS e CNAME. Para cada tipo de registro, apresente os resultados em tabelas formatadas. Ao final, crie um mini relatório DNS com: resumo executivo, análise de configuração de e-mail (SPF/DKIM/DMARC), nameservers e suas localizações, e uma nota de saúde DNS de 0 a 10 com justificativa.",
-    demoBadge: "Demonstração",
-    fullPromptHint: "Com upgrade, use qualquer domínio.",
+    demoPrompt: "Faça um diagnóstico DNS do domínio github.com consultando registros A, MX, TXT e NS. Execute cada consulta separadamente se necessário e apresente um resumo objetivo.",
+    demoBadge: "Demo",
+    fullPromptHint: "Nos planos Starter e Pro, use qualquer domínio.",
     requiredPlanForFull: "starter",
     toolsUsed: ["dns_lookup"],
   },
   {
     icon: Globe,
     title: "Navegar em Site",
-    demoPrompt: "Acesse https://www.cloudflare.com e faça uma análise completa da página. Apresente: título da página, status HTTP, tempo de resposta, descrição meta, tecnologias visíveis (CDN, frameworks, analytics), um resumo do conteúdo principal em 3 parágrafos, e uma tabela com os principais links encontrados. Formate tudo como um relatório de reconhecimento web profissional.",
-    demoBadge: "Demonstração",
-    fullPromptHint: "Com upgrade, navegue em qualquer URL.",
+    demoPrompt: "Acesse https://example.com, leia o conteúdo principal e resuma o que o site apresenta.",
+    demoBadge: "Demo",
+    fullPromptHint: "Nos planos Starter e Pro, navegue em qualquer URL.",
     requiredPlanForFull: "starter",
     toolsUsed: ["web_fetch"],
   },
   {
     icon: Shield,
     title: "Auditoria de Segurança",
-    demoPrompt: "Realize uma auditoria de segurança passiva completa de https://www.cloudflare.com. Verifique: (1) HTTPS e redirecionamento, (2) certificado SSL/TLS com validade e emissor, (3) headers de segurança (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy), (4) DNS público e configuração. Apresente os resultados como um checklist profissional com ✅ para itens OK e ⚠️ para pontos de atenção. Ao final, dê uma nota de segurança de A a F com justificativa e recomendações.",
-    demoBadge: "Demonstração",
-    fullPromptHint: "Com upgrade, audite qualquer domínio.",
+    demoPrompt: "Faça uma auditoria passiva e segura de https://example.com verificando HTTPS, certificado SSL, headers de segurança e DNS público. Não execute scan invasivo.",
+    demoBadge: "Demo",
+    fullPromptHint: "Nos planos Starter e Pro, audite qualquer domínio.",
     requiredPlanForFull: "starter",
     toolsUsed: ["ssl_check", "http_check", "dns_lookup"],
   },
   {
     icon: ImageIcon,
     title: "Gerar Diagrama",
-    demoPrompt: "Gere um diagrama de arquitetura de infraestrutura corporativa detalhado e profissional com os seguintes componentes conectados em sequência: Usuário Final → DNS/CDN (Cloudflare) → Firewall (pfSense) → WAF (ModSecurity) → Load Balancer (HAProxy) → 2x Servidores Web (Nginx) → Servidor de Aplicação (Node.js) → Banco de Dados (PostgreSQL Primary + Replica) → Backup (S3). Adicione também: Monitoramento (Zabbix/Grafana) conectado a todos os servidores, e SIEM (Wazuh) recebendo logs de todos os componentes. Use estilo corporativo com cores profissionais, ícones representativos e labels claros. O diagrama deve ser visualmente impressionante e digno de uma apresentação executiva.",
-    demoBadge: "Demonstração",
-    fullPromptHint: "Com upgrade, crie diagramas personalizados.",
+    demoPrompt: "Gere um diagrama simples de arquitetura com usuário, firewall, servidor web, banco de dados e serviço de monitoramento.",
+    demoBadge: "Demo",
+    fullPromptHint: "No plano Pro, crie diagramas personalizados.",
     requiredPlanForFull: "pro",
     toolsUsed: ["generate_image"],
   },
   {
     icon: Network,
     title: "Scan de Portas",
-    demoPrompt: "Realize um scan de portas seguro e controlado em scanme.nmap.org (servidor oficial de teste do Nmap) verificando as portas 22, 80, 443 e 8080. Para cada porta, informe: status (aberta/fechada/filtrada), serviço associado e versão se detectável. Apresente os resultados em uma tabela profissional e adicione uma análise de segurança com recomendações para cada porta aberta encontrada.",
+    demoPrompt: "Verifique de forma segura apenas as portas 80 e 443 de example.com e explique o resultado.",
     demoBadge: "Demo segura",
-    fullPromptHint: "Com upgrade, escaneie qualquer alvo.",
+    fullPromptHint: "No plano Pro, escaneie qualquer alvo e portas.",
     requiredPlanForFull: "pro",
     toolsUsed: ["port_scan"],
   },
   {
     icon: Terminal,
     title: "Sandbox de Código",
-    demoPrompt: "Execute um script Python profissional que faça análise completa de rede. O script deve: (1) validar se '192.168.1.0/24' é uma rede válida usando ipaddress, (2) calcular e exibir: endereço de rede, broadcast, máscara, total de hosts, primeiro e último IP utilizável, (3) verificar se IPs específicos (192.168.1.1, 192.168.1.100, 10.0.0.1) pertencem à rede, (4) classificar a rede (privada/pública, classe A/B/C), (5) gerar uma tabela formatada com todos os resultados usando formato alinhado. O código deve ser limpo, comentado e usar apenas bibliotecas padrão do Python.",
+    demoPrompt: "Execute um script Python seguro que valida se '192.168.0.1' é um endereço IPv4 válido usando a biblioteca padrão ipaddress e mostre informações sobre a rede.",
     demoBadge: "Demo segura",
-    fullPromptHint: "Com upgrade, execute código personalizado.",
+    fullPromptHint: "No plano Pro, execute código personalizado.",
     requiredPlanForFull: "pro",
     toolsUsed: ["execute_code"],
   },
@@ -645,7 +645,6 @@ export default function ChatPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; message: string; planId: string } | null>(null);
   const [showDemoUpgradeCTA, setShowDemoUpgradeCTA] = useState(false);
-  const isDemoActiveRef = useRef(false);
   const [showArchived, setShowArchived] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
   const [searchQuery, setSearchQuery] = useState("");
@@ -950,9 +949,7 @@ export default function ChatPage() {
   }, [isRecording, startRecording, stopRecording]);
 
   const handleSendMessage = useCallback(
-    async (content: string, options?: { isDemo?: boolean }) => {
-      const isDemo = options?.isDemo === true;
-      isDemoActiveRef.current = isDemo;
+    async (content: string) => {
       if ((!content.trim() && uploadedFiles.length === 0) || isStreaming) return;
 
       let convId = activeConversationId;
@@ -1010,7 +1007,7 @@ export default function ChatPage() {
         const response = await fetch("/api/chat/stream", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId: convId, content: messageContent, ...(isDemo && { isDemo: true }) }),
+          body: JSON.stringify({ conversationId: convId, content: messageContent }),
           signal: controller.signal,
         });
 
@@ -1021,28 +1018,19 @@ export default function ChatPage() {
               const errData = await response.json();
               const planId = errData.planId || "free";
               const msg = errData.error || "Você atingiu o limite do seu plano.";
-              // Suppress CTA if it's open, then show limit modal
-              setShowDemoUpgradeCTA(false);
               setUpgradeModal({ open: true, message: msg, planId });
               // Remove the user message we optimistically added
               setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
             } catch {
-              setShowDemoUpgradeCTA(false);
               setUpgradeModal({ open: true, message: "Você atingiu o limite do seu plano. Faça upgrade para continuar.", planId: "free" });
             }
             return;
           }
           if (response.status === 429) {
-            const errData = await response.json().catch(() => ({}));
-            if (errData.code === "DEMO_LIMIT_REACHED") {
-              toast.error(errData.error || "Limite de demonstrações atingido por hoje.");
-            } else {
-              toast.error("Muitas mensagens em pouco tempo. Aguarde um momento.");
-            }
+            toast.error("Muitas mensagens em pouco tempo. Aguarde um momento.");
             setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
             return;
           }
-
           throw new Error("Stream failed");
         }
 
@@ -1102,10 +1090,6 @@ export default function ChatPage() {
 
                 case "done":
                   setActiveSteps([]);
-                  // Show upgrade CTA after demo completes (only if no limit modal is open)
-                  if (parsed.isDemo && !upgradeModal?.open) {
-                    setShowDemoUpgradeCTA(true);
-                  }
                   break;
 
                 case "error":
@@ -1818,29 +1802,46 @@ export default function ChatPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {SUGGESTED_PROMPTS.map((item, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleSendMessage(item.demoPrompt, { isDemo: true })}
-                      disabled={isStreaming}
-                      className="group flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left relative"
-                    >
-                      <div className="p-2 rounded-lg shrink-0 transition-colors bg-primary/10 text-primary group-hover:bg-primary/20">
-                        <item.icon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium font-mono text-foreground">{item.title}</p>
-                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 whitespace-nowrap flex items-center gap-1">
-                            <Activity className="w-2.5 h-2.5" />
-                            {item.demoBadge}
-                          </span>
+                  {SUGGESTED_PROMPTS.map((item, i) => {
+                    const userPlan = usageQuery.data?.planId || "free";
+                    const planHierarchy: Record<string, number> = { free: 0, starter: 1, pro: 2, enterprise: 3 };
+                    const userLevel = planHierarchy[userPlan] ?? 0;
+                    const requiredLevel = planHierarchy[item.requiredPlanForFull] ?? 0;
+                    const isDemoMode = userLevel < requiredLevel;
+
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          handleSendMessage(item.demoPrompt);
+                          if (isDemoMode) {
+                            setTimeout(() => setShowDemoUpgradeCTA(true), 2000);
+                          }
+                        }}
+                        disabled={isStreaming}
+                        className="group flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left relative"
+                      >
+                        <div className="p-2 rounded-lg shrink-0 transition-colors bg-primary/10 text-primary group-hover:bg-primary/20">
+                          <item.icon className="w-4 h-4" />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.demoPrompt}</p>
-                        <p className="text-[10px] text-primary/60 mt-1.5 font-mono">{item.fullPromptHint}</p>
-                      </div>
-                    </button>
-                  ))}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium font-mono text-foreground">{item.title}</p>
+                            {isDemoMode && (
+                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 whitespace-nowrap flex items-center gap-1">
+                                <Activity className="w-2.5 h-2.5" />
+                                {item.demoBadge}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.demoPrompt}</p>
+                          {isDemoMode && (
+                            <p className="text-[10px] text-primary/60 mt-1.5 font-mono">{item.fullPromptHint}</p>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -2117,8 +2118,8 @@ export default function ChatPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Demo Upgrade CTA - never shown when upgrade modal is open */}
-      <Dialog open={showDemoUpgradeCTA && !upgradeModal?.open} onOpenChange={setShowDemoUpgradeCTA}>
+      {/* Demo Upgrade CTA */}
+      <Dialog open={showDemoUpgradeCTA} onOpenChange={setShowDemoUpgradeCTA}>
         <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
