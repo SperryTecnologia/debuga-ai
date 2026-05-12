@@ -348,6 +348,8 @@ A versão atual do debuga.ai possui as seguintes limitações que estão sendo e
 
 **Sandbox dedicado (v5.0–v6.0)** — Migração da ferramenta `execute_code` para execução em containers isolados (Docker) com limites de CPU, memória e rede, eliminando riscos de escape de ambiente.
 
+**Execução assistida com timeline textual (v5.0–v6.0)** — Estudo de viabilidade concluído em maio/2026 avaliou a integração de sandbox/browser/computer-use via API externa. Conclusão: a API é viável parcialmente para criação de tasks, polling com timeline textual, webhooks e recebimento de arquivos finais, mas não oferece live viewer, streaming visual, VNC, iframe ou screenshots intermediários embutidos. O primeiro MVP futuro será uma “execução assistida com timeline textual” (sem sandbox visual). O viewer ao vivo (via E2B Desktop, noVNC ou sandbox próprio) fica como roadmap posterior. Relatório completo disponível internamente.
+
 **Expansão enterprise/on-premise (v7.0)** — Versão self-hosted do debuga.ai para clientes que necessitam de controle total sobre dados e infraestrutura.
 
 ---
