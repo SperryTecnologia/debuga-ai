@@ -328,7 +328,7 @@ A versão atual do debuga.ai possui as seguintes limitações que estão sendo e
 |---|---|---|
 | [Whitepaper](docs/WHITEPAPER_PT-BR.md) | PT-BR | Whitepaper técnico com análise de mercado, arquitetura e modelo de negócio |
 | [Whitepaper](docs/WHITEPAPER_EN.md) | EN | Versão em inglês do whitepaper técnico |
-| [Arquitetura](docs/ARCHITECTURE.md) | PT-BR | Arquitetura detalhada com diagramas |
+| [Arquitetura](docs/ARCHITECTURE_PT-BR.md) | PT-BR | Arquitetura detalhada com diagramas |
 
 > **Nota:** Alguns documentos técnicos podem conter referências a funcionalidades planejadas (roadmap) que ainda não estão implementadas na versão atual. Consulte a seção "Estado Atual" deste README para a lista precisa de capacidades em produção.
 
