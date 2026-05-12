@@ -1,6 +1,6 @@
 # debuga.ai — System Architecture
 
-**Version:** 3.0  
+**Version:** 4.0  
 **Date:** May 2026  
 **Author:** Sperry Tecnologia  
 **Audience:** Senior developers, technical leads, and infrastructure architects
@@ -176,6 +176,7 @@ Communication with the backend occurs through two distinct channels:
 | `/pricing` | `PricingPage.tsx` | No | Subscription plans with Stripe checkout |
 | `/account` | `AccountPage.tsx` | Yes | User dashboard with usage metrics, activity, profile |
 | `/logout-success` | `LogoutSuccess.tsx` | No | Post-logout confirmation page |
+| `/demo/web-analysis` | `DemoWebAnalysis.tsx` | No | Static demo page for navigation card |
 
 ### 3.3 State Management
 
@@ -198,7 +199,8 @@ When a user sends a message, the system executes a pre-flight check pipeline bef
 1. **Rate limit check** — 20 msgs/min per user (in-memory Map with 5-min cleanup interval)
 2. **Plan limit check** — Daily message count and monthly conversation count against plan quotas
 3. **Credit balance check** — Sufficient credits remaining for at least one response
-4. **Context assembly** — Conversation history + system prompt + tool definitions
+4. **Upload limits check** — For messages with attachments, daily image/document quota verification against plan limits
+5. **Context assembly** — Conversation history + system prompt + tool definitions + attachment content (images as multimodal, documents as extracted text)
 
 If all checks pass, the message is persisted to the database and the assembled context is sent to the LLM. The LLM responds with either a **text completion** (final answer) or a **tool call** (action request). In the tool call case, the system executes the requested tool, appends the result to the context, and re-invokes the LLM. This cycle repeats for up to 5 iterations, enabling complex multi-step diagnostics.
 
@@ -317,6 +319,8 @@ The codebase has passed a production security audit.
 
 **Code Execution:** The `execute_code` tool runs user-provided code in `/tmp` with a 30-second timeout and 50KB output limit. The deployment platform provides additional process-level isolation. A dedicated sandbox environment (Docker-based) is planned for future versions to provide stronger isolation guarantees.
 
+**Upload Feature Flags:** Image and document upload functionalities are controlled by feature flags (`FEATURE_IMAGE_UPLOAD`, `FEATURE_DOCUMENT_UPLOAD`) that allow immediate deactivation without deploy. Per-plan limits (images/day, documents/day) add an additional abuse protection layer.
+
 **HTTPS Only:** All communications are encrypted in transit.
 
 ---
@@ -332,6 +336,9 @@ The codebase has passed a production security audit.
 | **Manus OAuth** | User authentication | `server/_core/oauth.ts` |
 | **S3-compatible storage** | File and artifact storage | `server/storage.ts` |
 | **Manus Image Service** | AI image generation | `server/_core/imageGeneration.ts` |
+| **pdf-parse** | PDF text extraction for agent analysis | `server/documentProcessor.ts` |
+| **mammoth** | DOCX text extraction for agent analysis | `server/documentProcessor.ts` |
+| **mermaid.js** | Visual diagram rendering in chat | `client/src/components/MermaidRenderer.tsx` |
 
 ### 8.2 Planned Integrations (Roadmap)
 

@@ -2,7 +2,7 @@
 
 **Plataforma de Agente Autônomo de IA para Infraestrutura de TI, Segurança da Informação e Telecomunicações**
 
-**Versão:** 3.0  
+**Versão:** 4.0  
 **Data:** Maio 2026  
 **Autor:** Sperry Tecnologia  
 **Contato:** www.sperrytecnologia.com.br
@@ -59,6 +59,11 @@ O agente utiliza o **Manus Forge API** como gateway de inferência, acessando mo
 | HTTP Check | Analisa headers, status e segurança de sites | Verificação de security headers |
 | WHOIS Lookup | Consulta informações de domínio e registrante | Investigação de propriedade |
 | Geração de Imagens | Cria diagramas de rede e fluxogramas | Documentação visual automatizada |
+| Upload e Análise de Imagens | Aceita screenshots, prints de erro e topologias para análise visual técnica | Diagnóstico visual de infraestrutura |
+| Upload e Análise de Documentos | Extração de texto de 12+ formatos (PDF, DOCX, TXT, MD, LOG, CONF, JSON, CSV, YAML, XML, SQL) | Análise de configs, logs e documentação |
+| Renderização Mermaid | Diagramas técnicos renderizados visualmente com exportação PNG/SVG/PDF | Visualização profissional de arquiteturas |
+
+> **Nota:** As capacidades de upload de imagens e documentos estão controladas por feature flags (`FEATURE_IMAGE_UPLOAD`, `FEATURE_DOCUMENT_UPLOAD`) e limites por plano. A renderização Mermaid está em validação contínua para estabilidade em diagramas complexos.
 
 ### 2.3 Capacidades Planejadas (roadmap)
 
@@ -202,12 +207,12 @@ O banco de dados é estruturado em 7 tabelas principais:
 
 ### 3.5 Sistema de Créditos e Limites
 
-| Plano | Mensagens/Dia | Conversas/Mês | Créditos Totais |
-|---|---|---|---|
-| Gratuito | 5 | 3 | 50 |
-| Starter | 100 | 30 | 1.000 |
-| Pro | Ilimitado | Ilimitado | 10.000 |
-| Enterprise | Ilimitado | Ilimitado | 100.000 |
+| Plano | Mensagens/Dia | Conversas/Mês | Imagens/Dia | Documentos/Dia | Créditos Totais |
+|---|---|---|---|---|---|
+| Gratuito | 5 | 3 | 2 | 3 | 50 |
+| Starter | 100 | 30 | 10 | 15 | 1.000 |
+| Pro | Ilimitado | Ilimitado | 50 | 50 | 10.000 |
+| Enterprise | Ilimitado | Ilimitado | Ilimitado | Ilimitado | 100.000 |
 
 O sistema de créditos opera em três camadas de proteção:
 1. **Rate Limiting**: Máximo 20 mensagens por minuto (proteção contra abuso)
@@ -283,8 +288,13 @@ O debuga.ai utiliza um modelo **freemium** com 4 tiers de assinatura recorrente 
 - Rate limiting e enforcement de limites de plano
 - Contadores de uso independentes (anti-manipulação)
 - Busca global de conversas e arquivamento
-- 236+ testes automatizados em 14 suítes
-- Documentação técnica (whitepaper, arquitetura, auditoria de segurança)
+- Upload e análise de imagens (screenshots, prints de erro, topologias)
+- Upload e análise de documentos (12+ formatos: PDF, DOCX, TXT, MD, LOG, etc.)
+- Renderização visual de diagramas Mermaid com exportação PNG/SVG/PDF
+- Suporte humano por plano (Pro: triagem técnica; Enterprise: canal consultivo)
+- Cards de exemplo guiados (5 visíveis + 3 ocultos da vitrine)
+- 321 testes automatizados em 17 suítes
+- Documentação técnica (whitepaper, arquitetura)
 
 ### 6.2 Fase 2 (v5.0) — Q3 2026
 
@@ -358,7 +368,7 @@ O debuga.ai utiliza um modelo **freemium** com 4 tiers de assinatura recorrente 
 
 O debuga.ai representa uma nova categoria de ferramenta para profissionais de TI: o **agente autônomo especializado**. Ao combinar a capacidade de raciocínio de LLMs de última geração com ferramentas de execução real (execução de código, network scanning, web scraping, geração de imagens), a plataforma oferece um assistente que não apenas sugere, mas **executa e diagnostica**.
 
-A versão atual opera com 8 ferramentas de diagnóstico em produção, sistema de billing completo e mais de 236 testes automatizados. A estratégia de evolução inclui a implantação de modelos especializados em infraestrutura GPU — atualmente em fase de laboratório e pesquisa na debuga.ai LLM Stack —, integração com plataformas de monitoramento (Zabbix, Wazuh, Prometheus) e expansão para o mercado enterprise com versão self-hosted.
+A versão atual opera com 8 ferramentas de diagnóstico, upload e análise de imagens e documentos, renderização visual de diagramas Mermaid, sistema de billing completo e 321 testes automatizados em 17 suítes. A estratégia de evolução inclui a implantação de modelos especializados em infraestrutura GPU — atualmente em fase de laboratório e pesquisa na debuga.ai LLM Stack —, integração com plataformas de monitoramento (Zabbix, Wazuh, Prometheus) e expansão para o mercado enterprise com versão self-hosted.
 
 Com o mercado brasileiro de TI em forte expansão e a crescente adoção de IA em cibersegurança, o debuga.ai está posicionado para capturar uma fatia significativa do mercado de ferramentas de produtividade para profissionais de infraestrutura e segurança.
 

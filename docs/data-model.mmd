@@ -3,6 +3,7 @@ erDiagram
     users ||--o| subscriptions : "has"
     users ||--o| credits : "has"
     users ||--o{ usage_log : "generates"
+    users ||--o{ usage_events : "tracks"
     conversations ||--o{ messages : "contains"
 
     users {
@@ -63,5 +64,13 @@ erDiagram
         int tokensUsed
         int creditsUsed
         string conversationId
+        datetime createdAt
+    }
+
+    usage_events {
+        int id PK
+        int userId FK
+        string eventType
+        string metadata
         datetime createdAt
     }

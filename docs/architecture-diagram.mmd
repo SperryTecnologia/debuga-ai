@@ -1,8 +1,12 @@
 graph TB
     A["Frontend - React 19 + Tailwind 4"] -->|"HTTPS"| B["Backend - Express 4 + tRPC 11"]
+    A --> MR["MermaidRenderer - Diagramas visuais"]
     B --> C["Auth - OAuth 2.0 + JWT"]
     B --> D["Billing - Stripe + Credits"]
     B --> E["Agent Loop - max 5 iterações"]
+    B --> UP["Upload Route - Imagens + Documentos"]
+    UP --> DP["Document Processor - PDF, DOCX, 12+ formatos"]
+    UP --> J["S3 Storage"]
     E --> F["LLM - Gemini 2.5 Flash"]
     E --> G["Tools"]
     G --> G1["Code Execution"]
@@ -16,4 +20,4 @@ graph TB
     C --> H["MySQL / TiDB"]
     D --> H
     D --> I["Stripe API"]
-    B --> J["S3 Storage"]
+    B --> J

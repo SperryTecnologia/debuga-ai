@@ -2,7 +2,7 @@
 
 **Autonomous AI Agent Platform for IT Infrastructure, Cybersecurity, and Telecommunications**
 
-**Version:** 3.0  
+**Version:** 4.0  
 **Date:** May 2026  
 **Author:** Sperry Tecnologia  
 **Website:** www.sperrytecnologia.com.br
@@ -59,6 +59,11 @@ The agent uses the **Manus Forge API** as an inference gateway, accessing state-
 | HTTP Check | Analyzes headers, status, and site security | Security header verification |
 | WHOIS Lookup | Queries domain and registrant information | Ownership investigation |
 | Image Generation | Creates network diagrams and flowcharts | Automated visual documentation |
+| Image Upload & Analysis | Accepts screenshots, error prints, and topologies for technical visual analysis | Visual infrastructure diagnostics |
+| Document Upload & Analysis | Text extraction from 12+ formats (PDF, DOCX, TXT, MD, LOG, CONF, JSON, CSV, YAML, XML, SQL) | Config, log, and documentation analysis |
+| Mermaid Rendering | Technical diagrams rendered visually with PNG/SVG/PDF export | Professional architecture visualization |
+
+> **Note:** Image and document upload capabilities are controlled by feature flags (`FEATURE_IMAGE_UPLOAD`, `FEATURE_DOCUMENT_UPLOAD`) and per-plan limits. Mermaid rendering is under continuous validation for complex diagram stability.
 
 ### 2.3 Planned Capabilities (roadmap)
 
@@ -202,12 +207,12 @@ The database is structured in 7 main tables:
 
 ### 3.5 Credits and Limits System
 
-| Plan | Messages/Day | Conversations/Month | Total Credits |
-|---|---|---|---|
-| Free | 5 | 3 | 50 |
-| Starter | 100 | 30 | 1,000 |
-| Pro | Unlimited | Unlimited | 10,000 |
-| Enterprise | Unlimited | Unlimited | 100,000 |
+| Plan | Messages/Day | Conversations/Month | Images/Day | Documents/Day | Total Credits |
+|---|---|---|---|---|---|
+| Free | 5 | 3 | 2 | 3 | 50 |
+| Starter | 100 | 30 | 10 | 15 | 1,000 |
+| Pro | Unlimited | Unlimited | 50 | 50 | 10,000 |
+| Enterprise | Unlimited | Unlimited | Unlimited | Unlimited | 100,000 |
 
 The credits system operates in three protection layers:
 1. **Rate Limiting**: Maximum 20 messages per minute (abuse protection)
@@ -283,8 +288,13 @@ debuga.ai uses a **freemium** model with 4 recurring subscription tiers in BRL (
 - Rate limiting and plan limits enforcement
 - Independent usage counters (anti-manipulation)
 - Global conversation search and archiving
-- 236+ automated tests across 14 test suites
-- Technical documentation (whitepaper, architecture, security audit)
+- Image upload and analysis (screenshots, error prints, topologies)
+- Document upload and analysis (12+ formats: PDF, DOCX, TXT, MD, LOG, etc.)
+- Visual Mermaid diagram rendering with PNG/SVG/PDF export
+- Human support by plan (Pro: technical triage; Enterprise: dedicated consultative channel)
+- Guided example cards (5 visible + 3 hidden from showcase)
+- 321 automated tests across 17 test suites
+- Technical documentation (whitepaper, architecture)
 
 ### 6.2 Phase 2 (v5.0) — Q3 2026
 
@@ -358,7 +368,7 @@ debuga.ai uses a **freemium** model with 4 recurring subscription tiers in BRL (
 
 debuga.ai represents a new category of tool for IT professionals: the **specialized autonomous agent**. By combining the reasoning capability of state-of-the-art LLMs with real execution tools (code execution, network scanning, web scraping, image generation), the platform offers an assistant that doesn't just suggest — it **executes and diagnoses**.
 
-The current version operates with 8 diagnostic tools in production, a complete billing system, and over 236 automated tests. The evolution strategy includes deploying specialized models on GPU infrastructure — currently in lab and research phase within the debuga.ai LLM Stack —, integrating with monitoring platforms (Zabbix, Wazuh, Prometheus), and expanding to the enterprise market with a self-hosted version.
+The current version operates with 8 diagnostic tools, image and document upload and analysis, visual Mermaid diagram rendering, a complete billing system, and 321 automated tests across 17 suites. The evolution strategy includes deploying specialized models on GPU infrastructure — currently in lab and research phase within the debuga.ai LLM Stack —, integrating with monitoring platforms (Zabbix, Wazuh, Prometheus), and expanding to the enterprise market with a self-hosted version.
 
 With the Brazilian IT market in strong expansion and the growing adoption of AI in cybersecurity, debuga.ai is positioned to capture a significant share of the productivity tools market for infrastructure and security professionals.
 

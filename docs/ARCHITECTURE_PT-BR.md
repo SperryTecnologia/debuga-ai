@@ -1,6 +1,6 @@
 # debuga.ai — Arquitetura do Sistema
 
-**Versão:** 3.0  
+**Versão:** 4.0  
 **Data:** Maio de 2026  
 **Autor:** Sperry Tecnologia  
 **Público-alvo:** Desenvolvedores seniores, líderes técnicos e arquitetos de infraestrutura
@@ -176,6 +176,7 @@ A comunicação com o backend ocorre através de dois canais distintos:
 | `/pricing` | `PricingPage.tsx` | Não | Planos de assinatura com checkout Stripe |
 | `/account` | `AccountPage.tsx` | Sim | Dashboard do usuário com métricas de uso, atividade, perfil |
 | `/logout-success` | `LogoutSuccess.tsx` | Não | Página de confirmação pós-logout |
+| `/demo/web-analysis` | `DemoWebAnalysis.tsx` | Não | Página estática de demonstração para card de navegação |
 
 ### 3.3 Gerenciamento de Estado
 
@@ -198,7 +199,8 @@ Quando um usuário envia uma mensagem, o sistema executa um pipeline de verifica
 1. **Verificação de rate limit** — 20 msgs/min por usuário (Map em memória com intervalo de limpeza de 5 min)
 2. **Verificação de limite do plano** — Contagem diária de mensagens e contagem mensal de conversas contra as cotas do plano
 3. **Verificação de saldo de créditos** — Créditos suficientes restantes para pelo menos uma resposta
-4. **Montagem de contexto** — Histórico de conversa + prompt de sistema + definições de ferramentas
+4. **Verificação de limites de upload** — Para mensagens com anexos, verificação de cota diária de imagens/documentos contra limites do plano
+5. **Montagem de contexto** — Histórico de conversa + prompt de sistema + definições de ferramentas + conteúdo de anexos (imagens como multimodal, documentos como texto extraído)
 
 Se todas as verificações passarem, a mensagem é persistida no banco de dados e o contexto montado é enviado ao LLM. O LLM responde com uma **completion de texto** (resposta final) ou uma **chamada de ferramenta** (requisição de ação). No caso de chamada de ferramenta, o sistema executa a ferramenta solicitada, adiciona o resultado ao contexto e re-invoca o LLM. Este ciclo se repete por até 5 iterações, permitindo diagnósticos complexos de múltiplas etapas.
 
@@ -317,6 +319,8 @@ O codebase passou por uma auditoria de segurança de produção.
 
 **Execução de Código:** A ferramenta `execute_code` executa código fornecido pelo usuário em `/tmp` com timeout de 30 segundos e limite de saída de 50KB. A plataforma de deploy fornece isolamento adicional em nível de processo. Um ambiente sandbox dedicado (baseado em Docker) está planejado para versões futuras para fornecer garantias de isolamento mais fortes.
 
+**Feature Flags de Upload:** As funcionalidades de upload de imagens e documentos são controladas por feature flags (`FEATURE_IMAGE_UPLOAD`, `FEATURE_DOCUMENT_UPLOAD`) que permitem desativação imediata sem deploy. Limites por plano (imagens/dia, documentos/dia) adicionam camada de proteção contra abuso.
+
 **Somente HTTPS:** Todas as comunicações são criptografadas em trânsito.
 
 ---
@@ -332,6 +336,9 @@ O codebase passou por uma auditoria de segurança de produção.
 | **Manus OAuth** | Autenticação de usuários | `server/_core/oauth.ts` |
 | **Storage compatível com S3** | Armazenamento de arquivos e artefatos | `server/storage.ts` |
 | **Manus Image Service** | Geração de imagens por IA | `server/_core/imageGeneration.ts` |
+| **pdf-parse** | Extração de texto de PDFs para análise pelo agente | `server/documentProcessor.ts` |
+| **mammoth** | Extração de texto de DOCX para análise pelo agente | `server/documentProcessor.ts` |
+| **mermaid.js** | Renderização visual de diagramas no chat | `client/src/components/MermaidRenderer.tsx` |
 
 ### 8.2 Integrações Planejadas (Roadmap)
 

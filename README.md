@@ -29,11 +29,21 @@ A versão atual do debuga.ai está em produção com as seguintes capacidades im
 
 **Agente autônomo com 8 ferramentas de diagnóstico** — DNS lookup, SSL check, HTTP check, WHOIS lookup, port scan, web fetch, execução de código e geração de imagens. Todas as ferramentas são invocadas autonomamente pelo agente durante o loop de raciocínio.
 
+**Upload e análise de imagens** — O agente aceita upload de imagens (screenshots, prints de erro, dashboards, topologias) diretamente no chat e realiza análise visual com profundidade técnica, identificando software, erros, configurações e riscos de segurança. Controlado por feature flag com limites por plano.
+
+**Upload e análise de documentos** — Suporte a upload e extração automática de texto de 12+ formatos (PDF, DOCX, TXT, MD, LOG, CONF, JSON, CSV, YAML, XML, SQL) para análise pelo agente. Utiliza pdf-parse para PDFs e mammoth para DOCX. Limite de 20MB por arquivo com truncamento em 50.000 caracteres. Controlado por feature flag com limites por plano.
+
+**Renderização visual de diagramas Mermaid** — O agente gera diagramas técnicos (rede, segurança, infraestrutura, DevOps) que são renderizados visualmente no chat com preview inline, modal fullscreen com zoom/pan/fit-to-screen, e exportação em PNG, SVG, PDF e código .mmd.
+
 **Inferência via API cloud** — O agente utiliza o Manus Forge API como gateway de inferência, acessando modelos de linguagem de última geração (atualmente Gemini 2.5 Flash) para raciocínio, tool calling e geração de respostas em streaming.
 
-**Sistema de billing completo** — Integração com Stripe para assinaturas em BRL, com 4 planos (Free, Starter, Pro, Enterprise), webhooks de ciclo de vida, upgrade/downgrade automático e controle de consumo por mensagens diárias, conversas mensais e créditos.
+**Sistema de billing completo** — Integração com Stripe para assinaturas em BRL, com 4 planos (Free, Starter, Pro, Enterprise), webhooks de ciclo de vida, upgrade/downgrade automático e controle de consumo por mensagens diárias, conversas mensais, uploads e créditos.
 
-**Interface de chat estilo terminal** — UI em React 19 com tema escuro, streaming de respostas via SSE, sidebar de conversas com busca global, arquivamento, e steps do agente com ícones laterais.
+**Interface de chat estilo terminal** — UI em React 19 com tema escuro, streaming de respostas via SSE, sidebar de conversas com busca global, arquivamento, cards de exemplo guiados e steps do agente com ícones laterais.
+
+**Suporte humano por plano** — Escalação para suporte humano sênior diferenciada por plano: Pro tem acesso a triagem técnica via WhatsApp com mensagem pré-preenchida; Enterprise tem canal consultivo dedicado.
+
+**Cards de exemplo guiados** — 5 cards visíveis na interface de chat (Diagnóstico DNS, Auditoria de Segurança, Scan de Portas, Auditor de Domínio, Gerar Diagrama) que demonstram as capacidades do agente com alvos seguros. 3 cards adicionais (Monitor de Servidor, Navegar em Site, Sandbox de Código) estão ocultos da vitrine, preservados para ativação futura.
 
 **Autenticação e segurança** — OAuth 2.0 com sessões JWT, rate limiting, isolamento de dados por usuário e verificação de assinatura em webhooks.
 
@@ -66,7 +76,7 @@ A estratégia de longo prazo prevê a adoção de modelos open-source fine-tuned
 | Pagamentos | Stripe (BRL, assinaturas + webhooks) | Cobrança PCI-compliant com suporte a Real Brasileiro |
 | Armazenamento | S3-compatível | Object storage para artefatos gerados |
 | Autenticação | OAuth 2.0 + sessões JWT | Autenticação stateless com cookies assinados |
-| Testes | Vitest (236+ testes automatizados) | Testes unitários rápidos com contextos mockados |
+| Testes | Vitest (321 testes automatizados em 17 suítes) | Testes unitários rápidos com contextos mockados |
 
 ---
 
@@ -99,12 +109,12 @@ A plataforma implementa um sistema de controle de consumo em três camadas:
 
 **Camada 3 — Consumo de Créditos:** Contagem de tokens pós-resposta (~4 chars/token + 50 tokens/tool call) com débito automático do saldo do usuário. Créditos são resetados mensalmente via webhook de assinatura do Stripe.
 
-| Plano | Mensagens/dia | Conversas/mês | Créditos |
-|---|---|---|---|
-| Free | 5 | 3 | 50 |
-| Starter | 100 | 30 | 1.000 |
-| Pro | Ilimitado | Ilimitado | 10.000 |
-| Enterprise | Ilimitado | Ilimitado | 100.000 |
+| Plano | Mensagens/dia | Conversas/mês | Imagens/dia | Documentos/dia | Créditos |
+|---|---|---|---|---|---|
+| Free | 5 | 3 | 2 | 3 | 50 |
+| Starter | 100 | 30 | 10 | 15 | 1.000 |
+| Pro | Ilimitado | Ilimitado | 50 | 50 | 10.000 |
+| Enterprise | Ilimitado | Ilimitado | Ilimitado | Ilimitado | 100.000 |
 
 A integração com Stripe gerencia sessões de checkout, webhooks de ciclo de vida da assinatura (`checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`) e downgrade automático para o plano free em caso de cancelamento.
 
@@ -112,7 +122,7 @@ A integração com Stripe gerencia sessões de checkout, webhooks de ciclo de vi
 
 ## Estrutura do Projeto
 
-O repositório contém aproximadamente 178 arquivos (excluindo `node_modules` e `dist`), organizados da seguinte forma:
+O repositório contém aproximadamente 181 arquivos (excluindo `node_modules` e `dist`), organizados da seguinte forma:
 
 ```
 debuga-ai/
@@ -134,9 +144,12 @@ debuga-ai/
 │   ├── streamRoute.ts             # Streaming SSE + agent loop + rate limiting + consumo
 │   ├── stripeRoutes.ts            # Checkout Stripe + handlers de webhook
 │   ├── agentTools.ts              # Implementações das 8 ferramentas do agente
+│   ├── uploadRoute.ts             # Upload de arquivos (imagens + documentos) com feature flags
+│   ├── documentProcessor.ts       # Extração de texto de documentos (PDF, DOCX, 12+ formatos)
+│   ├── transcribeRoute.ts         # Transcrição de áudio
 │   ├── products.ts                # Definições de planos e preços
 │   ├── storage.ts                 # Helpers S3
-│   └── *.test.ts                  # 14 suítes de teste Vitest
+│   └── *.test.ts                  # 17 suítes de teste Vitest
 ├── drizzle/                       # Schema do banco e migrações SQL
 │   └── schema.ts                  # 7 tabelas (users, conversations, messages,
 │                                  #   subscriptions, credits, usage_log, usage_events)
@@ -144,7 +157,8 @@ debuga-ai/
 ├── docs/                          # Documentação técnica e materiais estratégicos
 │   ├── WHITEPAPER_PT-BR.md        # Whitepaper técnico (Português)
 │   ├── WHITEPAPER_EN.md           # Whitepaper técnico (Inglês)
-│   ├── ARCHITECTURE.md            # Arquitetura do sistema com diagramas
+│   ├── ARCHITECTURE_PT-BR.md      # Arquitetura do sistema (Português)
+│   ├── ARCHITECTURE_EN.md         # Arquitetura do sistema (Inglês)
 ├── patches/                       # Patches de dependências (wouter)
 └── todo.md                        # Rastreamento de features e bugs
 ```
@@ -186,7 +200,17 @@ Os seguintes conectores estão em fase de planejamento ou desenvolvimento inicia
 - **Wazuh** — SIEM e detecção de ameaças
 - **Prometheus/Grafana** — Métricas e dashboards de observabilidade
 
-Esses conectores fazem parte da estratégia de evolução do produto para se tornar um hub de operações de TI, integrando dados de múltiplas fontes no raciocínio do agente.
+Esses conectores fazem parte da estratégia de evolução do produto para se tornar um hub de operações de TI, integrando dados de monitoramento real ao loop de raciocínio do agente.
+
+### Dependências Relevantes
+
+| Dependência | Função |
+|---|---|
+| `mermaid` | Renderização visual de diagramas Mermaid no chat |
+| `jspdf` | Exportação de diagramas para PDF |
+| `pdf-parse` | Extração de texto de PDFs para análise pelo agente |
+| `mammoth` | Extração de texto de DOCX para análise pelo agente |
+| `streamdown` | Renderização de Markdown com suporte a streaming |
 
 ---
 
@@ -198,6 +222,7 @@ O código passou por uma auditoria de segurança para produção:
 - **Isolamento do frontend** — Apenas variáveis com prefixo `VITE_` (chaves públicas) são acessíveis no bundle do navegador. Secrets do servidor nunca chegam ao cliente.
 - **Verificação de assinatura de webhook** — Webhooks do Stripe são verificados com `stripe.webhooks.constructEvent()` antes do processamento.
 - **Rate limiting** — 20 msgs/min por usuário com rastreamento in-memory e limpeza automática.
+- **Feature flags de upload** — `FEATURE_IMAGE_UPLOAD` e `FEATURE_DOCUMENT_UPLOAD` permitem desativar funcionalidades de upload em ambientes específicos. Limites por plano adicionam camada de proteção contra abuso.
 - **Execução de código controlada** — A ferramenta `execute_code` roda em `/tmp` com timeout de 30s e limite de 50KB de output. O ambiente de deploy fornece isolamento adicional a nível de plataforma.
 - **Apenas HTTPS** — Todas as comunicações são criptografadas em trânsito.
 
@@ -206,24 +231,27 @@ O código passou por uma auditoria de segurança para produção:
 ## Testes
 
 ```bash
-pnpm test    # 236+ testes, ~5s de execução
+pnpm test    # 321 testes em 17 suítes, ~5s de execução
 ```
 
 | Suíte | Testes | Cobertura |
 |---|---|---|
-| `agentTools.test.ts` | 49 | Validação de argumentos, JSON repair, erros amigáveis, todas as 8 ferramentas |
+| `agentTools.test.ts` | 46 | Validação de argumentos, JSON repair, erros amigáveis, todas as 8 ferramentas |
+| `agentTools.errorHandling.test.ts` | 11 | Tratamento de erros de ferramentas, mensagens amigáveis, edge cases |
 | `chat.test.ts` | 19 | CRUD de conversas, criação de mensagens, paginação |
 | `tools.test.ts` | 20 | Execução das ferramentas do agente (DNS, SSL, HTTP, port scan, etc.) |
 | `subscription.test.ts` | 10 | Status de assinatura, mapeamento de planos, precificação |
-| `credits.test.ts` | 10 | Saldo de créditos, limites de plano, contadores diários/mensais |
+| `credits.test.ts` | 13 | Saldo de créditos, limites de plano, contadores diários/mensais |
 | `stripe.test.ts` | 21 | Fluxos Stripe (checkout, webhook, upgrade, downgrade, cancelamento) |
-| `usage-counters.test.ts` | 12 | Contadores independentes anti-burla (usage_events) |
-| `archive.test.ts` | 10 | Arquivamento, desarquivamento, listagem de conversas |
+| `usage-counters.test.ts` | 9 | Contadores independentes anti-burla (usage_events) |
+| `archive.test.ts` | 8 | Arquivamento, desarquivamento, listagem de conversas |
 | `search.test.ts` | 17 | Busca global por título e conteúdo de mensagens |
 | `logout-flow.test.ts` | 23 | Fluxo de logout, invalidação de sessão, redirecionamento |
-| `freemium-cards.test.ts` | 29 | Cards de exemplo, prompts, feature-gating por plano |
+| `freemium-cards.test.ts` | 54 | Cards de exemplo, prompts, feature-gating por plano |
 | `modal-cta.test.ts` | 15 | Empilhamento de modais, CTA pós-resultado, prioridade de upgrade |
-| `limits.test.ts` | Var. | Rate limiting, limites de plano, enforcement de cotas |
+| `limits.test.ts` | 10 | Rate limiting, limites de plano, enforcement de cotas |
+| `image-upload.test.ts` | 16 | Feature flag de imagens, limites por plano, contadores de upload |
+| `document-upload.test.ts` | 28 | Feature flag de documentos, parsers PDF/DOCX/TXT, truncamento, limites |
 | `auth.logout.test.ts` | 1 | Fluxo base de logout e limpeza de sessão |
 
 Os testes utilizam Vitest com contextos mockados para simular usuários autenticados sem dependências de banco de dados externo.
@@ -270,6 +298,8 @@ As seguintes variáveis devem ser configuradas no ambiente de execução. Em pro
 | `VITE_APP_LOGO` | URL do logo (opcional) | — |
 | `VITE_ANALYTICS_ENDPOINT` | Endpoint de analytics (opcional) | — |
 | `VITE_ANALYTICS_WEBSITE_ID` | ID do site no analytics (opcional) | — |
+| `FEATURE_IMAGE_UPLOAD` | Feature flag para upload de imagens (default: ativado) | `true` ou `false` |
+| `FEATURE_DOCUMENT_UPLOAD` | Feature flag para upload de documentos (default: ativado) | `true` ou `false` |
 
 ---
 
@@ -303,7 +333,7 @@ A versão atual do debuga.ai possui as seguintes limitações que estão sendo e
 
 | Versão | Timeline | Funcionalidades |
 |---|---|---|
-| **v4.x** (Atual) | Q2 2026 | Agente autônomo com 8 ferramentas, billing Stripe, busca global, arquivamento, 236+ testes |
+| **v4.x** (Atual) | Q2 2026 | Agente autônomo com 8 ferramentas, upload/análise de imagens e documentos, renderização Mermaid, billing Stripe, busca global, arquivamento, suporte humano por plano, 321 testes |
 | **v5.0** | Q3 2026 | Conectores Zabbix/Wazuh ativos, roteamento multi-modelo, métodos de pagamento locais (quando disponíveis), cupons educacionais |
 | **v6.0** | Q4 2026 | Inferência on-premise via vLLM/TGI (Qwen, Mistral, Llama), API REST pública, memória de longo prazo |
 | **v7.0** | 2027 | Multi-tenancy, white-label, execução remota de agentes, marketplace de ferramentas |
@@ -329,6 +359,7 @@ A versão atual do debuga.ai possui as seguintes limitações que estão sendo e
 | [Whitepaper](docs/WHITEPAPER_PT-BR.md) | PT-BR | Whitepaper técnico com análise de mercado, arquitetura e modelo de negócio |
 | [Whitepaper](docs/WHITEPAPER_EN.md) | EN | Versão em inglês do whitepaper técnico |
 | [Arquitetura](docs/ARCHITECTURE_PT-BR.md) | PT-BR | Arquitetura detalhada com diagramas |
+| [Arquitetura](docs/ARCHITECTURE_EN.md) | EN | Versão em inglês da documentação de arquitetura |
 
 > **Nota:** Alguns documentos técnicos podem conter referências a funcionalidades planejadas (roadmap) que ainda não estão implementadas na versão atual. Consulte a seção "Estado Atual" deste README para a lista precisa de capacidades em produção.
 

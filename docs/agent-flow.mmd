@@ -5,7 +5,11 @@ flowchart TD
     C -->|Não| C1["Erro: Sem créditos"]
     C -->|Sim| D{"Limite diário OK?"}
     D -->|Não| D1["Erro: Limite diário"]
-    D -->|Sim| E["Salva mensagem no DB"]
+    D -->|Sim| DA{"Tem anexos?"}
+    DA -->|Sim| DB{"Limite upload OK?"}
+    DB -->|Não| DB1["Erro: Limite de upload"]
+    DB -->|Sim| E["Salva mensagem no DB"]
+    DA -->|Não| E
     E --> F["Envia contexto ao LLM"]
     F --> G{"LLM quer usar tool?"}
     G -->|Sim| H["Executa ferramenta"]
