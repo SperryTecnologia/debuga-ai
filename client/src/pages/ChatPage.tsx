@@ -1814,7 +1814,7 @@ export default function ChatPage() {
   // Auth loading
   if (authLoading) {
     return (
-      <div className="h-screen bg-background flex items-center justify-center">
+      <div className="h-dvh bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <img src={LOGO_ICON} alt="debuga.ai" className="w-16 h-16 rounded-xl animate-pulse" />
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -1829,7 +1829,7 @@ export default function ChatPage() {
   // Not authenticated
   if (!user) {
     return (
-      <div className="h-screen bg-background flex items-center justify-center">
+      <div className="h-dvh bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-8 max-w-md text-center px-6">
           <img src={LOGO_ICON} alt="debuga.ai" className="w-20 h-20 rounded-2xl shadow-lg shadow-primary/20" />
           <div className="space-y-3">
@@ -1868,11 +1868,11 @@ export default function ChatPage() {
   // Paywall
   if (!subQuery.isLoading && !hasAccess) {
     return (
-      <div className="h-screen bg-background flex items-center justify-center">
+      <div className="h-dvh bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-8 max-w-md text-center px-6">
-          <img src={LOGO_ICON} alt="debuga.ai" className="w-20 h-20 rounded-2xl shadow-lg shadow-primary/20" />
-          <div className="space-y-3">
-            <h1 className="text-2xl font-bold font-mono">Assinatura Necessária</h1>
+          <img src={LOGO_ICON} alt="debuga.ai" className="w-16 h-16 rounded-2xl shadow-lg" />
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold font-mono">Assinatura Necessária</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Para acessar o agente autônomo de IA, você precisa de uma assinatura ativa.
             </p>
@@ -1894,7 +1894,7 @@ export default function ChatPage() {
   const conversations = conversationsQuery.data || [];
 
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
+    <div className="h-dvh bg-background flex overflow-hidden">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -2380,8 +2380,8 @@ export default function ChatPage() {
         {/* Messages Area */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           {messages.length === 0 && !activeConversationId ? (
-            <div className="h-full flex flex-col items-center justify-center px-3 md:px-6 overflow-x-hidden">
-              <div className="max-w-2xl w-full space-y-6 md:space-y-8">
+            <div className="flex flex-col items-center px-3 md:px-6 overflow-x-hidden py-6 md:py-0 md:justify-center md:h-full">
+              <div className="max-w-2xl w-full space-y-5 md:space-y-8">
                 <div className="text-center space-y-3 md:space-y-4">
                   <img src={AVATAR_AGENT} alt="debuga.ai Agent" className="w-16 h-16 md:w-20 md:h-20 rounded-2xl mx-auto shadow-lg shadow-primary/10" />
                   <div>
