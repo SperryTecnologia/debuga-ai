@@ -55,7 +55,7 @@ The debuga.ai inference layer is designed as a **hybrid architecture** that comb
                   │                                     │
     ┌─────────────▼───────────────┐     ┌─────────▼─────────────────┐
     │  CLOUD PROVIDER (Prod)     │     │  LOCAL INFERENCE (Lab)     │
-    │  ────────────────────── │     │  ───────────────────────      │
+    │  ──────────────────────    │     │  ───────────────────────   │
     │  Manus Forge API           │     │  debuga-llm-gateway        │
     │  (Gemini 2.5 Flash)        │     │  (OpenAI-compatible API)   │
     │                            │     │           │                │
