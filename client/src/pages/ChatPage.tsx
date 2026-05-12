@@ -98,7 +98,39 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Streamdown } from "streamdown";
+import type { MermaidConfig } from "mermaid";
 import { toast } from "sonner";
+
+// Mermaid dark theme aligned to debuga.ai brand
+const MERMAID_CONFIG: MermaidConfig = {
+  theme: "dark",
+  darkMode: true,
+  themeVariables: {
+    primaryColor: "#052e16",
+    primaryTextColor: "#ffffff",
+    primaryBorderColor: "#22c55e",
+    lineColor: "#22c55e",
+    secondaryColor: "#1e293b",
+    tertiaryColor: "#0f172a",
+    background: "#0a0a0a",
+    mainBkg: "#0f172a",
+    nodeBorder: "#22c55e",
+    clusterBkg: "#0f172a",
+    clusterBorder: "#334155",
+    titleColor: "#22c55e",
+    edgeLabelBackground: "#1e293b",
+    nodeTextColor: "#ffffff",
+  },
+  flowchart: {
+    htmlLabels: true,
+    curve: "basis",
+    padding: 15,
+    nodeSpacing: 50,
+    rankSpacing: 60,
+  },
+  fontFamily: "JetBrains Mono, monospace",
+  fontSize: 12,
+};
 
 const LOGO_ICON =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga-logo-v2-A2P25ZnkFwTU2RkRjz85nk.webp";
@@ -2250,7 +2282,7 @@ export default function ChatPage() {
                       </div>
                       {msg.role === "assistant" ? (
                         <div className="prose prose-sm prose-invert max-w-none prose-pre:bg-[oklch(0.06_0.005_240)] prose-pre:border prose-pre:border-border prose-code:text-primary prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary">
-                          <Streamdown>{msg.content}</Streamdown>
+                          <Streamdown mermaidConfig={MERMAID_CONFIG}>{msg.content}</Streamdown>
                         </div>
                       ) : (
                         <div>
@@ -2302,7 +2334,7 @@ export default function ChatPage() {
                       <span className="text-[10px] text-primary/60 font-mono agent-pulse">gerando...</span>
                     </div>
                     <div className="prose prose-sm prose-invert max-w-none prose-pre:bg-[oklch(0.06_0.005_240)] prose-pre:border prose-pre:border-border prose-code:text-primary prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary">
-                      <Streamdown>{streamingContent}</Streamdown>
+                      <Streamdown mermaidConfig={MERMAID_CONFIG} isAnimating>{streamingContent}</Streamdown>
                     </div>
                   </div>
                 </div>

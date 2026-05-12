@@ -324,4 +324,58 @@ describe("Simplified Card Structure", () => {
       expect(chatPageContent).toContain("NOT_FOUND");
     });
   });
+
+  describe("Mermaid rendering integration", () => {
+    it("should import MermaidConfig type from mermaid", () => {
+      expect(chatPageContent).toContain('import type { MermaidConfig } from "mermaid"');
+    });
+
+    it("should define MERMAID_CONFIG constant with dark theme", () => {
+      expect(chatPageContent).toContain("const MERMAID_CONFIG: MermaidConfig");
+      expect(chatPageContent).toContain('theme: "dark"');
+      expect(chatPageContent).toContain("darkMode: true");
+    });
+
+    it("should use debuga.ai brand colors in mermaid theme", () => {
+      expect(chatPageContent).toContain('primaryBorderColor: "#22c55e"');
+      expect(chatPageContent).toContain('lineColor: "#22c55e"');
+      expect(chatPageContent).toContain('background: "#0a0a0a"');
+    });
+
+    it("should pass mermaidConfig to Streamdown for saved messages", () => {
+      expect(chatPageContent).toContain("<Streamdown mermaidConfig={MERMAID_CONFIG}>");
+    });
+
+    it("should pass mermaidConfig to Streamdown for streaming content", () => {
+      expect(chatPageContent).toContain("<Streamdown mermaidConfig={MERMAID_CONFIG} isAnimating>");
+    });
+
+    it("should use JetBrains Mono font for mermaid diagrams", () => {
+      expect(chatPageContent).toContain('fontFamily: "JetBrains Mono, monospace"');
+    });
+
+    it("should configure flowchart settings for premium layout", () => {
+      expect(chatPageContent).toContain("nodeSpacing: 50");
+      expect(chatPageContent).toContain("rankSpacing: 60");
+    });
+  });
+
+  describe("Mermaid CSS styling", () => {
+    const cssContent = fs.readFileSync(
+      "/home/ubuntu/debuga-ai/client/src/index.css",
+      "utf-8"
+    );
+
+    it("should include @source for streamdown styles", () => {
+      expect(cssContent).toContain('@source "../../node_modules/streamdown/dist/index.js"');
+    });
+
+    it("should have premium styling for mermaid blocks", () => {
+      expect(cssContent).toContain('[data-streamdown="mermaid-block"]');
+    });
+
+    it("should have mobile responsive styles for mermaid", () => {
+      expect(cssContent).toContain("@media (max-width: 640px)");
+    });
+  });
 });
