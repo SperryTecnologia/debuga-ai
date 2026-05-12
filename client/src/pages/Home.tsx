@@ -22,6 +22,7 @@ import {
   Github,
   FileText,
   ExternalLink,
+  Headset,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -92,6 +93,12 @@ const FEATURES = [
     icon: Lock,
     title: "SIEM & Monitoramento",
     desc: "Conectores planejados para Zabbix, Wazuh, Prometheus e Grafana — análise inteligente de alertas e métricas (em breve).",
+  },
+  {
+    icon: Headset,
+    title: "IA + Suporte Humano Sênior",
+    desc: "Nos planos Pro e Enterprise, quando a IA não for suficiente, sua demanda pode ser direcionada para uma equipe técnica da Sperry Tecnologia via WhatsApp.",
+    highlight: true,
   },
 ];
 
@@ -202,7 +209,7 @@ export default function Home() {
               >
                 O primeiro agente de IA com sandbox que navega em sites, executa código,
                 escaneia portas e audita sua infraestrutura de forma autônoma.
-                Não é um chatbot — é um especialista de TI que age.
+                Comece com IA. Escale para triagem humana sênior nos planos Pro e Enterprise.
               </motion.p>
 
               <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
@@ -228,7 +235,7 @@ export default function Home() {
                   <CheckCircle2 className="w-4 h-4 text-primary" /> Teste gratuito
                 </span>
                 <span className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-primary" /> Sem cartao
+                  <CheckCircle2 className="w-4 h-4 text-primary" /> Sem cartão
                 </span>
                 <span className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-primary" /> Cancele quando quiser

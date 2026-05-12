@@ -90,6 +90,9 @@ import {
   User,
   Crown,
   BarChart3,
+  Headset,
+  MessageCircle,
+  ExternalLink,
   ArrowUpCircle,
   Square,
   Monitor,
@@ -2203,13 +2206,107 @@ export default function ChatPage() {
                   </div>
                 </div>
 
-                {/* Unified accordion toggle for examples (desktop + mobile) */}
+                {/* Support banner by plan */}
+                {(() => {
+                  const userPlan = usageQuery.data?.planId || "free";
+                  const userName = user?.name || "Usuário";
+                  const userEmail = user?.email || "";
+                  const WHATSAPP_NUM = "555137374357";
+
+                  const buildWhatsAppUrl = (plan: string) => {
+                    const planLabel = plan === "enterprise" ? "Enterprise" : "Pro";
+                    const type = plan === "enterprise" ? "acionar o canal consultivo" : "suporte humano";
+                    const msg = `Olá, sou ${userName} (${userEmail}), plano ${planLabel}. Preciso de ${type} do debuga.ai para uma demanda técnica.`;
+                    return `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`;
+                  };
+
+                  if (userPlan === "enterprise") {
+                    return (
+                      <div className="px-1">
+                        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-lg bg-primary/20"><Shield className="w-4 h-4 text-primary" /></div>
+                            <div>
+                              <p className="text-sm font-bold font-mono text-primary">Canal consultivo Enterprise</p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Seu plano conta com direcionamento para equipe técnica sênior da Sperry Tecnologia para demandas críticas, integrações e necessidades específicas de infraestrutura, segurança e DevOps.
+                          </p>
+                          <p className="text-xs text-slate-500">Atendimento conforme contrato, escopo e criticidade.</p>
+                          <button
+                            onClick={() => window.open(buildWhatsAppUrl("enterprise"), "_blank")}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-primary text-primary-foreground font-mono text-sm font-medium hover:bg-primary/90 transition-all"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            Falar com equipe técnica
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (userPlan === "pro") {
+                    return (
+                      <div className="px-1">
+                        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-lg bg-primary/20"><Headset className="w-4 h-4 text-primary" /></div>
+                            <div>
+                              <p className="text-sm font-bold font-mono text-primary">Suporte humano incluído</p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Seu plano inclui canal de triagem via WhatsApp para demandas técnicas específicas quando a IA não for suficiente.
+                          </p>
+                          <p className="text-xs text-slate-500">Até 1 hora mensal de triagem técnica sênior, conforme elegibilidade do plano.</p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => window.open(buildWhatsAppUrl("pro"), "_blank")}
+                              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-primary text-primary-foreground font-mono text-sm font-medium hover:bg-primary/90 transition-all"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              Falar com suporte humano
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Free / Starter
+                  return (
+                    <div className="px-1">
+                      <div className="rounded-xl border border-border bg-card/50 p-4 space-y-3 opacity-90">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-muted"><Lock className="w-4 h-4 text-muted-foreground" /></div>
+                          <div>
+                            <p className="text-sm font-bold font-mono text-foreground">Suporte humano sênior</p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Disponível nos planos Pro e Enterprise para triagem técnica via WhatsApp quando a IA não for suficiente.
+                        </p>
+                        <p className="text-xs text-slate-500">Plano Pro inclui até 1 hora mensal de triagem técnica sênior, conforme elegibilidade do plano.</p>
+                        <button
+                          onClick={() => setLocation("/pricing")}
+                          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border border-primary/30 text-primary font-mono text-sm font-medium hover:bg-primary/10 transition-all"
+                        >
+                          <Crown className="w-4 h-4" />
+                          Desbloquear no Pro
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Secondary: guided examples toggle */}
                 <div className="px-1">
                   <button
                     onClick={() => setExamplesOpen(!examplesOpen)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-border bg-card hover:bg-accent transition-all font-mono text-sm text-muted-foreground hover:text-foreground"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-border bg-card hover:bg-accent transition-all font-mono text-xs text-muted-foreground hover:text-foreground"
                   >
-                    <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", examplesOpen && "rotate-180")} />
+                    <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", examplesOpen && "rotate-180")} />
                     {examplesOpen ? "Ocultar exemplos" : "Ver exemplos guiados"}
                   </button>
                 </div>
@@ -2220,8 +2317,8 @@ export default function ChatPage() {
                     {/* Mobile: compact list */}
                     <div className="flex flex-col gap-2 md:hidden">
                       {SUGGESTED_PROMPTS.filter(p => p.visible !== false).map((item, i) => {
-                        const userPlan = usageQuery.data?.planId || "free";
-                        const isPaidPlan = userPlan !== "free";
+                        const uPlan = usageQuery.data?.planId || "free";
+                        const isPaid = uPlan !== "free";
                         return (
                           <button
                             key={i}
@@ -2230,7 +2327,7 @@ export default function ChatPage() {
                               if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
                               setExamplesOpen(false);
                               handleSendMessage(item.prompt, item.displayMessage);
-                              if (!isPaidPlan) {
+                              if (!isPaid) {
                                 ctaTimeoutRef.current = setTimeout(() => {
                                   ctaTimeoutRef.current = null;
                                   if (!lastRequestBlockedRef.current && !upgradeModal?.open) {
@@ -2257,8 +2354,8 @@ export default function ChatPage() {
                     {/* Desktop: grid layout */}
                     <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-3">
                       {SUGGESTED_PROMPTS.filter(p => p.visible !== false).map((item, i) => {
-                        const userPlan = usageQuery.data?.planId || "free";
-                        const isPaidPlan = userPlan !== "free";
+                        const uPlan = usageQuery.data?.planId || "free";
+                        const isPaid = uPlan !== "free";
                         return (
                           <button
                             key={i}
@@ -2267,7 +2364,7 @@ export default function ChatPage() {
                               if (ctaTimeoutRef.current) { clearTimeout(ctaTimeoutRef.current); ctaTimeoutRef.current = null; }
                               setExamplesOpen(false);
                               handleSendMessage(item.prompt, item.displayMessage);
-                              if (!isPaidPlan) {
+                              if (!isPaid) {
                                 ctaTimeoutRef.current = setTimeout(() => {
                                   ctaTimeoutRef.current = null;
                                   if (!lastRequestBlockedRef.current && !upgradeModal?.open) {
