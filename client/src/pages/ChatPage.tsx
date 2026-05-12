@@ -1146,7 +1146,16 @@ export default function ChatPage() {
           const data = await res.json();
           newFiles.push(data.file);
         } else {
-          toast.error(`Falha ao enviar ${file.name}`);
+          const errData = await res.json().catch(() => null);
+          if (res.status === 402 && errData?.code === "IMAGE_LIMIT_REACHED") {
+            toast.error(errData.error || `Limite de imagens atingido. Faça upgrade para enviar mais.`);
+            break; // Stop uploading remaining files
+          } else if (res.status === 403) {
+            toast.error(errData?.error || "Upload de imagens desativado temporariamente.");
+            break;
+          } else {
+            toast.error(`Falha ao enviar ${file.name}`);
+          }
         }
       } catch {
         toast.error(`Erro ao enviar ${file.name}`);
@@ -2432,13 +2441,23 @@ export default function ChatPage() {
                           {msg.attachments && msg.attachments.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
                               {msg.attachments.map((att, ai) => (
-                                <div key={ai} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-primary/5 border border-primary/10 text-xs font-mono">
+                                <div key={ai} className={cn(
+                                  "rounded-lg border border-primary/10 overflow-hidden",
+                                  att.isImage ? "max-w-[200px] md:max-w-[280px]" : "flex items-center gap-2 px-2.5 py-1.5 bg-primary/5 text-xs font-mono"
+                                )}>
                                   {att.isImage ? (
-                                    <img src={att.url} alt={att.filename} className="w-10 h-10 rounded object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.open(att.url, '_blank')} />
+                                    <img
+                                      src={att.url}
+                                      alt={att.filename}
+                                      className="w-full h-auto max-h-[200px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                      onClick={() => window.open(att.url, '_blank')}
+                                    />
                                   ) : (
-                                    <FileText className="w-3.5 h-3.5 text-primary" />
+                                    <>
+                                      <FileText className="w-3.5 h-3.5 text-primary" />
+                                      <span className="text-foreground/70 truncate max-w-[100px]">{att.filename}</span>
+                                    </>
                                   )}
-                                  <span className="text-foreground/70 truncate max-w-[100px]">{att.filename}</span>
                                 </div>
                               ))}
                             </div>
@@ -2497,18 +2516,34 @@ export default function ChatPage() {
           <div className="max-w-4xl mx-auto">
             {/* Uploaded files preview */}
             {uploadedFiles.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 md:gap-2 mb-2 overflow-x-hidden">
+              <div className="flex flex-wrap gap-2 mb-2 overflow-x-hidden">
                 {uploadedFiles.map((f, i) => (
-                  <div key={i} className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 rounded-lg bg-card border border-border text-xs font-mono max-w-full">
+                  <div key={i} className={cn(
+                    "relative group rounded-lg border border-border bg-card overflow-hidden",
+                    f.isImage ? "w-20 h-20 md:w-24 md:h-24" : "flex items-center gap-2 px-3 py-1.5"
+                  )}>
                     {f.isImage ? (
-                      <img src={f.url} alt={f.filename} className="w-6 h-6 md:w-8 md:h-8 rounded object-cover shrink-0" />
+                      <>
+                        <img src={f.url} alt={f.filename} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-[9px] text-white font-mono truncate px-1 max-w-full">{f.filename}</span>
+                        </div>
+                        <button
+                          onClick={() => setUploadedFiles((prev) => prev.filter((_, j) => j !== i))}
+                          className="absolute top-1 right-1 bg-black/70 rounded-full p-0.5 text-white/80 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <XCircle className="w-4 h-4" />
+                        </button>
+                      </>
                     ) : (
-                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      <>
+                        <FileText className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-foreground/80 truncate max-w-[80px] md:max-w-[120px] text-xs font-mono">{f.filename}</span>
+                        <button onClick={() => setUploadedFiles((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive transition-colors shrink-0">
+                          <XCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </>
                     )}
-                    <span className="text-foreground/80 truncate max-w-[80px] md:max-w-[120px]">{f.filename}</span>
-                    <button onClick={() => setUploadedFiles((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive transition-colors shrink-0">
-                      <XCircle className="w-3.5 h-3.5" />
-                    </button>
                   </div>
                 ))}
               </div>

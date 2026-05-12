@@ -785,3 +785,47 @@ export async function searchConversations(
   return { results: paginated, total: results.length };
 }
 
+
+// ── Image Upload Usage ──
+
+/**
+ * Get today's image upload count from usage_events table.
+ */
+export async function getTodayImageCount(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const today = new Date();
+  const periodKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  const result = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(usageEvents)
+    .where(
+      and(
+        eq(usageEvents.userId, userId),
+        eq(usageEvents.eventType, "image_upload"),
+        eq(usageEvents.periodKey, periodKey)
+      )
+    );
+
+  return Number(result[0]?.count || 0);
+}
+
+/**
+ * Record an "image_upload" usage event.
+ */
+export async function recordImageUpload(userId: number, conversationId: number | null): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const today = new Date();
+  const periodKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  await db.insert(usageEvents).values({
+    userId,
+    eventType: "image_upload",
+    conversationId,
+    periodKey,
+  });
+}

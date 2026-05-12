@@ -13,6 +13,7 @@ export interface Plan {
     messagesPerDay: number;
     conversationsPerMonth: number;
     maxTokensPerMessage: number;
+    imagesPerDay: number;
   };
   stripe: {
     priceMonthly: number; // in cents (BRL)
@@ -38,6 +39,7 @@ export const PLANS: Plan[] = [
       messagesPerDay: 5,
       conversationsPerMonth: 3,
       maxTokensPerMessage: 2048,
+      imagesPerDay: 2,
     },
     stripe: {
       priceMonthly: 0,
@@ -62,6 +64,7 @@ export const PLANS: Plan[] = [
       messagesPerDay: 100,
       conversationsPerMonth: 30,
       maxTokensPerMessage: 4096,
+      imagesPerDay: 10,
     },
     stripe: {
       priceMonthly: 4990, // R$49,90
@@ -86,6 +89,7 @@ export const PLANS: Plan[] = [
       messagesPerDay: 999999,
       conversationsPerMonth: 999999,
       maxTokensPerMessage: 32768,
+      imagesPerDay: 50,
     },
     stripe: {
       priceMonthly: 14990, // R$149,90
@@ -111,6 +115,7 @@ export const PLANS: Plan[] = [
       messagesPerDay: 999999,
       conversationsPerMonth: 999999,
       maxTokensPerMessage: 65536,
+      imagesPerDay: 999999,
     },
     stripe: {
       priceMonthly: 49990, // R$499,90
