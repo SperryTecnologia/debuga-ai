@@ -312,14 +312,14 @@ describe("executeToolCall - unknown tool", () => {
 
 // ── Tool Definitions Integrity ──
 describe("AGENT_TOOLS - definitions", () => {
-  it("should have 8 tools defined", () => {
-    expect(AGENT_TOOLS.length).toBe(8);
+  it("should have 9 tools defined", () => {
+    expect(AGENT_TOOLS.length).toBe(9);
   });
 
   it("should have required parameters for each tool", () => {
     const expectedTools = [
       "generate_image", "execute_code", "dns_lookup", "ssl_check",
-      "http_check", "whois_lookup", "web_fetch", "port_scan",
+      "http_check", "whois_lookup", "web_fetch", "port_scan", "get_account_usage",
     ];
     const toolNames = AGENT_TOOLS.map(t => t.function.name);
     for (const name of expectedTools) {
@@ -340,7 +340,10 @@ describe("AGENT_TOOLS - definitions", () => {
       expect(tool.function.parameters.type).toBe("object");
       expect(tool.function.parameters.required).toBeDefined();
       expect(Array.isArray(tool.function.parameters.required)).toBe(true);
-      expect(tool.function.parameters.required.length).toBeGreaterThan(0);
+      // get_account_usage has no required params (uses context)
+      if (tool.function.name !== "get_account_usage") {
+        expect(tool.function.parameters.required.length).toBeGreaterThan(0);
+      }
     }
   });
 });

@@ -4,8 +4,8 @@ import type { ToolCall } from "./_core/llm";
 
 describe("Agent Tools", () => {
   describe("AGENT_TOOLS definitions", () => {
-    it("should define 8 tools", () => {
-      expect(AGENT_TOOLS).toHaveLength(8);
+    it("should define 9 tools", () => {
+      expect(AGENT_TOOLS).toHaveLength(9);
     });
 
     it("should have correct tool names", () => {
@@ -18,6 +18,7 @@ describe("Agent Tools", () => {
       expect(names).toContain("whois_lookup");
       expect(names).toContain("web_fetch");
       expect(names).toContain("port_scan");
+      expect(names).toContain("get_account_usage");
     });
 
     it("each tool should have required parameters", () => {

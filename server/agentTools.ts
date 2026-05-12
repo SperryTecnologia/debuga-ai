@@ -11,6 +11,8 @@ import dns from "dns/promises";
 import https from "https";
 import http from "http";
 import { URL } from "url";
+import { getActiveSubscription, getUsageStats, getOrCreateCredits } from "./db";
+import { PLANS, type Plan } from "./products";
 
 // ─── Tool Definitions (sent to LLM) ───
 
@@ -187,6 +189,20 @@ export const AGENT_TOOLS: Tool[] = [
           },
         },
         required: ["host"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_account_usage",
+      description:
+        "Consulta informações da conta do usuário atual: plano, mensagens usadas hoje, limite diário, conversas do mês, limite mensal, status da assinatura e data de renovação. Use quando o usuário perguntar sobre créditos, plano, uso, limites, renovação, upgrade ou onde ver informações da conta.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
         additionalProperties: false,
       },
     },
@@ -769,6 +785,7 @@ const FRIENDLY_TOOL_NAMES: Record<string, string> = {
   whois_lookup: "Consulta WHOIS",
   web_fetch: "Navegação Web",
   port_scan: "Scan de Portas",
+  get_account_usage: "Consulta de Conta",
 };
 
 function tryParseJSON(str: string): any | null {
@@ -919,7 +936,11 @@ function validateToolArgs(name: string, args: any): { valid: boolean; args: any;
   return { valid: true, args: merged };
 }
 
-export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
+export interface ToolContext {
+  userId?: number;
+}
+
+export async function executeToolCall(toolCall: ToolCall, context?: ToolContext): Promise<ToolResult> {
   const { name, arguments: argsStr } = toolCall.function;
   const friendlyName = FRIENDLY_TOOL_NAMES[name] || name;
   let args: any;
@@ -987,6 +1008,9 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
       case "port_scan":
         result = await executePortScan(args);
         break;
+      case "get_account_usage":
+        result = await executeGetAccountUsage(context?.userId);
+        break;
       default:
         result = { error: `Ferramenta "${name}" não está disponível. Verifique as ferramentas disponíveis no seu plano.` };
     }
@@ -1021,5 +1045,96 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
         _internal: msg,
       },
     };
+  }
+}
+
+
+// ─── get_account_usage Tool (read-only) ───
+
+async function executeGetAccountUsage(userId?: number): Promise<any> {
+  if (!userId) {
+    return {
+      error: "Não foi possível identificar o usuário. Faça login novamente.",
+      navigation: {
+        planoEUso: "Menu lateral → Plano e Uso",
+        minhaConta: "Menu lateral → Minha Conta",
+      },
+    };
+  }
+
+  try {
+    // Get subscription info
+    const subscription = await getActiveSubscription(userId);
+
+    // Determine plan
+    let plan: Plan = PLANS.find((p) => p.id === "free")!;
+    if (subscription) {
+      const creds = await getOrCreateCredits(userId, "free");
+      if (creds && creds.planId !== "free") {
+        const foundPlan = PLANS.find((p) => p.id === creds.planId);
+        if (foundPlan) plan = foundPlan;
+      } else {
+        // If subscription exists but no plan in credits, at least starter
+        plan = PLANS.find((p) => p.id === "starter")!;
+      }
+    }
+
+    // Get usage stats
+    const usage = await getUsageStats(userId);
+
+    // Build safe response (no internal IDs exposed)
+    const response: any = {
+      plano: {
+        nome: plan.name,
+        id: plan.id,
+        descricao: plan.description,
+      },
+      uso: {
+        mensagensHoje: usage.todayMessages,
+        limiteMensagensDia: plan.limits.messagesPerDay === 999999 ? "Ilimitado" : plan.limits.messagesPerDay,
+        conversasMes: usage.monthConversations,
+        limiteConversasMes: plan.limits.conversationsPerMonth === 999999 ? "Ilimitado" : plan.limits.conversationsPerMonth,
+        imagensDia: plan.limits.imagesPerDay === 999999 ? "Ilimitado" : `Até ${plan.limits.imagesPerDay}/dia`,
+        documentosDia: plan.limits.docsPerDay === 999999 ? "Ilimitado" : `Até ${plan.limits.docsPerDay}/dia`,
+      },
+      assinatura: {
+        status: subscription ? subscription.status : "sem_assinatura",
+        renovacao: subscription?.currentPeriodEnd
+          ? new Date(subscription.currentPeriodEnd).toLocaleDateString("pt-BR")
+          : null,
+      },
+      suporteHumano: getSupportInfo(plan.id),
+      navegacao: {
+        planoEUso: "Menu lateral → Plano e Uso",
+        minhaConta: "Menu lateral → Minha Conta",
+        fazerUpgrade: "Menu lateral → Fazer Upgrade (ou página de planos)",
+      },
+    };
+
+    return response;
+  } catch (error: any) {
+    console.error("[Tool] get_account_usage error:", error.message);
+    return {
+      error: "Não consegui consultar seus dados de uso agora. Você pode acessar Plano e Uso no menu lateral.",
+      navigation: {
+        planoEUso: "Menu lateral → Plano e Uso",
+        minhaConta: "Menu lateral → Minha Conta",
+      },
+    };
+  }
+}
+
+function getSupportInfo(planId: string): string {
+  switch (planId) {
+    case "free":
+      return "Suporte humano sênior está disponível nos planos Pro e Enterprise. No plano Gratuito, o debuga.ai responde suas dúvidas diretamente no chat.";
+    case "starter":
+      return "Suporte humano sênior está disponível nos planos Pro e Enterprise. No Starter, você conta com suporte por email.";
+    case "pro":
+      return "Pode incluir até 1 hora mensal de triagem técnica sênior via WhatsApp, conforme elegibilidade. Acesse Minha Conta para detalhes.";
+    case "enterprise":
+      return "Canal consultivo dedicado conforme contrato e escopo. Acesse Minha Conta ou fale com seu gerente de conta.";
+    default:
+      return "Consulte Minha Conta para detalhes sobre suporte disponível no seu plano.";
   }
 }

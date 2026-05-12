@@ -16,23 +16,25 @@ import {
   recordMessageSent,
   recordConversationStarted,
 } from "./db";
-import { AGENT_TOOLS, executeToolCall } from "./agentTools";
+import { AGENT_TOOLS, executeToolCall, type ToolContext } from "./agentTools";
 import { buildSystemPrompt } from "./agentIdentity";
 import { PLANS, type Plan } from "./products";
 import type { Tool, ToolCall } from "./_core/llm";
 
 // ── Feature-gating: tools available per plan tier ──
+// Tools available to all plans (read-only, account info)
+const UNIVERSAL_TOOLS = ["get_account_usage"];
 const BASIC_TOOLS = ["dns_lookup", "ssl_check", "http_check", "whois_lookup", "web_fetch"];
 const PRO_TOOLS = [...BASIC_TOOLS, "port_scan", "generate_image", "execute_code"];
 
 function getToolsForPlan(plan: Plan): Tool[] | null {
   if (plan.id === "free") {
-    // Free: no tools
-    return null;
+    // Free: only universal tools (account usage)
+    return AGENT_TOOLS.filter(t => UNIVERSAL_TOOLS.includes(t.function.name));
   }
   if (plan.id === "starter") {
-    // Starter: basic network tools only
-    return AGENT_TOOLS.filter(t => BASIC_TOOLS.includes(t.function.name));
+    // Starter: basic network tools + universal
+    return AGENT_TOOLS.filter(t => [...BASIC_TOOLS, ...UNIVERSAL_TOOLS].includes(t.function.name));
   }
   // Pro & Enterprise: all tools
   return AGENT_TOOLS;
@@ -83,6 +85,18 @@ Você tem acesso a ferramentas que pode usar automaticamente. Quando o usuário 
 - **whois_lookup**: Para consultar informações de domínio
 - **web_fetch**: Para acessar e ler conteúdo de páginas web (navegação autônoma)
 - **port_scan**: Para escanear portas abertas em hosts (auditoria de segurança)
+- **get_account_usage**: Para consultar plano, uso, limites e informações da conta do usuário
+
+## Consultas sobre Conta/Plano/Uso:
+Quando o usuário perguntar sobre créditos, plano, uso, limites, renovação, upgrade, suporte humano ou onde ver informações da conta, USE a ferramenta get_account_usage IMEDIATAMENTE.
+- NÃO responda genericamente que "não tem acesso" aos dados da conta.
+- NÃO invente números de uso ou limites.
+- Após receber os dados, responda de forma natural e amigável, por exemplo:
+  "Você está no plano X. Hoje você usou Y de Z mensagens. Neste mês, usou A de B conversas."
+- Sempre oriente sobre onde encontrar mais detalhes: "Menu lateral → Plano e Uso" ou "Menu lateral → Minha Conta".
+- Para perguntas sobre upgrade: "Clique em Fazer Upgrade no menu lateral ou acesse a página de planos."
+- NUNCA exponha IDs internos (stripeCustomerId, subscriptionId, userId).
+- Se a consulta falhar, oriente: "Você pode acessar Plano e Uso no menu lateral."
 
 ## Diretrizes Operacionais:
 1. Sempre responda em português brasileiro
@@ -468,14 +482,15 @@ export function registerStreamRoute(app: Express) {
             args: toolCall.function.arguments,
           });
 
-          let result = await executeToolCall(toolCall);
+          const toolContext: ToolContext = { userId: user.id };
+          let result = await executeToolCall(toolCall, toolContext);
 
           // Silent retry: if the error is internal (parse/validation), retry once
           if (result.result?._retryable && result.result?._internalError) {
             console.log(`[Stream] Tool ${toolCall.function.name} failed with internal error, retrying silently...`);
             // Wait a brief moment before retry
             await new Promise(r => setTimeout(r, 500));
-            result = await executeToolCall(toolCall);
+            result = await executeToolCall(toolCall, toolContext);
             // If still failing after retry, replace with friendly message
             if (result.result?._internalError) {
               console.warn(`[Stream] Tool ${toolCall.function.name} failed after retry. Sending friendly error to LLM.`);
