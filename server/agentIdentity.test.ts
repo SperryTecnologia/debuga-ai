@@ -87,6 +87,45 @@ describe("agentIdentity - IDENTITY_BLOCK", () => {
   });
 });
 
+describe("agentIdentity - Identity Usage Rules (no repetition)", () => {
+  it("should contain the critical rule about not repeating identity", () => {
+    expect(IDENTITY_BLOCK).toContain("NÃO repetir a apresentação");
+    expect(IDENTITY_BLOCK).toContain("Sou o debuga.ai...");
+  });
+
+  it("should define when to use identity presentation", () => {
+    expect(IDENTITY_BLOCK).toContain("SOMENTE quando");
+    expect(IDENTITY_BLOCK).toContain("quem é você?");
+    expect(IDENTITY_BLOCK).toContain("qual IA você usa?");
+    expect(IDENTITY_BLOCK).toContain("você é ChatGPT/Claude/Gemini?");
+  });
+
+  it("should define when NOT to use identity (direct responses)", () => {
+    expect(IDENTITY_BLOCK).toContain("responder DIRETAMENTE sem se apresentar");
+    expect(IDENTITY_BLOCK).toContain("Perguntas sobre plano/uso");
+    expect(IDENTITY_BLOCK).toContain("Perguntas sobre upgrade");
+    expect(IDENTITY_BLOCK).toContain("Perguntas sobre suporte");
+    expect(IDENTITY_BLOCK).toContain("Perguntas técnicas");
+    expect(IDENTITY_BLOCK).toContain("Solicitações de documentos");
+  });
+
+  it("should include correct examples", () => {
+    expect(IDENTITY_BLOCK).toContain("Seu plano atual é Starter");
+    expect(IDENTITY_BLOCK).toContain("menu lateral em 'Fazer Upgrade'");
+  });
+
+  it("should include incorrect examples to avoid", () => {
+    expect(IDENTITY_BLOCK).toContain("Exemplos ERRADOS");
+    expect(IDENTITY_BLOCK).toContain("nunca fazer");
+  });
+
+  it("should have the summary rule about going direct", () => {
+    expect(IDENTITY_BLOCK).toContain("Vá direto ao ponto");
+    expect(IDENTITY_BLOCK).toContain("A identidade já está implícita na plataforma");
+    expect(IDENTITY_BLOCK).toContain("Só se apresente quando perguntado");
+  });
+});
+
 describe("agentIdentity - TONE_BLOCK", () => {
   it("should define professional tone", () => {
     expect(TONE_BLOCK).toContain("Profissional e técnico");
