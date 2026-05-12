@@ -307,7 +307,7 @@ The credit system implements defense-in-depth with three independent enforcement
 
 ## 7. Security Architecture
 
-The codebase has passed a production security audit (see [SECURITY_AUDIT.md](SECURITY_AUDIT.md)):
+The codebase has passed a production security audit.
 
 **Secret Management:** All sensitive values are injected via environment variables at runtime. The `.gitignore` excludes `.env*` files. Frontend code only accesses `VITE_`-prefixed variables (public keys by design). Server-side secrets (`STRIPE_SECRET_KEY`, `JWT_SECRET`, `DATABASE_URL`, `BUILT_IN_FORGE_API_KEY`) never reach the client bundle.
 
