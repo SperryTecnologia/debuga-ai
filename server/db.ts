@@ -829,3 +829,45 @@ export async function recordImageUpload(userId: number, conversationId: number |
     periodKey,
   });
 }
+
+/**
+ * Count how many documents the user uploaded today.
+ */
+export async function getTodayDocCount(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const today = new Date();
+  const periodKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  const result = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(usageEvents)
+    .where(
+      and(
+        eq(usageEvents.userId, userId),
+        eq(usageEvents.eventType, "doc_upload"),
+        eq(usageEvents.periodKey, periodKey)
+      )
+    );
+
+  return Number(result[0]?.count || 0);
+}
+
+/**
+ * Record a "doc_upload" usage event.
+ */
+export async function recordDocUpload(userId: number, conversationId: number | null): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const today = new Date();
+  const periodKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  await db.insert(usageEvents).values({
+    userId,
+    eventType: "doc_upload",
+    conversationId,
+    periodKey,
+  });
+}

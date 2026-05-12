@@ -27,6 +27,7 @@ import {
   getRecentActivity,
   searchConversations,
   getTodayImageCount,
+  getTodayDocCount,
 } from "./db";
 import { PLANS } from "./products";
 import { invokeLLM } from "./_core/llm";
@@ -136,16 +137,19 @@ export const appRouter = router({
       const todayMessages = await getTodayMessageCount(ctx.user.id);
       const monthConversations = await getMonthConversationCount(ctx.user.id);
       const todayImages = await getTodayImageCount(ctx.user.id);
+      const todayDocs = await getTodayDocCount(ctx.user.id);
       return {
         planId: plan.id,
         planName: plan.name,
         todayMessages,
         monthConversations,
         todayImages,
+        todayDocs,
         limits: {
           messagesPerDay: plan.limits.messagesPerDay,
           conversationsPerMonth: plan.limits.conversationsPerMonth,
           imagesPerDay: plan.limits.imagesPerDay,
+          docsPerDay: plan.limits.docsPerDay,
         },
         isAdmin: ctx.user.role === "admin",
       };

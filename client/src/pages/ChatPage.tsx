@@ -155,6 +155,10 @@ type UploadedFile = {
   size: number;
   textContent?: string | null;
   isImage?: boolean;
+  isDocument?: boolean;
+  truncated?: boolean;
+  processingMethod?: string | null;
+  processingError?: string | null;
 };
 
 // Tool result types from SSE
@@ -1127,8 +1131,8 @@ export default function ChatPage() {
     setIsUploading(true);
     const newFiles: UploadedFile[] = [];
     for (const file of Array.from(files)) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error(`${file.name} excede o limite de 10MB`);
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`${file.name} excede o limite de 20MB`);
         continue;
       }
       try {
@@ -1144,14 +1148,21 @@ export default function ChatPage() {
         });
         if (res.ok) {
           const data = await res.json();
-          newFiles.push(data.file);
+          const f = data.file;
+          if (f.isDocument && f.processingError) {
+            toast.error(`${file.name}: ${f.processingError}`);
+          } else if (f.isDocument && f.textContent) {
+            const method = f.processingMethod === "pdf" ? "PDF" : f.processingMethod === "docx" ? "DOCX" : "texto";
+            toast.success(`${file.name} processado (${method}, ${f.textContent.length.toLocaleString()} caracteres)${f.truncated ? " — truncado" : ""}`);
+          }
+          newFiles.push(f);
         } else {
           const errData = await res.json().catch(() => null);
-          if (res.status === 402 && errData?.code === "IMAGE_LIMIT_REACHED") {
-            toast.error(errData.error || `Limite de imagens atingido. Faça upgrade para enviar mais.`);
+          if (res.status === 402 && (errData?.code === "IMAGE_LIMIT_REACHED" || errData?.code === "DOC_LIMIT_REACHED")) {
+            toast.error(errData.error || `Limite atingido. Faça upgrade para enviar mais.`);
             break; // Stop uploading remaining files
           } else if (res.status === 403) {
-            toast.error(errData?.error || "Upload de imagens desativado temporariamente.");
+            toast.error(errData?.error || "Upload desativado temporariamente.");
             break;
           } else {
             toast.error(`Falha ao enviar ${file.name}`);
@@ -2537,8 +2548,16 @@ export default function ChatPage() {
                       </>
                     ) : (
                       <>
-                        <FileText className="w-4 h-4 text-primary shrink-0" />
-                        <span className="text-foreground/80 truncate max-w-[80px] md:max-w-[120px] text-xs font-mono">{f.filename}</span>
+                        <FileText className={cn("w-4 h-4 shrink-0", f.processingError ? "text-destructive" : f.textContent ? "text-green-500" : "text-primary")} />
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-foreground/80 truncate max-w-[80px] md:max-w-[120px] text-xs font-mono">{f.filename}</span>
+                          {f.isDocument && f.textContent && (
+                            <span className="text-[9px] text-green-500/70 font-mono">{f.textContent.length.toLocaleString()} chars{f.truncated ? " (truncado)" : ""}</span>
+                          )}
+                          {f.isDocument && f.processingError && (
+                            <span className="text-[9px] text-destructive/70 font-mono truncate max-w-[100px]">{f.processingError}</span>
+                          )}
+                        </div>
                         <button onClick={() => setUploadedFiles((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive transition-colors shrink-0">
                           <XCircle className="w-3.5 h-3.5" />
                         </button>
@@ -2554,7 +2573,7 @@ export default function ChatPage() {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept=".txt,.csv,.json,.xml,.yaml,.yml,.log,.conf,.cfg,.ini,.sh,.py,.js,.ts,.html,.css,.md,.pdf,.png,.jpg,.jpeg,.gif,.webp,.svg,.mp3,.wav,.webm,.ogg,.m4a"
+                accept=".txt,.csv,.json,.xml,.yaml,.yml,.log,.conf,.cfg,.ini,.sh,.py,.js,.ts,.html,.css,.md,.pdf,.docx,.doc,.png,.jpg,.jpeg,.gif,.webp,.svg,.mp3,.wav,.webm,.ogg,.m4a"
                 className="hidden"
                 onChange={(e) => handleFileUpload(e.target.files)}
               />
