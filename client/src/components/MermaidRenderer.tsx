@@ -240,148 +240,117 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
     setShowExportMenu(false);
   }, [getCleanSvg, title]);
 
+  // Helper: render SVG to canvas without tainting (uses data URL instead of blob URL)
+  const svgToCanvas = useCallback(
+    async (svgStr: string): Promise<{ canvas: HTMLCanvasElement; width: number; height: number } | null> => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svgStr, "image/svg+xml");
+      const svgEl = doc.querySelector("svg");
+      if (!svgEl) return null;
+
+      const viewBox = svgEl.getAttribute("viewBox")?.split(" ").map(Number);
+      const width = viewBox ? viewBox[2] : parseInt(svgEl.getAttribute("width") || "800");
+      const height = viewBox ? viewBox[3] : parseInt(svgEl.getAttribute("height") || "600");
+
+      // Ensure explicit dimensions
+      svgEl.setAttribute("width", String(width));
+      svgEl.setAttribute("height", String(height));
+
+      // Inline all foreignObject content and remove external references
+      svgEl.querySelectorAll("image").forEach((img) => img.remove());
+
+      const serialized = new XMLSerializer().serializeToString(svgEl);
+      // Use data URL to avoid cross-origin tainted canvas
+      const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(serialized)}`;
+
+      const scale = 3;
+      const canvas = document.createElement("canvas");
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve({ canvas, width, height });
+        };
+        img.onerror = () => resolve(null);
+        img.src = dataUrl;
+      });
+    },
+    []
+  );
+
   // Export as PNG
   const exportPng = useCallback(async () => {
     const svg = getCleanSvg();
     if (!svg) return;
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(svg, "image/svg+xml");
-    const svgEl = doc.querySelector("svg");
-    if (!svgEl) return;
+    const result = await svgToCanvas(svg);
+    if (!result) {
+      setShowExportMenu(false);
+      return;
+    }
 
-    // Get dimensions
-    const viewBox = svgEl.getAttribute("viewBox")?.split(" ").map(Number);
-    const width = viewBox ? viewBox[2] : parseInt(svgEl.getAttribute("width") || "800");
-    const height = viewBox ? viewBox[3] : parseInt(svgEl.getAttribute("height") || "600");
-
-    // Scale up for high quality
-    const scale = 3;
-    const canvas = document.createElement("canvas");
-    canvas.width = width * scale;
-    canvas.height = height * scale;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Dark background
-    ctx.fillStyle = "#0a0a0a";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Ensure SVG has explicit dimensions for rendering
-    svgEl.setAttribute("width", String(width));
-    svgEl.setAttribute("height", String(height));
-    const svgStr = new XMLSerializer().serializeToString(svgEl);
-
-    const img = new Image();
-    const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-
-    return new Promise<void>((resolve) => {
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(
-          (b) => {
-            if (b) {
-              const downloadUrl = URL.createObjectURL(b);
-              const a = document.createElement("a");
-              a.href = downloadUrl;
-              a.download = `${title || "diagrama-debuga"}.png`;
-              a.click();
-              URL.revokeObjectURL(downloadUrl);
-            }
-            URL.revokeObjectURL(url);
-            setShowExportMenu(false);
-            resolve();
-          },
-          "image/png",
-          1.0
-        );
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
+    result.canvas.toBlob(
+      (b) => {
+        if (b) {
+          const downloadUrl = URL.createObjectURL(b);
+          const a = document.createElement("a");
+          a.href = downloadUrl;
+          a.download = `${title || "diagrama-debuga"}.png`;
+          a.click();
+          URL.revokeObjectURL(downloadUrl);
+        }
         setShowExportMenu(false);
-        resolve();
-      };
-      img.src = url;
-    });
-  }, [getCleanSvg, title]);
+      },
+      "image/png",
+      1.0
+    );
+  }, [getCleanSvg, title, svgToCanvas]);
 
   // Export as PDF
   const exportPdf = useCallback(async () => {
     const svg = getCleanSvg();
     if (!svg) return;
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(svg, "image/svg+xml");
-    const svgEl = doc.querySelector("svg");
-    if (!svgEl) return;
+    const result = await svgToCanvas(svg);
+    if (!result) {
+      setShowExportMenu(false);
+      return;
+    }
 
-    const viewBox = svgEl.getAttribute("viewBox")?.split(" ").map(Number);
-    const width = viewBox ? viewBox[2] : parseInt(svgEl.getAttribute("width") || "800");
-    const height = viewBox ? viewBox[3] : parseInt(svgEl.getAttribute("height") || "600");
+    const { canvas, width, height } = result;
+    const imgData = canvas.toDataURL("image/png", 1.0);
 
-    // Scale for quality
-    const scale = 3;
-    const canvas = document.createElement("canvas");
-    canvas.width = width * scale;
-    canvas.height = height * scale;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.fillStyle = "#0a0a0a";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    svgEl.setAttribute("width", String(width));
-    svgEl.setAttribute("height", String(height));
-    const svgStr = new XMLSerializer().serializeToString(svgEl);
-
-    const img = new Image();
-    const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-
-    return new Promise<void>((resolve) => {
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const imgData = canvas.toDataURL("image/png", 1.0);
-
-        // PDF in landscape if wider than tall
-        const orientation = width > height ? "landscape" : "portrait";
-        const pdf = new jsPDF({
-          orientation,
-          unit: "px",
-          format: [width + 80, height + 120],
-        });
-
-        // Dark background
-        pdf.setFillColor(10, 10, 10);
-        pdf.rect(0, 0, width + 80, height + 120, "F");
-
-        // Title
-        pdf.setTextColor(34, 197, 94);
-        pdf.setFontSize(16);
-        pdf.text(title || "Diagrama de Infraestrutura", 40, 35);
-
-        // Subtitle
-        pdf.setTextColor(148, 163, 184);
-        pdf.setFontSize(10);
-        pdf.text(`debuga.ai — Gerado em ${new Date().toLocaleDateString("pt-BR")}`, 40, 52);
-
-        // Diagram
-        pdf.addImage(imgData, "PNG", 40, 70, width, height);
-
-        pdf.save(`${title || "diagrama-debuga"}.pdf`);
-        URL.revokeObjectURL(url);
-        setShowExportMenu(false);
-        resolve();
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        setShowExportMenu(false);
-        resolve();
-      };
-      img.src = url;
+    const orientation = width > height ? "landscape" : "portrait";
+    const pdf = new jsPDF({
+      orientation,
+      unit: "px",
+      format: [width + 80, height + 120],
     });
-  }, [getCleanSvg, title]);
+
+    pdf.setFillColor(10, 10, 10);
+    pdf.rect(0, 0, width + 80, height + 120, "F");
+
+    pdf.setTextColor(34, 197, 94);
+    pdf.setFontSize(16);
+    pdf.text(title || "Diagrama de Infraestrutura", 40, 35);
+
+    pdf.setTextColor(148, 163, 184);
+    pdf.setFontSize(10);
+    pdf.text(`debuga.ai — Gerado em ${new Date().toLocaleDateString("pt-BR")}`, 40, 52);
+
+    pdf.addImage(imgData, "PNG", 40, 70, width, height);
+
+    pdf.save(`${title || "diagrama-debuga"}.pdf`);
+    setShowExportMenu(false);
+  }, [getCleanSvg, title, svgToCanvas]);
 
   // Export .mmd source
   const exportMmd = useCallback(() => {
