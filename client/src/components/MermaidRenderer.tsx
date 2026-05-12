@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import mermaid from "mermaid";
 import jsPDF from "jspdf";
 import {
@@ -57,7 +57,7 @@ mermaid.initialize({
     nodeSpacing: 50,
     rankSpacing: 60,
     padding: 15,
-    useMaxWidth: true,
+    useMaxWidth: false, // Let SVG use its natural size for better scaling
   },
 });
 
@@ -66,9 +66,31 @@ interface MermaidRendererProps {
   title?: string;
 }
 
+/** Extract the natural width/height from the rendered SVG string */
+function getSvgDimensions(svgStr: string): { width: number; height: number } {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgStr, "image/svg+xml");
+  const svg = doc.querySelector("svg");
+  if (!svg) return { width: 800, height: 600 };
+
+  // Try viewBox first
+  const vb = svg.getAttribute("viewBox");
+  if (vb) {
+    const parts = vb.split(/[\s,]+/).map(Number);
+    if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) {
+      return { width: parts[2], height: parts[3] };
+    }
+  }
+
+  // Fallback to width/height attributes
+  const w = parseFloat(svg.getAttribute("width") || "800");
+  const h = parseFloat(svg.getAttribute("height") || "600");
+  return { width: w || 800, height: h || 600 };
+}
+
 export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const modalContainerRef = useRef<HTMLDivElement>(null);
+  const modalAreaRef = useRef<HTMLDivElement>(null);
   const [svgContent, setSvgContent] = useState<string>("");
   const [renderError, setRenderError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -79,6 +101,9 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
   const [copied, setCopied] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  // Get SVG natural dimensions
+  const svgDims = useMemo(() => getSvgDimensions(svgContent), [svgContent]);
 
   // Render mermaid diagram
   useEffect(() => {
@@ -109,13 +134,31 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Reset zoom/pan when opening fullscreen
+  // Calculate fit-to-width zoom when opening fullscreen
   useEffect(() => {
-    if (isFullscreen) {
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
+    if (isFullscreen && svgContent) {
+      // Wait for modal to render
+      requestAnimationFrame(() => {
+        const area = modalAreaRef.current;
+        if (!area) return;
+
+        const areaW = area.clientWidth - 64; // padding
+        const areaH = area.clientHeight - 64;
+        const { width: svgW, height: svgH } = svgDims;
+
+        // Calculate zoom to fit width, clamped between 0.5 and 2.0
+        const fitW = areaW / svgW;
+        const fitH = areaH / svgH;
+        // Use the smaller of the two to ensure it fits, but prefer width
+        const fitZoom = Math.min(fitW, fitH);
+        // Clamp: minimum 0.5 (never microscopic), maximum 2.0
+        const initialZoom = Math.max(0.5, Math.min(2.0, fitZoom));
+
+        setZoom(initialZoom);
+        setPan({ x: 0, y: 0 });
+      });
     }
-  }, [isFullscreen]);
+  }, [isFullscreen, svgContent, svgDims]);
 
   // Escape key to close fullscreen
   useEffect(() => {
@@ -141,14 +184,36 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
   }, [isFullscreen]);
 
   const handleZoomIn = useCallback(() => {
-    setZoom((z) => Math.min(z + 0.25, 4));
+    setZoom((z) => Math.min(z + 0.25, 5));
   }, []);
 
   const handleZoomOut = useCallback(() => {
     setZoom((z) => Math.max(z - 0.25, 0.25));
   }, []);
 
+  // Fit to width: calculate zoom so SVG width fills the viewport
+  const handleFitToWidth = useCallback(() => {
+    const area = modalAreaRef.current;
+    if (!area) return;
+    const areaW = area.clientWidth - 64;
+    const fitZoom = areaW / svgDims.width;
+    setZoom(Math.max(0.5, Math.min(3.0, fitZoom)));
+    setPan({ x: 0, y: 0 });
+  }, [svgDims]);
+
+  // Fit to screen: fit both dimensions
   const handleFitToScreen = useCallback(() => {
+    const area = modalAreaRef.current;
+    if (!area) return;
+    const areaW = area.clientWidth - 64;
+    const areaH = area.clientHeight - 64;
+    const fitZoom = Math.min(areaW / svgDims.width, areaH / svgDims.height);
+    setZoom(Math.max(0.5, Math.min(3.0, fitZoom)));
+    setPan({ x: 0, y: 0 });
+  }, [svgDims]);
+
+  // Reset to 100%
+  const handleReset100 = useCallback(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
   }, []);
@@ -180,12 +245,41 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
     (e: React.WheelEvent) => {
       if (isFullscreen) {
         e.preventDefault();
-        const delta = e.deltaY > 0 ? -0.1 : 0.1;
-        setZoom((z) => Math.max(0.25, Math.min(4, z + delta)));
+        const delta = e.deltaY > 0 ? -0.15 : 0.15;
+        setZoom((z) => Math.max(0.25, Math.min(5, z + delta)));
       }
     },
     [isFullscreen]
   );
+
+  // Touch support for mobile pan
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (isFullscreen && e.touches.length === 1) {
+        const touch = e.touches[0];
+        touchStartRef.current = { x: touch.clientX - pan.x, y: touch.clientY - pan.y };
+      }
+    },
+    [isFullscreen, pan]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (isFullscreen && touchStartRef.current && e.touches.length === 1) {
+        const touch = e.touches[0];
+        setPan({
+          x: touch.clientX - touchStartRef.current.x,
+          y: touch.clientY - touchStartRef.current.y,
+        });
+      }
+    },
+    [isFullscreen]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    touchStartRef.current = null;
+  }, []);
 
   // Copy mermaid code
   const handleCopy = useCallback(async () => {
@@ -194,7 +288,6 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       const ta = document.createElement("textarea");
       ta.value = code;
       document.body.appendChild(ta);
@@ -206,10 +299,9 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
     }
   }, [code]);
 
-  // Get clean SVG for export
+  // Get clean SVG for export — tightly cropped, no wasted space
   const getCleanSvg = useCallback((): string => {
     if (!svgContent) return "";
-    // Parse and clean the SVG
     const parser = new DOMParser();
     const doc = parser.parseFromString(svgContent, "image/svg+xml");
     const svg = doc.querySelector("svg");
@@ -217,14 +309,16 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
 
     // Set explicit background
     svg.style.backgroundColor = "#0a0a0a";
-    // Ensure viewBox is set
+
+    // Ensure viewBox is set with tight bounds
     if (!svg.getAttribute("viewBox")) {
-      const width = svg.getAttribute("width") || "800";
-      const height = svg.getAttribute("height") || "600";
-      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      const w = svg.getAttribute("width") || String(svgDims.width);
+      const h = svg.getAttribute("height") || String(svgDims.height);
+      svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
     }
+
     return new XMLSerializer().serializeToString(svg);
-  }, [svgContent]);
+  }, [svgContent, svgDims]);
 
   // Export as SVG
   const exportSvg = useCallback(() => {
@@ -240,7 +334,7 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
     setShowExportMenu(false);
   }, [getCleanSvg, title]);
 
-  // Helper: render SVG to canvas without tainting (uses data URL instead of blob URL)
+  // Helper: render SVG to canvas without tainting (data URL approach)
   const svgToCanvas = useCallback(
     async (svgStr: string): Promise<{ canvas: HTMLCanvasElement; width: number; height: number } | null> => {
       const parser = new DOMParser();
@@ -248,21 +342,19 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
       const svgEl = doc.querySelector("svg");
       if (!svgEl) return null;
 
-      const viewBox = svgEl.getAttribute("viewBox")?.split(" ").map(Number);
-      const width = viewBox ? viewBox[2] : parseInt(svgEl.getAttribute("width") || "800");
-      const height = viewBox ? viewBox[3] : parseInt(svgEl.getAttribute("height") || "600");
+      const { width, height } = getSvgDimensions(svgStr);
 
-      // Ensure explicit dimensions
+      // Set explicit dimensions
       svgEl.setAttribute("width", String(width));
       svgEl.setAttribute("height", String(height));
 
-      // Inline all foreignObject content and remove external references
+      // Remove external references that cause tainted canvas
       svgEl.querySelectorAll("image").forEach((img) => img.remove());
 
       const serialized = new XMLSerializer().serializeToString(svgEl);
-      // Use data URL to avoid cross-origin tainted canvas
       const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(serialized)}`;
 
+      // 3x scale for high-res export
       const scale = 3;
       const canvas = document.createElement("canvas");
       canvas.width = width * scale;
@@ -270,6 +362,7 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
 
+      // Dark background
       ctx.fillStyle = "#0a0a0a";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -328,25 +421,31 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
     const { canvas, width, height } = result;
     const imgData = canvas.toDataURL("image/png", 1.0);
 
+    // Add padding around diagram
+    const pad = 60;
     const orientation = width > height ? "landscape" : "portrait";
     const pdf = new jsPDF({
       orientation,
       unit: "px",
-      format: [width + 80, height + 120],
+      format: [width + pad * 2, height + pad + 100], // extra top for title
     });
 
+    // Dark background
     pdf.setFillColor(10, 10, 10);
-    pdf.rect(0, 0, width + 80, height + 120, "F");
+    pdf.rect(0, 0, width + pad * 2, height + pad + 100, "F");
 
+    // Title
     pdf.setTextColor(34, 197, 94);
     pdf.setFontSize(16);
-    pdf.text(title || "Diagrama de Infraestrutura", 40, 35);
+    pdf.text(title || "Diagrama de Infraestrutura", pad, 35);
 
+    // Subtitle
     pdf.setTextColor(148, 163, 184);
     pdf.setFontSize(10);
-    pdf.text(`debuga.ai — Gerado em ${new Date().toLocaleDateString("pt-BR")}`, 40, 52);
+    pdf.text(`debuga.ai — Gerado em ${new Date().toLocaleDateString("pt-BR")}`, pad, 52);
 
-    pdf.addImage(imgData, "PNG", 40, 70, width, height);
+    // Diagram — tight to the content, no wasted space
+    pdf.addImage(imgData, "PNG", pad, 70, width, height);
 
     pdf.save(`${title || "diagrama-debuga"}.pdf`);
     setShowExportMenu(false);
@@ -364,10 +463,10 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
     setShowExportMenu(false);
   }, [code, title]);
 
-  // Render error fallback
+  // Error state
   if (renderError) {
     return (
-      <div className="my-4 rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-6">
+      <div className="my-4 rounded-xl border border-yellow-500/30 bg-[#0f172a] p-5">
         <div className="flex items-center gap-2 text-yellow-400 mb-2">
           <FileCode className="h-4 w-4" />
           <span className="text-sm font-medium">Diagrama em processamento</span>
@@ -400,7 +499,7 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
     );
   }
 
-  // Inline preview
+  // Inline preview — use the SVG at natural size, scrollable
   const inlinePreview = (
     <div className="my-4 group" ref={containerRef}>
       {/* Header bar */}
@@ -440,7 +539,7 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
                   className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-300 hover:bg-green-500/10 hover:text-green-400 transition-colors"
                 >
                   <FileImage className="h-3.5 w-3.5" />
-                  Baixar PNG
+                  Baixar PNG (3x)
                 </button>
                 <button
                   onClick={exportSvg}
@@ -478,15 +577,19 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
         </div>
       </div>
 
-      {/* Diagram preview */}
+      {/* Diagram preview — scrollable, shows diagram at readable size */}
       <div
-        className="rounded-b-xl border border-slate-700/50 bg-[#0a0a0a] p-4 overflow-hidden cursor-pointer hover:border-green-500/30 transition-colors"
+        className="rounded-b-xl border border-slate-700/50 bg-[#0a0a0a] overflow-auto cursor-pointer hover:border-green-500/30 transition-colors"
         onClick={() => setIsFullscreen(true)}
+        style={{ maxHeight: "500px" }}
       >
         <div
-          className="mermaid-diagram-preview w-full overflow-x-auto"
+          className="mermaid-diagram-preview p-4"
           dangerouslySetInnerHTML={{ __html: svgContent }}
-          style={{ minHeight: "200px" }}
+          style={{
+            minHeight: "200px",
+            minWidth: "fit-content",
+          }}
         />
       </div>
     </div>
@@ -524,7 +627,7 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
           >
             <ZoomOut className="h-4 w-4" />
           </button>
-          <span className="text-xs text-slate-500 font-mono min-w-[3rem] text-center">
+          <span className="text-xs text-slate-500 font-mono min-w-[3.5rem] text-center">
             {Math.round(zoom * 100)}%
           </span>
           <button
@@ -534,6 +637,23 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
           >
             <ZoomIn className="h-4 w-4" />
           </button>
+
+          <div className="w-px h-5 bg-slate-700 mx-0.5" />
+
+          <button
+            onClick={handleReset100}
+            className="rounded-md px-2 py-1 text-xs text-slate-400 hover:text-green-400 hover:bg-slate-700/50 transition-all font-mono"
+            title="Zoom 100%"
+          >
+            100%
+          </button>
+          <button
+            onClick={handleFitToWidth}
+            className="rounded-md p-1.5 text-slate-400 hover:text-green-400 hover:bg-slate-700/50 transition-all"
+            title="Ajustar à largura"
+          >
+            <Maximize2 className="h-4 w-4" />
+          </button>
           <button
             onClick={handleFitToScreen}
             className="rounded-md p-1.5 text-slate-400 hover:text-green-400 hover:bg-slate-700/50 transition-all"
@@ -542,7 +662,7 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
             <Minimize2 className="h-4 w-4" />
           </button>
 
-          <div className="w-px h-5 bg-slate-700 mx-1" />
+          <div className="w-px h-5 bg-slate-700 mx-0.5" />
 
           {/* Export buttons */}
           <button
@@ -570,7 +690,7 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
             <span className="hidden sm:inline">PDF</span>
           </button>
 
-          <div className="w-px h-5 bg-slate-700 mx-1" />
+          <div className="w-px h-5 bg-slate-700 mx-0.5" />
 
           <button
             onClick={handleCopy}
@@ -580,7 +700,7 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
           </button>
 
-          <div className="w-px h-5 bg-slate-700 mx-1" />
+          <div className="w-px h-5 bg-slate-700 mx-0.5" />
 
           <button
             onClick={() => setIsFullscreen(false)}
@@ -592,25 +712,33 @@ export default function MermaidRenderer({ code, title }: MermaidRendererProps) {
         </div>
       </div>
 
-      {/* Diagram area */}
+      {/* Diagram area — the SVG is rendered at its natural size * zoom */}
       <div
-        ref={modalContainerRef}
+        ref={modalAreaRef}
         className="flex-1 overflow-hidden cursor-grab active:cursor-grabbing"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <div
           className="w-full h-full flex items-center justify-center"
           style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: "center center",
-            transition: isPanning ? "none" : "transform 0.2s ease-out",
+            transform: `translate(${pan.x}px, ${pan.y}px)`,
+            transition: isPanning ? "none" : "transform 0.15s ease-out",
           }}
         >
           <div
-            className="mermaid-diagram-fullscreen p-8"
+            className="mermaid-diagram-fullscreen"
             dangerouslySetInnerHTML={{ __html: svgContent }}
+            style={{
+              transform: `scale(${zoom})`,
+              transformOrigin: "center center",
+              transition: isPanning ? "none" : "transform 0.2s ease-out",
+              padding: "32px",
+            }}
           />
         </div>
       </div>
