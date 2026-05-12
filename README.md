@@ -7,7 +7,8 @@
   <a href="https://debuga.ai">Demo ao Vivo</a> · 
   <a href="docs/WHITEPAPER_PT-BR.md">Whitepaper PT-BR</a> · 
   <a href="docs/WHITEPAPER_EN.md">Whitepaper EN</a> · 
-  <a href="docs/ARCHITECTURE.md">Arquitetura</a>
+  <a href="docs/ARCHITECTURE_PT-BR.md">Arquitetura PT-BR</a> · 
+  <a href="docs/ARCHITECTURE_EN.md">Arquitetura EN</a>
 </p>
 
 ---
