@@ -23,6 +23,7 @@ import {
   FileText,
   ExternalLink,
   Headset,
+  Rocket,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -48,21 +49,43 @@ const stagger = {
 const FEATURES = [
   {
     icon: Bot,
-    title: "Agente Autônomo com Sandbox",
-    desc: "Diferente de chatbots comuns, o debuga.ai executa tarefas de forma autônoma em um ambiente isolado: navega em sites, roda scripts e analisa resultados em tempo real.",
+    title: "IA com Contexto Técnico Especializado",
+    desc: "O debuga.ai foi desenhado para atuar em cenários de infraestrutura, segurança, redes, servidores, DNS, SSL, DevOps, documentação técnica e análise de evidências — não é uma IA genérica.",
+    highlight: true,
+  },
+  {
+    icon: Eye,
+    title: "Base Orientada por Experiência Humana",
+    desc: "A plataforma incorpora padrões de resposta, fluxos de diagnóstico e boas práticas inspiradas na atuação técnica da Sperry Tecnologia em ambientes corporativos.",
+    highlight: true,
+  },
+  {
+    icon: Headset,
+    title: "Suporte Humano Sênior",
+    desc: "Nos planos Pro e Enterprise, demandas específicas podem ser direcionadas para triagem humana via WhatsApp, conforme elegibilidade, contrato e escopo.",
+    highlight: true,
+  },
+  {
+    icon: FileText,
+    title: "Documentação e Evidências",
+    desc: "Gere análises, relatórios, propostas, checklists e documentação técnica em formatos estruturados para uso profissional imediato.",
+    highlight: true,
+  },
+  {
+    icon: Rocket,
+    title: "Roadmap Enterprise",
+    desc: "A evolução do debuga.ai prevê laboratório próprio, autenticação independente, PostgreSQL, GPU local e inferência híbrida cloud/local para cenários Enterprise.",
     highlight: true,
   },
   {
     icon: Globe,
     title: "Navegação Web Autônoma",
-    desc: "O agente acessa URLs, extrai conteúdo de páginas, analisa meta tags, SEO e links. Peça para ele 'ler' qualquer site e reportar o que encontrou.",
-    highlight: true,
+    desc: "O agente acessa URLs, extrai conteúdo de páginas, analisa meta tags e links. Peça para ele ler qualquer site e reportar o que encontrou.",
   },
   {
     icon: Code2,
     title: "Sandbox de Código",
-    desc: "Execute scripts Python e Bash em ambiente seguro e isolado. Ideal para automação, análise de dados, cálculos e validação de configurações.",
-    highlight: true,
+    desc: "Execute scripts Python e Bash em ambiente seguro e isolado. Ideal para automação, análise de dados e validação de configurações.",
   },
   {
     icon: Scan,
@@ -93,12 +116,6 @@ const FEATURES = [
     icon: Lock,
     title: "SIEM & Monitoramento",
     desc: "Conectores planejados para Zabbix, Wazuh, Prometheus e Grafana — análise inteligente de alertas e métricas (em breve).",
-  },
-  {
-    icon: Headset,
-    title: "IA + Suporte Humano Sênior",
-    desc: "Nos planos Pro e Enterprise, quando a IA não for suficiente, sua demanda pode ser direcionada para uma equipe técnica da Sperry Tecnologia via WhatsApp.",
-    highlight: true,
   },
 ];
 
@@ -199,17 +216,27 @@ export default function Home() {
                 Seu agente{" "}
                 <span className="text-primary terminal-glow">autônomo</span>{" "}
                 de IA para{" "}
-                <span className="text-primary terminal-glow">TI</span> e{" "}
-                <span className="text-primary terminal-glow">Segurança</span>
+                <span className="text-primary terminal-glow">TI</span>,{" "}
+                <span className="text-primary terminal-glow">Segurança</span>{" "}
+                e{" "}
+                <span className="text-primary terminal-glow">Infraestrutura</span>
               </motion.h1>
 
               <motion.p
                 variants={fadeInUp}
                 className="text-lg text-muted-foreground leading-relaxed max-w-lg"
               >
-                O primeiro agente de IA com sandbox que navega em sites, executa código,
-                escaneia portas e audita sua infraestrutura de forma autônoma.
-                Comece com IA. Escale para triagem humana sênior nos planos Pro e Enterprise.
+                O debuga.ai combina inteligência artificial, contexto técnico especializado
+                e apoio humano sênior para acelerar diagnósticos, gerar documentação e
+                orientar decisões em ambientes corporativos.
+              </motion.p>
+
+              <motion.p
+                variants={fadeInUp}
+                className="text-sm text-muted-foreground/80 leading-relaxed max-w-lg"
+              >
+                Mais que uma IA genérica: uma plataforma orientada para problemas reais
+                de infraestrutura, segurança, DevOps e telecomunicações.
               </motion.p>
 
               <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
@@ -254,7 +281,7 @@ export default function Home() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">debuga.ai</p>
-                  <p className="text-sm font-mono text-primary font-semibold">IA + Suporte Humano</p>
+                  <p className="text-sm font-mono text-primary font-semibold">IA Técnica + Suporte Humano</p>
                 </div>
               </div>
             </motion.div>
@@ -277,11 +304,11 @@ export default function Home() {
               {"// RECURSOS"}
             </motion.p>
             <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">
-              Mais que um chatbot. Um agente que age.
+              Mais que um chatbot. Um agente técnico que age.
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-muted-foreground max-w-2xl mx-auto">
-              Sandbox isolada, navegação web autônoma, execução de código e ferramentas
-              de segurança integradas. Tudo o que sua equipe de TI precisa em um único agente.
+              IA orientada por contexto técnico especializado, base de conhecimento curada
+              e boas práticas de infraestrutura, segurança e DevOps. Tudo em um único agente.
             </motion.p>
           </motion.div>
 
@@ -337,7 +364,8 @@ export default function Home() {
               Integrações em evolução
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-muted-foreground max-w-2xl mx-auto">
-              Conectores para as principais ferramentas de monitoramento, segurança e gestão de infraestrutura estão no roadmap e serão liberados gradualmente para planos avançados e projetos Enterprise.
+              Conectores para as principais ferramentas de monitoramento, segurança e gestão de infraestrutura
+              estão no roadmap. A evolução prevê liberação gradual para planos avançados e projetos Enterprise.
             </motion.p>
           </motion.div>
 
@@ -382,11 +410,11 @@ export default function Home() {
               className="w-24 mx-auto mb-8 drop-shadow-[0_0_20px_rgba(0,255,65,0.3)]"
             />
             <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">
-              Pronto para transformar sua TI?
+              Acelere diagnósticos e decisões na sua TI
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-muted-foreground mb-8 max-w-lg mx-auto">
-              Comece a usar o debuga.ai hoje e tenha um especialista de TI
-              com inteligencia artificial disponivel 24 horas por dia.
+              Comece com IA técnica especializada. Escale para triagem humana sênior
+              nos planos Pro e Enterprise quando precisar.
             </motion.p>
             <motion.div variants={fadeInUp}>
               <Button
@@ -414,7 +442,7 @@ export default function Home() {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Agente autônomo de IA para infraestrutura de TI, segurança da informação e telecomunicações.
+                IA técnica especializada para infraestrutura, segurança da informação, DevOps e telecomunicações. Contexto especializado + suporte humano sênior.
               </p>
               <a
                 href="https://www.sperrytecnologia.com.br"
