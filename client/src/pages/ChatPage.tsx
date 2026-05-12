@@ -2300,7 +2300,8 @@ export default function ChatPage() {
                   );
                 })()}
 
-                {/* Secondary: guided examples toggle */}
+                {/* Secondary: guided examples toggle — HIDDEN: examples moved to support banner only */}
+                {false && (<>
                 <div className="px-1">
                   <button
                     onClick={() => setExamplesOpen(!examplesOpen)}
@@ -2389,6 +2390,7 @@ export default function ChatPage() {
                     </div>
                   </div>
                 )}
+                </>)}
               </div>
             </div>
           ) : (
