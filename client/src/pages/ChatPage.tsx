@@ -296,10 +296,19 @@ const TOOL_DISPLAY: Record<string, { icon: LucideIcon; label: string; color: str
   whois_lookup: { icon: Globe, label: "Consulta WHOIS", color: "text-indigo-400" },
   web_fetch: { icon: Globe, label: "Navegando em Site", color: "text-emerald-400" },
   port_scan: { icon: Network, label: "Scan de Portas", color: "text-orange-400" },
+  get_account_usage: { icon: Activity, label: "Consultando conta", color: "text-primary" },
 };
+
+// Tools internas cujo resultado NÃO deve ser renderizado na UI (dados usados apenas pelo agente)
+const INTERNAL_TOOLS: Set<string> = new Set(["get_account_usage"]);
 
 // ── Tool Result Renderers ──
 function ToolResultCard({ name, result }: { name: string; result: any }) {
+  // Tools internas: resultado usado apenas pelo agente, não exibir na UI
+  if (INTERNAL_TOOLS.has(name)) {
+    return null;
+  }
+
   const display = TOOL_DISPLAY[name] || { icon: Wrench, label: name, color: "text-muted-foreground" };
   const Icon = display.icon;
 
@@ -1613,19 +1622,34 @@ export default function ChatPage() {
                   break;
 
                 case "tool_start":
-                  setActiveSteps((prev) => [
-                    ...prev,
-                    {
-                      step: "tool",
-                      content: `Executando ${TOOL_DISPLAY[parsed.name]?.label || parsed.name}...`,
-                      tools: [parsed.name],
-                    },
-                  ]);
+                  // Tools internas: mostrar indicador sutil sem nome técnico
+                  if (INTERNAL_TOOLS.has(parsed.name)) {
+                    setActiveSteps((prev) => [
+                      ...prev,
+                      {
+                        step: "tool",
+                        content: "Consultando dados...",
+                        tools: [parsed.name],
+                      },
+                    ]);
+                  } else {
+                    setActiveSteps((prev) => [
+                      ...prev,
+                      {
+                        step: "tool",
+                        content: `Executando ${TOOL_DISPLAY[parsed.name]?.label || parsed.name}...`,
+                        tools: [parsed.name],
+                      },
+                    ]);
+                  }
                   break;
 
                 case "tool_result":
-                  collectedToolResults.push(parsed as ToolResultEvent);
-                  setToolResults([...collectedToolResults]);
+                  // Tools internas: não adicionar ao array de resultados visíveis
+                  if (!INTERNAL_TOOLS.has(parsed.name)) {
+                    collectedToolResults.push(parsed as ToolResultEvent);
+                    setToolResults([...collectedToolResults]);
+                  }
                   setActiveSteps((prev) => prev.filter((s) => !s.tools?.includes(parsed.name)));
                   break;
 
