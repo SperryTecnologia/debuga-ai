@@ -17,6 +17,7 @@ import {
   recordConversationStarted,
 } from "./db";
 import { AGENT_TOOLS, executeToolCall } from "./agentTools";
+import { buildSystemPrompt } from "./agentIdentity";
 import { PLANS, type Plan } from "./products";
 import type { Tool, ToolCall } from "./_core/llm";
 
@@ -37,9 +38,8 @@ function getToolsForPlan(plan: Plan): Tool[] | null {
   return AGENT_TOOLS;
 }
 
-const SYSTEM_PROMPT = `Você é o **debuga.ai**, um agente autônomo especializado em Infraestrutura de TI, Segurança da Informação, DevOps e Telecomunicações. Você foi desenvolvido pela Sperry Tecnologia.
-
-## Suas Capacidades:
+// ── Technical capabilities block (kept separate from identity for modularity) ──
+const TECHNICAL_CAPABILITIES = `## Capacidades Técnicas:
 - Análise e diagnóstico de infraestrutura de TI (servidores, redes, storage)
 - Segurança da informação: análise de vulnerabilidades, hardening, resposta a incidentes
 - Monitoramento: interpretação de métricas do Zabbix, Prometheus, Grafana
@@ -84,7 +84,7 @@ Você tem acesso a ferramentas que pode usar automaticamente. Quando o usuário 
 - **web_fetch**: Para acessar e ler conteúdo de páginas web (navegação autônoma)
 - **port_scan**: Para escanear portas abertas em hosts (auditoria de segurança)
 
-## Diretrizes:
+## Diretrizes Operacionais:
 1. Sempre responda em português brasileiro
 2. Seja técnico e preciso, mas acessível
 3. USE as ferramentas proativamente quando relevante
@@ -102,6 +102,9 @@ Você tem acesso a ferramentas que pode usar automaticamente. Quando o usuário 
 - Use **negrito** para termos importantes
 - Use tabelas quando comparar opções
 - Inclua avisos de segurança quando relevante com ⚠️`;
+
+// Build the full system prompt from centralized identity + technical capabilities
+const SYSTEM_PROMPT = buildSystemPrompt(TECHNICAL_CAPABILITIES);
 
 const resolveApiUrl = () =>
   ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
