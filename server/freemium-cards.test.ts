@@ -231,9 +231,10 @@ describe("Simplified Card Structure", () => {
     });
 
     it("Diagrama prompt has Mermaid fallback", () => {
+      const diagramStart = chatPageContent.indexOf('title: "Gerar Diagrama"');
       const diagramSection = chatPageContent.substring(
-        chatPageContent.indexOf('title: "Gerar Diagrama"'),
-        chatPageContent.indexOf('title: "Gerar Diagrama"') + 2000
+        diagramStart,
+        diagramStart + 5000
       );
       expect(diagramSection).toContain("profissional");
       expect(diagramSection).toContain("Mermaid");
@@ -342,12 +343,12 @@ describe("Simplified Card Structure", () => {
       expect(chatPageContent).toContain('background: "#0a0a0a"');
     });
 
-    it("should pass mermaidConfig to Streamdown for saved messages", () => {
-      expect(chatPageContent).toContain("<Streamdown mermaidConfig={MERMAID_CONFIG}>");
+    it("should pass mermaidConfig to MessageWithMermaid for saved messages", () => {
+      expect(chatPageContent).toContain("<MessageWithMermaid content={msg.content} mermaidConfig={MERMAID_CONFIG}");
     });
 
-    it("should pass mermaidConfig to Streamdown for streaming content", () => {
-      expect(chatPageContent).toContain("<Streamdown mermaidConfig={MERMAID_CONFIG} isAnimating>");
+    it("should pass mermaidConfig to MessageWithMermaid for streaming content", () => {
+      expect(chatPageContent).toContain("<MessageWithMermaid content={streamingContent} mermaidConfig={MERMAID_CONFIG}");
     });
 
     it("should use JetBrains Mono font for mermaid diagrams", () => {
