@@ -1962,7 +1962,7 @@ export default function ChatPage() {
           )}
         </div>
 
-        <ScrollArea className="flex-1 px-2">
+        <ScrollArea className="flex-1 min-h-0 overflow-hidden px-2">
           {/* Search results mode */}
           {searchEnabled ? (
             <div className="space-y-0.5 py-1">
@@ -2330,7 +2330,7 @@ export default function ChatPage() {
       {/* Main Chat Area */}
       <div
         ref={chatAreaRef}
-        className={cn("flex-1 flex flex-col h-full relative", isDragOver && "ring-2 ring-primary ring-inset")}
+        className={cn("flex-1 flex flex-col h-full min-w-0 relative", isDragOver && "ring-2 ring-primary ring-inset")}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -2378,7 +2378,7 @@ export default function ChatPage() {
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {messages.length === 0 && !activeConversationId ? (
             <div className="h-full flex flex-col items-center justify-center px-3 md:px-6 overflow-x-hidden">
               <div className="max-w-2xl w-full space-y-6 md:space-y-8">
