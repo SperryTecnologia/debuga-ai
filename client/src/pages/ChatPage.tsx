@@ -97,6 +97,7 @@ import {
   Square,
   Monitor,
   SearchCheck,
+  CheckCircle2,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -146,6 +147,73 @@ type ChatMessage = {
   content: string;
   createdAt: Date;
   attachments?: UploadedFile[];
+};
+
+/**
+ * Strips internal attachment metadata from user message content for display.
+ * The backend stores the full content (with file descriptions) for LLM context,
+ * but the UI should only show the user's actual text + visual attachment chips.
+ */
+function stripAttachmentMetadata(content: string): { displayText: string; parsedAttachments: ParsedAttachment[] } {
+  const parsedAttachments: ParsedAttachment[] = [];
+  let displayText = content;
+
+  // Pattern 1: "text\n\n---\nArquivos anexados:\n..."
+  const separatorIdx = displayText.indexOf("\n\n---\nArquivos anexados:\n");
+  if (separatorIdx !== -1) {
+    const metaSection = displayText.slice(separatorIdx);
+    displayText = displayText.slice(0, separatorIdx).trim();
+
+    // Extract image attachments
+    const imgRegex = /\[Imagem anexada: ([^\]]+)\] URL: (https?:\/\/[^\s]+)/g;
+    let match;
+    while ((match = imgRegex.exec(metaSection)) !== null) {
+      parsedAttachments.push({ filename: match[1], url: match[2], isImage: true });
+    }
+
+    // Extract document attachments with content
+    const docRegex = /\[Arquivo: ([^\]]+)\]/g;
+    while ((match = docRegex.exec(metaSection)) !== null) {
+      parsedAttachments.push({ filename: match[1], isImage: false, isDocument: true });
+    }
+
+    // Extract generic file attachments
+    const genericRegex = /\[Arquivo anexado: ([^\(]+)\(([^,]+), ([^)]+)\)\]/g;
+    while ((match = genericRegex.exec(metaSection)) !== null) {
+      parsedAttachments.push({ filename: match[1].trim(), isImage: false, mimeType: match[2] });
+    }
+  }
+
+  // Pattern 2: "Analise os seguintes arquivos:\n\n..."
+  if (displayText.startsWith("Analise os seguintes arquivos:")) {
+    const imgRegex = /\[Imagem anexada: ([^\]]+)\] URL: (https?:\/\/[^\s]+)/g;
+    let match;
+    while ((match = imgRegex.exec(displayText)) !== null) {
+      parsedAttachments.push({ filename: match[1], url: match[2], isImage: true });
+    }
+    const docRegex = /\[Arquivo: ([^\]]+)\]/g;
+    while ((match = docRegex.exec(displayText)) !== null) {
+      parsedAttachments.push({ filename: match[1], isImage: false, isDocument: true });
+    }
+    const genericRegex = /\[Arquivo anexado: ([^\(]+)\(([^,]+), ([^)]+)\)\]/g;
+    while ((match = genericRegex.exec(displayText)) !== null) {
+      parsedAttachments.push({ filename: match[1].trim(), isImage: false, mimeType: match[2] });
+    }
+    // If we parsed attachments, the display text should be a friendly fallback
+    if (parsedAttachments.length > 0) {
+      displayText = `Enviou ${parsedAttachments.length} arquivo(s) para análise`;
+    }
+  }
+
+  return { displayText: displayText || "Enviou arquivo(s) para análise", parsedAttachments };
+}
+
+type ParsedAttachment = {
+  filename: string;
+  url?: string;
+  isImage?: boolean;
+  isDocument?: boolean;
+  mimeType?: string;
 };
 
 type UploadedFile = {
@@ -959,6 +1027,82 @@ function StreamLoadingIndicator({ avatarSrc }: { avatarSrc: string }) {
           <div className="h-full bg-primary/60 rounded-full animate-loading-bar" />
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Renders a user message with clean display text and visual attachment chips.
+ * Strips internal metadata (URLs, file paths, separators) from DB-stored content.
+ */
+function UserMessageContent({ msg }: { msg: ChatMessage }) {
+  // If the message already has in-memory attachments (just sent), use them directly
+  if (msg.attachments && msg.attachments.length > 0) {
+    return (
+      <div>
+        <p className="text-sm text-foreground/90 whitespace-pre-wrap">{msg.content}</p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {msg.attachments.map((att, ai) => (
+            <div key={ai} className={cn(
+              "rounded-lg border border-primary/10 overflow-hidden",
+              att.isImage ? "max-w-[200px] md:max-w-[280px]" : "flex items-center gap-2 px-2.5 py-1.5 bg-primary/5 text-xs font-mono"
+            )}>
+              {att.isImage ? (
+                <img
+                  src={att.url}
+                  alt={att.filename}
+                  className="w-full h-auto max-h-[200px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => window.open(att.url, '_blank')}
+                />
+              ) : (
+                <>
+                  <FileText className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-foreground/70 truncate max-w-[120px]">{att.filename}</span>
+                  <CheckCircle2 className="w-3 h-3 text-green-500 ml-1" />
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // For messages loaded from DB, strip metadata and show clean content + parsed attachment chips
+  const { displayText, parsedAttachments } = stripAttachmentMetadata(msg.content);
+
+  return (
+    <div>
+      <p className="text-sm text-foreground/90 whitespace-pre-wrap">{displayText}</p>
+      {parsedAttachments.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {parsedAttachments.map((att, ai) => (
+            <div key={ai} className={cn(
+              "rounded-lg border border-primary/10 overflow-hidden",
+              att.isImage && att.url ? "max-w-[200px] md:max-w-[280px]" : "flex items-center gap-2 px-2.5 py-1.5 bg-primary/5 text-xs font-mono"
+            )}>
+              {att.isImage && att.url ? (
+                <img
+                  src={att.url}
+                  alt={att.filename}
+                  className="w-full h-auto max-h-[200px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => window.open(att.url!, '_blank')}
+                />
+              ) : (
+                <>
+                  {att.isImage ? (
+                    <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                  ) : (
+                    <FileText className="w-3.5 h-3.5 text-primary" />
+                  )}
+                  <span className="text-foreground/70 truncate max-w-[120px]">{att.filename}</span>
+                  <CheckCircle2 className="w-3 h-3 text-green-500 ml-1" />
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -2447,33 +2591,7 @@ export default function ChatPage() {
                           <MessageWithMermaid content={msg.content} mermaidConfig={MERMAID_CONFIG} />
                         </div>
                       ) : (
-                        <div>
-                          <p className="text-sm text-foreground/90 whitespace-pre-wrap">{msg.content}</p>
-                          {msg.attachments && msg.attachments.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {msg.attachments.map((att, ai) => (
-                                <div key={ai} className={cn(
-                                  "rounded-lg border border-primary/10 overflow-hidden",
-                                  att.isImage ? "max-w-[200px] md:max-w-[280px]" : "flex items-center gap-2 px-2.5 py-1.5 bg-primary/5 text-xs font-mono"
-                                )}>
-                                  {att.isImage ? (
-                                    <img
-                                      src={att.url}
-                                      alt={att.filename}
-                                      className="w-full h-auto max-h-[200px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                      onClick={() => window.open(att.url, '_blank')}
-                                    />
-                                  ) : (
-                                    <>
-                                      <FileText className="w-3.5 h-3.5 text-primary" />
-                                      <span className="text-foreground/70 truncate max-w-[100px]">{att.filename}</span>
-                                    </>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        <UserMessageContent msg={msg} />
                       )}
                     </div>
                   </div>
