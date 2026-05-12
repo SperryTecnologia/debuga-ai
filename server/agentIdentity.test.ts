@@ -167,24 +167,51 @@ describe("agentIdentity - SAFETY_BLOCK", () => {
 });
 
 describe("agentIdentity - HUMAN_SUPPORT_BLOCK", () => {
-  it("should define Pro plan support", () => {
-    expect(HUMAN_SUPPORT_BLOCK).toContain("Plano Pro");
-    expect(HUMAN_SUPPORT_BLOCK).toContain("triagem técnica sênior via WhatsApp");
+  it("should define Free plan response", () => {
+    expect(HUMAN_SUPPORT_BLOCK).toContain("**Free:**");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("n\u00e3o inclui suporte humano");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("Pro e Enterprise");
   });
 
-  it("should define Enterprise plan support", () => {
-    expect(HUMAN_SUPPORT_BLOCK).toContain("Plano Enterprise");
-    expect(HUMAN_SUPPORT_BLOCK).toContain("canal consultivo com equipe técnica sênior");
+  it("should define Starter plan response with upgrade orientation", () => {
+    expect(HUMAN_SUPPORT_BLOCK).toContain("**Starter:**");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("n\u00e3o inclui suporte humano");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("Fazer Upgrade");
   });
 
-  it("should define Free/Starter plan support", () => {
-    expect(HUMAN_SUPPORT_BLOCK).toContain("Planos Free/Starter");
-    expect(HUMAN_SUPPORT_BLOCK).toContain("Suporte humano sênior está disponível nos planos avançados");
+  it("should define Pro plan response with WhatsApp", () => {
+    expect(HUMAN_SUPPORT_BLOCK).toContain("**Pro:**");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("triagem t\u00e9cnica s\u00eanor via WhatsApp");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("at\u00e9 1 hora mensal");
+  });
+
+  it("should define Enterprise plan response with consultive channel", () => {
+    expect(HUMAN_SUPPORT_BLOCK).toContain("**Enterprise:**");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("canal consultivo com equipe t\u00e9cnica s\u00eanor");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("conforme contrato");
   });
 
   it("should use conditional language (pode incluir)", () => {
     expect(HUMAN_SUPPORT_BLOCK).toContain("pode incluir");
     expect(HUMAN_SUPPORT_BLOCK).toContain("conforme elegibilidade");
+  });
+
+  it("should NOT promise guaranteed support", () => {
+    expect(HUMAN_SUPPORT_BLOCK).toContain("NUNCA prometer");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("Resolu\u00e7\u00e3o garantida");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("SLA 24/7");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("Suporte ilimitado");
+  });
+
+  it("should include correct language guidelines", () => {
+    expect(HUMAN_SUPPORT_BLOCK).toContain("pode incluir");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("conforme elegibilidade");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("triagem t\u00e9cnica");
+  });
+
+  it("should include commercial orientation without pressure", () => {
+    expect(HUMAN_SUPPORT_BLOCK).toContain("sem press\u00e3o exagerada");
+    expect(HUMAN_SUPPORT_BLOCK).toContain("Falar com suporte humano");
   });
 });
 
