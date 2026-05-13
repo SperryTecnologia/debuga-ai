@@ -574,6 +574,14 @@ export default function Home() {
               <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Documentação</p>
               <div className="flex flex-col gap-2">
                 <a
+                  href="https://github.com/SperryTecnologia/debuga-ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+                >
+                  <Github className="w-4 h-4" /> GitHub
+                </a>
+                <a
                   href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITEPAPER_PT-BR.md"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -596,17 +604,6 @@ export default function Home() {
                   className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
                 >
                   <FileText className="w-4 h-4" /> White Label Enterprise
-                </a>
-              </div>
-              <div className="mt-4">
-                <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider mb-2">Código</p>
-                <a
-                  href="https://github.com/SperryTecnologia/debuga-ai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
-                >
-                  <Github className="w-4 h-4" /> GitHub
                 </a>
               </div>
             </div>
