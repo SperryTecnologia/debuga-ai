@@ -8,7 +8,9 @@
   <a href="docs/WHITEPAPER_PT-BR.md">Whitepaper PT-BR</a> · 
   <a href="docs/WHITEPAPER_EN.md">Whitepaper EN</a> · 
   <a href="docs/ARCHITECTURE_PT-BR.md">Arquitetura PT-BR</a> · 
-  <a href="docs/ARCHITECTURE_EN.md">Arquitetura EN</a>
+  <a href="docs/ARCHITECTURE_EN.md">Arquitetura EN</a> · 
+  <a href="docs/WHITE_LABEL_ENTERPRISE.md">White Label Enterprise PT-BR</a> · 
+  <a href="docs/WHITE_LABEL_ENTERPRISE_EN.md">White Label Enterprise EN</a>
 </p>
 
 ---
