@@ -566,14 +566,6 @@ export default function Home() {
                 <a href="#integrations" className="text-sm text-muted-foreground hover:text-primary transition-colors">Integrações</a>
                 <a href="#enterprise" className="text-sm text-muted-foreground hover:text-primary transition-colors">Enterprise</a>
                 <a href="/pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">Planos</a>
-                <a
-                  href="https://github.com/SperryTecnologia/debuga-ai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
-                >
-                  <Github className="w-4 h-4" /> GitHub
-                </a>
               </div>
             </div>
 
@@ -614,17 +606,14 @@ export default function Home() {
             <p className="text-xs text-muted-foreground">
               &copy; {new Date().getFullYear()} Sperry Tecnologia. Todos os direitos reservados.
             </p>
-            <div className="flex items-center gap-4">
-              <a
-                href="https://github.com/SperryTecnologia/debuga-ai"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
-                title="GitHub"
-              >
-                <Github className="w-5 h-5" />
-              </a>
-            </div>
+            <a
+              href="https://github.com/SperryTecnologia/debuga-ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+            >
+              <Github className="w-4 h-4" /> GitHub
+            </a>
           </div>
         </div>
       </footer>
