@@ -56,25 +56,25 @@ A arquitetura White Label segue o mesmo padrão da plataforma debuga.ai, com ada
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                  Cliente (Browser)                │
-│         React + Tailwind + tRPC Client           │
-│         Identidade visual personalizada          │
+│                  Cliente (Browser)              │
+│         React + Tailwind + tRPC Client          │
+│         Identidade visual personalizada         │
 └───────────────────┬─────────────────────────────┘
                     │ HTTPS
 ┌───────────────────▼─────────────────────────────┐
-│              Reverse Proxy (Nginx)                │
-│         TLS, rate limiting, headers              │
+│              Reverse Proxy (Nginx)              │
+│         TLS, rate limiting, headers             │
 └───────────────────┬─────────────────────────────┘
                     │
 ┌───────────────────▼─────────────────────────────┐
-│           Servidor de Aplicação (Node.js)         │
-│     Express + tRPC + SSE Streaming + Auth        │
-│     System prompt + contexto personalizado       │
+│           Servidor de Aplicação (Node.js)       │
+│     Express + tRPC + SSE Streaming + Auth       │
+│     System prompt + contexto personalizado      │
 └──────┬──────────┬──────────┬────────────────────┘
        │          │          │
 ┌──────▼───┐ ┌───▼────┐ ┌──▼──────────────┐
-│ Banco de │ │Storage │ │ Gateway LLM      │
-│ Dados    │ │(S3/    │ │ Cloud + Local    │
+│ Banco de │ │Storage │ │ Gateway LLM     │
+│ Dados    │ │(S3/    │ │ Cloud + Local   │
 │(PostgreSQL)│MinIO) │ │ (Ollama/OpenAI)  │
 └──────────┘ └────────┘ └─────────────────┘
 ```
