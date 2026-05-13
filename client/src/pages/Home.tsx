@@ -24,6 +24,12 @@ import {
   ExternalLink,
   Headset,
   Rocket,
+  Building2,
+  Briefcase,
+  Database,
+  Palette,
+  BookOpen,
+  Cog,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -43,6 +49,7 @@ const fadeInUp = {
 };
 
 const stagger = {
+  hidden: {},
   visible: { transition: { staggerChildren: 0.12 } },
 };
 
@@ -161,6 +168,9 @@ export default function Home() {
             </a>
             <a href="#integrations" className="hover:text-primary transition-colors">
               Integrações
+            </a>
+            <a href="#enterprise" className="hover:text-primary transition-colors">
+              Enterprise
             </a>
             <a href="/pricing" className="hover:text-primary transition-colors">
               Planos
@@ -393,6 +403,100 @@ export default function Home() {
         </div>
       </section>
 
+      {/* White Label / Enterprise Section */}
+      <section id="enterprise" className="py-20 md:py-32 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/3 to-transparent pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+          >
+            <motion.p variants={fadeInUp} className="text-primary font-mono text-sm mb-3 text-center">
+              {"// ENTERPRISE"}
+            </motion.p>
+            <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold text-center mb-4">
+              White Label e IA sob medida para empresas
+            </motion.h2>
+            <motion.p variants={fadeInUp} className="text-muted-foreground text-center max-w-3xl mx-auto mb-14 leading-relaxed">
+              Além do debuga.ai para TI e segurança, a arquitetura pode ser adaptada para
+              empresas que desejam uma IA própria, com identidade visual, base de conhecimento,
+              fluxos de atendimento e implantação dedicada.
+            </motion.p>
+
+            <motion.div
+              variants={fadeInUp}
+              className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-14"
+            >
+              {[
+                {
+                  icon: Palette,
+                  title: "IA com a identidade da sua empresa",
+                  desc: "Personalize nome, marca, tom de resposta, contexto, fluxos e áreas de atuação.",
+                },
+                {
+                  icon: BookOpen,
+                  title: "Base de conhecimento orientada ao negócio",
+                  desc: "Organize documentos, perguntas frequentes, processos, políticas internas e instruções específicas para o agente.",
+                },
+                {
+                  icon: Server,
+                  title: "Deploy dedicado e ambiente próprio",
+                  desc: "Possibilidade de implantação em ambiente homologado, VPS, servidor próprio ou arquitetura híbrida, conforme projeto.",
+                },
+                {
+                  icon: Briefcase,
+                  title: "Treinamento e acompanhamento",
+                  desc: "Planos Enterprise podem incluir orientação técnica, treinamento de uso, documentação e apoio humano sênior.",
+                },
+                {
+                  icon: Cog,
+                  title: "Arquitetura preparada para evolução",
+                  desc: "Autenticação própria, banco dedicado, storage compatível com S3, provedores LLM e possibilidade de inferência local experimental em ambientes homologados.",
+                },
+                {
+                  icon: Building2,
+                  title: "Modelo consultivo",
+                  desc: "Cada projeto Enterprise é dimensionado conforme escopo, integrações, volume e necessidades específicas da empresa.",
+                },
+              ].map((card, i) => (
+                <motion.div
+                  key={i}
+                  variants={fadeInUp}
+                  className="relative p-6 rounded-xl border border-border/50 bg-card/30 hover:border-primary/30 hover:bg-card/60 transition-all duration-300 group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <card.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-sm mb-2">{card.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{card.desc}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            <motion.div variants={fadeInUp} className="text-center">
+              <Button
+                size="lg"
+                onClick={() => {
+                  const msg = encodeURIComponent(
+                    "Olá! Tenho interesse no debuga.ai White Label / Enterprise. " +
+                    "Gostaria de entender como adaptar a plataforma para minha empresa."
+                  );
+                  window.open(`https://wa.me/555137374357?text=${msg}`, "_blank");
+                }}
+                className="gap-2 font-mono text-base px-8 h-12"
+              >
+                Falar com a Equipe Comercial <ArrowRight className="w-5 h-5" />
+              </Button>
+              <p className="text-xs text-muted-foreground/60 mt-3">
+                Sem compromisso. Entenda como o debuga.ai pode ser adaptado para sua operação.
+              </p>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 md:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-transparent pointer-events-none" />
@@ -460,6 +564,7 @@ export default function Home() {
               <div className="flex flex-col gap-2">
                 <a href="#features" className="text-sm text-muted-foreground hover:text-primary transition-colors">Recursos</a>
                 <a href="#integrations" className="text-sm text-muted-foreground hover:text-primary transition-colors">Integrações</a>
+                <a href="#enterprise" className="text-sm text-muted-foreground hover:text-primary transition-colors">Enterprise</a>
                 <a href="/pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">Planos</a>
               </div>
             </div>
