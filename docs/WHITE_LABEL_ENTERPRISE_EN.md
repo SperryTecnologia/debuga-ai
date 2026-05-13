@@ -131,6 +131,14 @@ Training is delivered as practical technical guidance, not as a formal certifica
 
 ## 8. Deployment model
 
+### Deployment models
+
+debuga.ai White Label / Enterprise can be planned for different deployment models: dedicated cloud, VPS, GPU-enabled VPS, customer-owned server, local datacenter, or hybrid architecture. The choice depends on security, cost, performance, governance, integrations, and local inference requirements.
+
+Dedicated GPU environments may be evaluated when local workloads, open model testing, experimental inference, or specific privacy and latency requirements are needed.
+
+### Deployment process
+
 The Enterprise deployment follows a consultative process.
 
 **Phase 1 — Discovery and scoping.** Initial meeting to understand the organization's needs: agent areas of expertise, desired integrations, expected volume, security requirements, and available infrastructure.

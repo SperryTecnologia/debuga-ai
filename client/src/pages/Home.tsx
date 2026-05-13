@@ -442,8 +442,8 @@ export default function Home() {
                 },
                 {
                   icon: Server,
-                  title: "Deploy dedicado e ambiente próprio",
-                  desc: "Possibilidade de implantação em ambiente homologado, VPS, servidor próprio ou arquitetura híbrida, conforme projeto.",
+                  title: "Deploy dedicado em cloud, servidor próprio ou ambiente híbrido",
+                  desc: "A arquitetura White Label pode ser implantada em cloud dedicada, VPS, servidor próprio do cliente ou ambiente híbrido, conforme escopo, segurança e necessidade operacional. Quando o projeto exigir, é possível avaliar infraestrutura com GPU dedicada para inferência local experimental ou workloads específicos.",
                 },
                 {
                   icon: Briefcase,

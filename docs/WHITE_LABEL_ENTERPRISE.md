@@ -131,6 +131,14 @@ O treinamento é oferecido como orientação técnica prática, não como certif
 
 ## 8. Modelo de implantação
 
+### Modelos de implantação
+
+O debuga.ai White Label / Enterprise pode ser planejado para diferentes modelos de implantação: cloud dedicada, VPS, VPS com GPU, servidor próprio do cliente, datacenter local ou arquitetura híbrida. A escolha depende de requisitos de segurança, custo, performance, governança, integrações e necessidade de inferência local.
+
+Ambientes com GPU dedicada podem ser avaliados quando houver necessidade de workloads locais, testes com modelos abertos, inferência experimental ou requisitos específicos de privacidade e latência.
+
+### Processo de implantação
+
 O processo de implantação Enterprise segue um fluxo consultivo.
 
 **Fase 1 — Diagnóstico e escopo.** Reunião inicial para entender as necessidades da empresa: áreas de atuação do agente, integrações desejadas, volume esperado, requisitos de segurança e infraestrutura disponível.
