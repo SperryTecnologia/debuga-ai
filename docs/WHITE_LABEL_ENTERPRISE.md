@@ -179,10 +179,9 @@ O roadmap é indicativo e não constitui compromisso de entrega. A priorização
 
 ## Contato
 
-Para saber mais sobre o debuga.ai White Label / Enterprise, entre em contato com a equipe comercial da Sperry Tecnologia.
+Para saber mais sobre o debuga.ai White Label / Enterprise, fale com a equipe comercial da Sperry Tecnologia pelo canal oficial disponível na landing page.
 
-- **WhatsApp:** +55 51 3737-4357
+O atendimento é consultivo e indicado para empresas que desejam avaliar personalização, implantação dedicada, treinamento, suporte humano sênior ou arquitetura white label conforme escopo.
+
 - **Site:** [sperrytecnologia.com.br](https://www.sperrytecnologia.com.br)
 - **Plataforma:** [debuga.ai](https://debuga.ai)
-
-Sem compromisso. Entenda como o debuga.ai pode ser adaptado para sua operação.

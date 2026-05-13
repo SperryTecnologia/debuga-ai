@@ -597,6 +597,22 @@ export default function Home() {
                 >
                   <FileText className="w-4 h-4" /> Whitepaper (EN)
                 </a>
+                <a
+                  href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITE_LABEL_ENTERPRISE.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" /> White Label Enterprise (PT-BR)
+                </a>
+                <a
+                  href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITE_LABEL_ENTERPRISE_EN.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" /> White Label Enterprise (EN)
+                </a>
               </div>
             </div>
           </div>
