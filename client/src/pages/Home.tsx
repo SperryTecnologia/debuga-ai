@@ -598,22 +598,25 @@ export default function Home() {
                   <FileText className="w-4 h-4" /> White Label Enterprise
                 </a>
               </div>
+              <div className="mt-4">
+                <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider mb-2">Código</p>
+                <a
+                  href="https://github.com/SperryTecnologia/debuga-ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+                >
+                  <Github className="w-4 h-4" /> GitHub
+                </a>
+              </div>
             </div>
           </div>
 
           {/* Bottom bar */}
-          <div className="border-t border-border/30 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="border-t border-border/30 pt-6 flex items-center justify-center">
             <p className="text-xs text-muted-foreground">
               &copy; {new Date().getFullYear()} Sperry Tecnologia. Todos os direitos reservados.
             </p>
-            <a
-              href="https://github.com/SperryTecnologia/debuga-ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
-            >
-              <Github className="w-4 h-4" /> GitHub
-            </a>
           </div>
         </div>
       </footer>
