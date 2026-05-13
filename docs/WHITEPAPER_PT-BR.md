@@ -2,7 +2,7 @@
 
 **Plataforma de Agente Autônomo de IA para Infraestrutura de TI, Segurança da Informação e Telecomunicações**
 
-**Versão:** 4.0  
+**Versão:** 4.1
 **Data:** Maio 2026  
 **Autor:** Sperry Tecnologia  
 **Contato:** www.sperrytecnologia.com.br
