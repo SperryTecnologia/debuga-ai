@@ -536,7 +536,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-border/40 py-12">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             {/* Brand */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
@@ -566,13 +566,6 @@ export default function Home() {
                 <a href="#integrations" className="text-sm text-muted-foreground hover:text-primary transition-colors">Integrações</a>
                 <a href="#enterprise" className="text-sm text-muted-foreground hover:text-primary transition-colors">Enterprise</a>
                 <a href="/pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">Planos</a>
-              </div>
-            </div>
-
-            {/* Open Source & Docs */}
-            <div className="space-y-3">
-              <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Documentação</p>
-              <div className="flex flex-col gap-2">
                 <a
                   href="https://github.com/SperryTecnologia/debuga-ai"
                   target="_blank"
@@ -581,21 +574,28 @@ export default function Home() {
                 >
                   <Github className="w-4 h-4" /> GitHub
                 </a>
+              </div>
+            </div>
+
+            {/* Documentação PT-BR */}
+            <div className="space-y-3">
+              <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Documentação</p>
+              <div className="flex flex-col gap-2">
                 <a
                   href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITEPAPER_PT-BR.md"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
                 >
-                  <FileText className="w-4 h-4" /> Whitepaper (PT-BR)
+                  <FileText className="w-4 h-4" /> Whitepaper
                 </a>
                 <a
-                  href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITEPAPER_EN.md"
+                  href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/ARCHITECTURE_PT-BR.md"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
                 >
-                  <FileText className="w-4 h-4" /> Whitepaper (EN)
+                  <FileText className="w-4 h-4" /> Arquitetura
                 </a>
                 <a
                   href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITE_LABEL_ENTERPRISE.md"
@@ -603,7 +603,30 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
                 >
-                  <FileText className="w-4 h-4" /> White Label Enterprise (PT-BR)
+                  <FileText className="w-4 h-4" /> White Label Enterprise
+                </a>
+              </div>
+            </div>
+
+            {/* Technical Docs EN */}
+            <div className="space-y-3">
+              <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Technical Docs (EN)</p>
+              <div className="flex flex-col gap-2">
+                <a
+                  href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITEPAPER_EN.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" /> Whitepaper
+                </a>
+                <a
+                  href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/ARCHITECTURE_EN.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" /> Architecture
                 </a>
                 <a
                   href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITE_LABEL_ENTERPRISE_EN.md"
@@ -611,7 +634,7 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
                 >
-                  <FileText className="w-4 h-4" /> White Label Enterprise (EN)
+                  <FileText className="w-4 h-4" /> White Label Enterprise
                 </a>
               </div>
             </div>
