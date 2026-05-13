@@ -74,7 +74,7 @@ The White Label architecture follows the same design as the debuga.ai platform, 
        │          │          │
 ┌──────▼───┐ ┌────▼───┐ ┌────▼────────────┐
 │ Database │ │Storage │ │ LLM Gateway     │
-│          │ │ S3/    │ │ Cloud + Local   │
+│          │ │  S3    │ │ Cloud + Local   │
 │PostgreSQL| │ MinIO  │ │ (Ollama/OpenAI) │
 └──────────┘ └────────┘ └─────────────────┘
 ```
