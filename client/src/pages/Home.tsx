@@ -170,7 +170,7 @@ export default function Home() {
               Integrações
             </a>
             <a href="#enterprise" className="hover:text-primary transition-colors">
-              Enterprise
+              White Label
             </a>
             <a href="/pricing" className="hover:text-primary transition-colors">
               Planos
@@ -214,11 +214,6 @@ export default function Home() {
             className="grid lg:grid-cols-2 gap-12 items-center"
           >
             <div className="space-y-8">
-              <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-primary text-sm font-mono">
-                <Zap className="w-4 h-4" />
-                Powered by Sperry Tecnologia
-              </motion.div>
-
               <motion.h1
                 variants={fadeInUp}
                 className="text-4xl md:text-6xl font-bold leading-tight"
@@ -267,7 +262,19 @@ export default function Home() {
                 </Button>
               </motion.div>
 
-              <motion.div variants={fadeInUp} className="flex items-center gap-6 text-sm text-muted-foreground">
+              <motion.div variants={fadeInUp} className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                <span className="flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-primary" /> IA técnica especializada
+                </span>
+                <span className="flex items-center gap-2">
+                  <Headset className="w-4 h-4 text-primary" /> Suporte humano sênior
+                </span>
+                <span className="flex items-center gap-2">
+                  <Server className="w-4 h-4 text-primary" /> White label e deploy dedicado
+                </span>
+              </motion.div>
+
+              <motion.div variants={fadeInUp} className="flex items-center gap-6 text-sm text-muted-foreground/70">
                 <span className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-primary" /> Teste gratuito
                 </span>
@@ -285,15 +292,6 @@ export default function Home() {
               className="relative hidden lg:block"
             >
               <HeroAnimation />
-              <div className="absolute bottom-4 left-4 bg-card/80 backdrop-blur-sm border border-border rounded-xl px-4 py-3 shadow-lg flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">debuga.ai</p>
-                  <p className="text-sm font-mono text-primary font-semibold">IA Técnica + Suporte Humano</p>
-                </div>
-              </div>
             </motion.div>
           </motion.div>
         </div>
@@ -414,15 +412,16 @@ export default function Home() {
             variants={stagger}
           >
             <motion.p variants={fadeInUp} className="text-primary font-mono text-sm mb-3 text-center">
-              {"// ENTERPRISE"}
+              {"// WHITE LABEL"}
             </motion.p>
             <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold text-center mb-4">
-              White Label e IA sob medida para empresas
+              White Label Enterprise
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-muted-foreground text-center max-w-3xl mx-auto mb-14 leading-relaxed">
-              Além do debuga.ai para TI e segurança, a arquitetura pode ser adaptada para
-              empresas que desejam uma IA própria, com identidade visual, base de conhecimento,
-              fluxos de atendimento e implantação dedicada.
+              A arquitetura do debuga.ai pode ser implantada como solução White Label para
+              empresas que desejam uma IA própria — em cloud dedicada, VPS, ou infraestrutura
+              própria do cliente. Identidade visual, base de conhecimento, fluxos de atendimento
+              e deploy sob medida.
             </motion.p>
 
             <motion.div
@@ -442,8 +441,8 @@ export default function Home() {
                 },
                 {
                   icon: Server,
-                  title: "Deploy dedicado em cloud, servidor próprio ou ambiente híbrido",
-                  desc: "A arquitetura White Label pode ser implantada em cloud dedicada, VPS, servidor próprio do cliente ou ambiente híbrido, conforme escopo, segurança e necessidade operacional. Quando o projeto exigir, é possível avaliar infraestrutura com GPU dedicada para inferência local experimental ou workloads específicos.",
+                  title: "Cloud, VPS ou infraestrutura própria",
+                  desc: "Implante em cloud dedicada (AWS, Azure, GCP), VPS própria, servidor on-premises ou ambiente híbrido. A escolha é do cliente, conforme requisitos de segurança, compliance e operação. GPU dedicada disponível para inferência local quando necessário.",
                 },
                 {
                   icon: Briefcase,
@@ -564,7 +563,7 @@ export default function Home() {
               <div className="flex flex-col gap-2">
                 <a href="#features" className="text-sm text-muted-foreground hover:text-primary transition-colors">Recursos</a>
                 <a href="#integrations" className="text-sm text-muted-foreground hover:text-primary transition-colors">Integrações</a>
-                <a href="#enterprise" className="text-sm text-muted-foreground hover:text-primary transition-colors">Enterprise</a>
+                <a href="#enterprise" className="text-sm text-muted-foreground hover:text-primary transition-colors">White Label</a>
                 <a href="/pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">Planos</a>
               </div>
             </div>
