@@ -114,6 +114,19 @@ bash scripts/validate-all.sh --env /opt/debuga-ai/.env
 
 Para instruções detalhadas, consulte **docs/PRODUCTION_DEPLOY.md**.
 
+### Templates Disponíveis
+
+| Cenário | Comando |
+|---------|--------|
+| Produção oficial | `cp templates/.env.production.template .env` |
+| Homologação | `cp templates/.env.homolog.template .env` |
+| Cliente white label | `cp templates/.env.customer.template .env` |
+| On-premise com GPU | `cp templates/.env.onprem-gpu.template .env` |
+| On-premise sem GPU | `cp templates/.env.onprem-cpu.template .env` |
+| Cloud-only (sem Ollama) | `cp templates/.env.cloud-only.template .env` |
+
+Consulte **templates/README.md** para detalhes de cada cenário.
+
 ---
 
 ## Providers LLM

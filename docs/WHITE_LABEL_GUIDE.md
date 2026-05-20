@@ -572,3 +572,99 @@ Ao final das 4 aulas, o aluno terá uma implantação funcional com marca própr
 | `docs/17-PRODUCAO-HOMOLOG-WHITELABEL.md` | Diferenças entre ambientes |
 | `docs/18-OBSERVABILIDADE.md` | Monitoramento, logs, alertas |
 | `docs/19-SEGURANCA.md` | Segurança, hardening, firewall, TLS |
+
+---
+
+## 15. Provisionando um Novo Cliente White Label
+
+Este procedimento cobre o fluxo completo de provisionamento de um novo cliente, desde o clone até a validação.
+
+### Pré-requisitos
+
+- Acesso ao repositório `debuga-ai-prod`
+- Servidor preparado (Docker, Docker Compose, GPU opcional)
+- Domínio do cliente configurado (DNS A record)
+- Credenciais de providers (OpenAI, SMTP, OAuth)
+
+### Passo a Passo
+
+```bash
+# 1. Clonar repositório
+git clone git@github.com:SperryTecnologia/debuga-ai-prod.git /opt/cliente-ia
+cd /opt/cliente-ia
+
+# 2. Copiar template de cliente
+cp templates/.env.customer.template .env
+chmod 600 .env
+
+# 3. Substituir placeholders do cliente
+sed -i 's/cliente_slug/acme/g' .env
+sed -i 's/ia.cliente.com.br/ia.acme.com.br/g' .env
+sed -i 's/Nome da Solução/ACME IA/g' .env
+sed -i 's/Nome da Empresa/ACME Tecnologia/g' .env
+
+# 4. Gerar secrets seguros
+JWT_SECRET=$(openssl rand -base64 64)
+SESSION_SECRET=$(openssl rand -base64 64)
+DB_PASSWORD=$(openssl rand -base64 48)
+MINIO_PASSWORD=$(openssl rand -base64 48)
+
+# 5. Preencher secrets no .env
+# Substituir CHANGE_ME_OPENSSL_RAND_BASE64_64 por $JWT_SECRET e $SESSION_SECRET
+# Substituir CHANGE_ME_STRONG_PASSWORD_64CHARS por $DB_PASSWORD
+# Substituir CHANGE_ME_MINIO_PASSWORD_64CHARS por $MINIO_PASSWORD
+# Preencher OPENAI_API_KEY, SMTP_USER, SMTP_PASSWORD, etc.
+nano .env
+
+# 6. Personalizar identidade do agente
+nano app/server/agentIdentity.ts
+# Alterar: AGENT_NAME, AGENT_COMPANY, AGENT_DOMAIN
+
+# 7. Personalizar cores (opcional)
+nano app/client/src/index.css
+# Alterar variáveis CSS de cor
+
+# 8. Subir ambiente
+docker compose -f docker/docker-compose.yml up -d
+
+# 9. Validar
+bash scripts/validate-all.sh --env /opt/cliente-ia/.env
+
+# 10. Testar funcionalidades
+# - Login (local e/ou OAuth)
+# - Chat com agente
+# - Upload de arquivos
+# - Geração de imagens
+# - Painel admin
+# - Planos/billing (se Stripe configurado)
+```
+
+### Checklist de Validação
+
+| Item | Verificação |
+|------|------------|
+| Login local funciona | Criar conta, verificar email, logar |
+| OAuth funciona (se habilitado) | Login com Google redireciona corretamente |
+| Chat responde | Enviar mensagem, receber resposta |
+| Streaming funciona | Resposta aparece em tempo real |
+| Upload funciona | Enviar imagem/documento, ver no chat |
+| Storage acessível | Arquivos salvos no MinIO/S3 |
+| Admin panel | Acessar /admin, ver usuários e logs |
+| Marca correta | Logo, nome, cores do cliente |
+| Domínio correto | Acessar via domínio do cliente |
+| Email funciona | Verificação de email chega na caixa |
+| Validate-all passa | `APROVADO` ou `APROVADO COM AVISOS` |
+
+### Isolamento entre Clientes
+
+Cada cliente deve ter isolamento completo:
+
+| Recurso | Isolamento |
+|---------|-----------|
+| Banco de dados | `POSTGRES_DB` único por cliente |
+| Storage | `S3_BUCKET` / `MINIO_BUCKET` único |
+| Docker network | `COMPOSE_PROJECT_NAME` único |
+| Domínio | DNS separado |
+| OAuth | Credenciais Google separadas |
+| Stripe | Conta Stripe separada (ou Connected Account) |
+| Secrets | `.env` separado com `chmod 600` |

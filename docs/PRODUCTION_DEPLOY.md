@@ -42,7 +42,7 @@ docker compose version
 
 ```bash
 cd /opt
-git clone https://github.com/SEU_USUARIO/debuga-ai.git debuga-ai
+git clone git@github.com:SperryTecnologia/debuga-ai-prod.git debuga-ai
 cd debuga-ai
 ```
 
@@ -51,9 +51,26 @@ cd debuga-ai
 ## 3. Configurar Variáveis de Ambiente
 
 ```bash
-cp .env.example .env
-nano .env
+# Escolher o template adequado (ver templates/README.md para detalhes)
+cp templates/.env.production.template .env
+chmod 600 .env
+nano .env  # preencher todos os CHANGE_ME
+
+# Gerar secrets seguros
+openssl rand -base64 64  # para JWT_SECRET e SESSION_SECRET
+openssl rand -base64 48  # para senhas de banco e MinIO
 ```
+
+### Templates Disponíveis
+
+| Cenário | Template |
+|---------|----------|
+| Produção oficial | `templates/.env.production.template` |
+| Homologação | `templates/.env.homolog.template` |
+| Cliente white label | `templates/.env.customer.template` |
+| On-premise com GPU | `templates/.env.onprem-gpu.template` |
+| On-premise sem GPU | `templates/.env.onprem-cpu.template` |
+| Cloud-only (sem Ollama) | `templates/.env.cloud-only.template` |
 
 ### Variáveis Obrigatórias
 

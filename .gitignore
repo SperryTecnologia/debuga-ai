@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!templates/.env.*.template
 .env.local
 .env.*.local
 
