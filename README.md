@@ -53,7 +53,7 @@ A plataforma oferece um agente de IA especializado com as seguintes capacidades 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     NGINX (TLS + Rate Limiting)              │
+│                     NGINX (TLS + Rate Limiting)             │
 ├─────────────────────────────────────────────────────────────┤
 │  Frontend (React 19 + Tailwind 4 + shadcn/ui)               │
 │  ├── Chat UI com streaming SSE                              │
