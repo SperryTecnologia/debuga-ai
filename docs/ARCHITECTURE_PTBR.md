@@ -1,51 +1,52 @@
-# Reference Architecture — debuga.ai
+# Arquitetura de Referência — debuga.ai
 
-**Public architecture document for the debuga.ai platform.**
+**Documento público de arquitetura da plataforma debuga.ai.**
 
-Version 1.0 | May 2025 | Sperry Tecnologia
-
----
-
-## Overview
-
-debuga.ai is a full-stack application composed of independent layers communicating via internal APIs. The architecture is designed to operate on the operator's dedicated infrastructure, with full control over data, costs, and customization.
+Versão 1.0 | Maio 2025 | Sperry Tecnologia
 
 ---
 
-## Layer Diagram
+## Visão Geral
+
+A debuga.ai é uma aplicação full-stack composta por camadas independentes que se comunicam via APIs internas. A arquitetura foi projetada para operar em infraestrutura dedicada do operador, com controle total sobre dados, custos e personalização.
+
+---
+
+## Diagrama de Camadas
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Presentation Layer                             │
+│                    Camada de Apresentação                         │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
 │  │  Chat UI      │  │  Admin Panel  │  │  Landing Page         │  │
 │  │  (React)      │  │  (React)      │  │  (White Label)        │  │
 │  └──────┬───────┘  └──────┬───────┘  └──────────┬───────────┘  │
 ├─────────┴──────────────────┴──────────────────────┴─────────────┤
-│                    API Layer                                      │
+│                    Camada de API                                  │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │  tRPC (type-safe RPC) + Express                           │   │
 │  │  Auth | Billing | Chat | Admin | Tools | Storage          │   │
 │  └──────────────────────────────────────────────────────────┘   │
 ├─────────────────────────────────────────────────────────────────┤
-│                    Orchestration Layer                            │
+│                    Camada de Orquestração                         │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
-│  │  Autonomous   │  │  LLM          │  │  Diagnostic           │  │
-│  │  Agent        │  │  Routing      │  │  Tools                │  │
+│  │  Agente       │  │  Roteamento   │  │  Ferramentas          │  │
+│  │  Autônomo     │  │  LLM          │  │  de Diagnóstico       │  │
 │  └──────┬───────┘  └──────┬───────┘  └──────────┬───────────┘  │
 ├─────────┴──────────────────┴──────────────────────┴─────────────┤
-│                    Inference Layer                                │
+│                    Camada de Inferência                           │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
-│  │  Local GPU    │  │  Cloud        │  │  Multimodal           │  │
-│  │  (Ollama)     │  │  Providers    │  │  Generation           │  │
+│  │  GPU Local    │  │  Providers    │  │  Geração              │  │
+│  │  (Ollama)     │  │  Cloud        │  │  Multimodal           │  │
 │  └──────────────┘  └──────────────┘  └────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────────┤
-│                    Persistence Layer                              │
+│                    Camada de Persistência                         │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
 │  │  PostgreSQL   │  │  MinIO/S3    │  │  Redis                │  │
+│  │  (dados)      │  │  (arquivos)  │  │  (cache/sessões)      │  │
 │  └──────────────┘  └──────────────┘  └────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────────┤
-│                    Infrastructure Layer                           │
+│                    Camada de Infraestrutura                       │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
 │  │  Docker       │  │  NGINX       │  │  Let's Encrypt        │  │
 │  │  Compose      │  │  (proxy)     │  │  (TLS)                │  │
@@ -55,104 +56,104 @@ debuga.ai is a full-stack application composed of independent layers communicati
 
 ---
 
-## Presentation Layer
+## Camada de Apresentação
 
-| Component | Technology | Function |
-|-----------|-----------|----------|
-| Chat UI | React 19 + Tailwind CSS 4 | Conversational interface with streaming |
-| Admin Panel | React + shadcn/ui | User, plan, and configuration management |
-| Landing Page | React (white label) | Operator-customizable public page |
-
----
-
-## API Layer
-
-The API uses tRPC for type-safe frontend-backend communication, with Express as the HTTP server.
-
-| Module | Function |
-|--------|----------|
-| Auth | Local authentication + OAuth, JWT sessions |
-| Billing | Stripe integration, webhooks, plan management |
-| Chat | SSE streaming, history, context |
-| Admin | User management, metrics, settings |
-| Tools | Diagnostic tool invocation |
-| Storage | File upload and management |
+| Componente | Tecnologia | Função |
+|-----------|-----------|--------|
+| Chat UI | React 19 + Tailwind CSS 4 | Interface conversacional com streaming |
+| Admin Panel | React + shadcn/ui | Gestão de usuários, planos e configurações |
+| Landing Page | React (white label) | Página pública personalizável pelo operador |
 
 ---
 
-## Orchestration Layer
+## Camada de API
 
-The autonomous agent operates in a reasoning loop, deciding which tools to invoke and when to request inference.
+A API utiliza tRPC para comunicação type-safe entre frontend e backend, com Express como servidor HTTP.
 
-**Autonomous Agent** — Reasoning loop with tool calling. The agent analyzes the user query, determines which tools are needed, executes them sequentially, and synthesizes the response.
-
-**LLM Routing** — Directs queries to the most suitable provider based on availability, complexity, task type, and cost limits.
-
-**Diagnostic Tools** — DNS lookup, SSL check, HTTP check, WHOIS lookup, port scan, web fetch, code execution, image generation.
-
----
-
-## Inference Layer
-
-| Provider | Type | Priority | Use Case |
-|----------|------|----------|----------|
-| Ollama (local GPU) | Local | Primary | General use, zero cost |
-| OpenAI | Cloud | Fallback 1 | Complex reasoning |
-| Anthropic | Cloud | Fallback 2 | Long analysis |
-| Google Gemini | Cloud | Fallback 3 | Cost-effectiveness |
-| OpenRouter | Cloud | Fallback 4 | Additional model access |
+| Módulo | Função |
+|--------|--------|
+| Auth | Autenticação local + OAuth, sessões JWT |
+| Billing | Integração Stripe, webhooks, controle de planos |
+| Chat | Streaming SSE, histórico, contexto |
+| Admin | Gestão de usuários, métricas, configurações |
+| Tools | Invocação de ferramentas de diagnóstico |
+| Storage | Upload e gerenciamento de arquivos |
 
 ---
 
-## Persistence Layer
+## Camada de Orquestração
 
-| Service | Function | Data |
-|---------|----------|------|
-| PostgreSQL 16 | Primary database | Users, conversations, plans, audit |
-| MinIO/S3 | Object storage | Uploads, generated images, exports |
-| Redis | Cache and sessions | Rate limiting, active sessions |
+O agente autônomo opera em loop de raciocínio, decidindo quais ferramentas invocar e quando solicitar inferência.
 
----
+**Agente Autônomo** — Loop de raciocínio com tool calling. O agente analisa a consulta do usuário, decide quais ferramentas são necessárias, executa-as em sequência e sintetiza a resposta.
 
-## Security
+**Roteamento LLM** — Direciona consultas para o provider mais adequado com base em disponibilidade, complexidade, tipo de tarefa e limites de custo.
 
-| Aspect | Implementation |
-|--------|---------------|
-| Transport | TLS 1.3 via NGINX + Let's Encrypt |
-| Authentication | JWT with rotation, bcrypt, OAuth 2.0 |
-| Authorization | RBAC (admin, user) |
-| Rate limiting | Per IP and per user |
-| Audit | Immutable logs of all actions |
-| Isolation | Data separated by tenant |
-| Secrets | Environment variables, never in code |
+**Ferramentas de Diagnóstico** — DNS lookup, SSL check, HTTP check, WHOIS lookup, port scan, web fetch, execução de código, geração de imagens.
 
 ---
 
-## Deployment
+## Camada de Inferência
 
-The platform is containerized via Docker Compose with the following services:
+| Provider | Tipo | Prioridade | Caso de uso |
+|----------|------|-----------|-------------|
+| Ollama (GPU local) | Local | Primário | Uso geral, custo zero |
+| OpenAI | Cloud | Fallback 1 | Raciocínio complexo |
+| Anthropic | Cloud | Fallback 2 | Análise longa |
+| Google Gemini | Cloud | Fallback 3 | Custo-benefício |
+| OpenRouter | Cloud | Fallback 4 | Acesso a modelos adicionais |
 
-| Service | Container | Port |
-|---------|----------|------|
-| Application | Node.js (frontend + backend) | 3000 |
-| Database | PostgreSQL 16 | 5432 |
+---
+
+## Camada de Persistência
+
+| Serviço | Função | Dados |
+|---------|--------|-------|
+| PostgreSQL 16 | Banco principal | Usuários, conversas, planos, auditoria |
+| MinIO/S3 | Storage de objetos | Uploads, imagens geradas, exports |
+| Redis | Cache e sessões | Rate limiting, sessões ativas |
+
+---
+
+## Segurança
+
+| Aspecto | Implementação |
+|---------|--------------|
+| Transporte | TLS 1.3 via NGINX + Let's Encrypt |
+| Autenticação | JWT com rotação, bcrypt, OAuth 2.0 |
+| Autorização | RBAC (admin, user) |
+| Rate limiting | Por IP e por usuário |
+| Auditoria | Logs imutáveis de todas as ações |
+| Isolamento | Dados separados por tenant |
+| Secrets | Variáveis de ambiente, nunca em código |
+
+---
+
+## Deploy
+
+A plataforma é containerizada via Docker Compose, com os seguintes serviços:
+
+| Serviço | Container | Porta |
+|---------|----------|-------|
+| Aplicação | Node.js (frontend + backend) | 3000 |
+| Banco de dados | PostgreSQL 16 | 5432 |
 | Storage | MinIO | 9000/9001 |
-| Inference | Ollama (GPU) | 11434 |
+| Inferência | Ollama (GPU) | 11434 |
 | Proxy | NGINX | 80/443 |
 
 ---
 
-## Hardware Requirements
+## Requisitos de Hardware
 
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
+| Componente | Mínimo | Recomendado |
+|-----------|--------|-------------|
 | CPU | 4 cores | 8+ cores |
 | RAM | 16 GB | 32+ GB |
 | Storage | 100 GB SSD | 500+ GB NVMe |
 | GPU | NVIDIA 8 GB VRAM | NVIDIA 24+ GB VRAM |
-| Network | 100 Mbps | 1 Gbps |
+| Rede | 100 Mbps | 1 Gbps |
 
-GPU is optional. Without GPU, the platform operates exclusively with cloud providers.
+A GPU é opcional. Sem GPU, a plataforma opera exclusivamente com providers cloud.
 
 ---
 
