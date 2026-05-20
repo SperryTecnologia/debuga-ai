@@ -1,0 +1,50 @@
+# Environment
+.env
+.env.*
+!.env.example
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+app/node_modules/
+
+# Build output
+app/dist/
+
+# Backups
+backups/*.tar.gz
+
+# Docker volumes (if local)
+docker/postgres_data/
+docker/minio_data/
+docker/ollama_data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+nginx_logs/
+
+# Dumps
+*.dump
+*.sql.gz
+dumps/
+
+# Uploads
+uploads/
+
+# TLS certs (managed by certbot)
+/etc/letsencrypt/
+
+# Manus/debug artifacts
+.manus-logs/
+.manus/

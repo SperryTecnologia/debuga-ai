@@ -1,0 +1,40 @@
+{
+  "name": "debuga.ai",
+  "short_name": "debuga",
+  "description": "Agente autônomo de IA para infraestrutura de TI, DevOps e segurança da informação.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0d0f14",
+  "background_color": "#0d0f14",
+  "icons": [
+    {
+      "src": "/storage/icon-192x192_d0becabc.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/storage/icon-512x512_9c0d5e32.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/storage/icon-192x192-maskable_6a011e4d.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/storage/icon-512x512-maskable_4663ea75.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"],
+  "lang": "pt-BR",
+  "dir": "ltr"
+}

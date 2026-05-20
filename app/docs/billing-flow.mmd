@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant U as Usuário
+    participant F as Frontend
+    participant B as Backend
+    participant S as Stripe
+    participant DB as Database
+
+    U->>F: Clica em Assinar Plano
+    F->>B: POST /api/stripe/create-checkout
+    B->>S: stripe.checkout.sessions.create()
+    S-->>B: session.url
+    B-->>F: checkout URL
+    F->>U: Abre aba Stripe Checkout
+
+    U->>S: Preenche dados e paga
+    S->>B: Webhook checkout.session.completed
+    B->>DB: updateUserStripeCustomerId()
+    B->>DB: upsertSubscription()
+    B->>DB: updateCreditsPlan()
+    B-->>S: 200 OK
+
+    Note over U,DB: Usuário agora tem créditos do plano
+
+    U->>F: Envia mensagem no chat
+    F->>B: SSE /api/chat/stream
+    B->>DB: Verifica créditos e limites
+    B->>B: Processa com LLM + Tools
+    B->>DB: Debita créditos
+    B->>DB: Registra uso
+    B-->>F: Stream resposta
