@@ -85,7 +85,7 @@ O debuga.ai opera com arquitetura híbrida: modelos locais (Ollama/vLLM em GPU d
 | GPU indisponível | Fallback automático para provider cloud |
 | Sem GPU instalada | Apenas providers cloud |
 
-Providers cloud suportados: OpenAI (GPT-4o), Anthropic (Claude 3.5), Google (Gemini 2.0), OpenRouter (diversos).
+Providers cloud suportados: OpenAI (GPT-4o), Anthropic (Claude 3.5 Sonnet), Google (Gemini 2.0), DeepSeek, Qwen e outros via gateway proprietário.
 
 ---
 
@@ -206,4 +206,6 @@ Para informações sobre licenciamento, demonstrações ou implantação, entre 
 **Sperry Tecnologia**
 - Site: [sperrytecnologia.com.br](https://www.sperrytecnologia.com.br)
 - Plataforma: [debuga.ai](https://debuga.ai)
+- E-mail: contato@sperry.dev.br
 - GitHub: [SperryTecnologia](https://github.com/SperryTecnologia)
+- WhatsApp: [+55 48 99161-0953](https://wa.me/5548991610953)
