@@ -3163,3 +3163,136 @@
 [2026-05-21T19:12:28.079Z] 3:12:28 PM [vite] (client) hmr update /src/pages/ResetPasswordPage.tsx, /src/index.css
 [2026-05-21T19:12:28.079Z] 3:12:28 PM [vite] (client) hmr update /src/pages/TermsPage.tsx, /src/index.css
 [2026-05-21T19:12:28.089Z] 3:12:28 PM [vite] changed tsconfig file detected: /home/ubuntu/debuga-ai/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2026-05-21T19:12:28.104Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/LoginPage.tsx, /src/pages/PricingPage.tsx, /src/pages/Home.tsx, /src/pages/BillingPage.tsx, /src/pages/AccountPage.tsx, /src/pages/ChatPage.tsx
+[2026-05-21T19:12:28.105Z] 3:12:28 PM [vite] (client) hmr update /src/index.css
+[2026-05-21T19:12:28.105Z] 3:12:28 PM [vite] (client) hmr update /src/components/ErrorBoundary.tsx, /src/index.css
+[2026-05-21T19:12:28.106Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/HeroAnimation.tsx
+[2026-05-21T19:12:28.106Z] 3:12:28 PM [vite] (client) hmr update /src/index.css
+[2026-05-21T19:12:28.107Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/MessageWithMermaid.tsx
+[2026-05-21T19:12:28.107Z] 3:12:28 PM [vite] (client) hmr update /src/index.css
+[2026-05-21T19:12:28.107Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/TurnstileWidget.tsx
+[2026-05-21T19:12:28.108Z] 3:12:28 PM [vite] (client) hmr update /src/components/WhatsAppButton.tsx, /src/index.css
+[2026-05-21T19:12:28.108Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/alert-dialog.tsx
+[2026-05-21T19:12:28.108Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/avatar.tsx
+[2026-05-21T19:12:28.109Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/badge.tsx
+[2026-05-21T19:12:28.109Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/button.tsx
+[2026-05-21T19:12:28.109Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/card.tsx
+[2026-05-21T19:12:28.110Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/checkbox.tsx
+[2026-05-21T19:12:28.110Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/context-menu.tsx
+[2026-05-21T19:12:28.111Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/dialog.tsx
+[2026-05-21T19:12:28.111Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/dropdown-menu.tsx
+[2026-05-21T19:12:28.111Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/input.tsx
+[2026-05-21T19:12:28.112Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/scroll-area.tsx
+[2026-05-21T19:12:28.112Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/select.tsx
+[2026-05-21T19:12:28.112Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/separator.tsx
+[2026-05-21T19:12:28.113Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/skeleton.tsx
+[2026-05-21T19:12:28.113Z] 3:12:28 PM [vite] (client) hmr update /src/components/ui/sonner.tsx, /src/index.css
+[2026-05-21T19:12:28.113Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/switch.tsx
+[2026-05-21T19:12:28.114Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/table.tsx
+[2026-05-21T19:12:28.114Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/textarea.tsx
+[2026-05-21T19:12:28.114Z] 3:12:28 PM [vite] (client) hmr update /src/components/ui/tooltip.tsx, /src/index.css
+[2026-05-21T19:12:28.115Z] 3:12:28 PM [vite] (client) hmr update /src/contexts/ThemeContext.tsx, /src/index.css
+[2026-05-21T19:12:28.115Z] 3:12:28 PM [vite] (client) page reload src/hooks/useComposition.ts
+[2026-05-21T19:12:28.115Z] 3:12:28 PM [vite] (client) page reload src/hooks/usePersistFn.ts
+[2026-05-21T19:12:28.116Z] 3:12:28 PM [vite] (client) page reload src/lib/trpc.ts
+[2026-05-21T19:12:28.116Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/PricingPage.tsx, /src/pages/Home.tsx, /src/pages/BillingPage.tsx, /src/pages/AccountPage.tsx, /src/pages/ChatPage.tsx
+[2026-05-21T19:12:28.117Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminAssets.tsx
+[2026-05-21T19:12:28.117Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminAudit.tsx
+[2026-05-21T19:12:28.117Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminCapabilities.tsx
+[2026-05-21T19:12:28.118Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminConversations.tsx
+[2026-05-21T19:12:28.120Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminDashboard.tsx
+[2026-05-21T19:12:28.121Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminInstructions.tsx
+[2026-05-21T19:12:28.121Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminKnowledge.tsx
+[2026-05-21T19:12:28.121Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminLayout.tsx
+[2026-05-21T19:12:28.123Z] 3:12:28 PM [vite] (client) hmr update /src/pages/admin/AdminLearning.tsx, /src/index.css
+[2026-05-21T19:12:28.124Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminLogs.tsx
+[2026-05-21T19:12:28.124Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminProviders.tsx
+[2026-05-21T19:12:28.125Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminUsers.tsx
+[2026-05-21T19:12:28.125Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminWhiteLabel.tsx
+[2026-05-21T19:12:28.125Z] 3:12:28 PM [vite] (client) hmr update /src/App.tsx, /src/index.css
+[2026-05-21T19:12:28.126Z] 3:12:28 PM [vite] (client) page reload /home/ubuntu/debuga-ai/shared/const.ts
+[2026-05-21T19:12:28.126Z] 3:12:28 PM [vite] (client) hmr update /src/index.css
+[2026-05-21T19:12:28.126Z] 3:12:28 PM [vite] (client) hmr update /src/components/ErrorBoundary.tsx, /src/index.css
+[2026-05-21T19:12:28.127Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/HeroAnimation.tsx
+[2026-05-21T19:12:28.127Z] 3:12:28 PM [vite] (client) hmr update /src/index.css
+[2026-05-21T19:12:28.128Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/MessageWithMermaid.tsx
+[2026-05-21T19:12:28.128Z] 3:12:28 PM [vite] (client) hmr update /src/index.css
+[2026-05-21T19:12:28.129Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/TurnstileWidget.tsx
+[2026-05-21T19:12:28.129Z] 3:12:28 PM [vite] (client) hmr update /src/components/WhatsAppButton.tsx, /src/index.css
+[2026-05-21T19:12:28.129Z] 3:12:28 PM [vite] (client) hmr update /src/contexts/ThemeContext.tsx, /src/index.css
+[2026-05-21T19:12:28.130Z] 3:12:28 PM [vite] (client) page reload src/hooks/useComposition.ts
+[2026-05-21T19:12:28.130Z] 3:12:28 PM [vite] (client) page reload src/hooks/usePersistFn.ts
+[2026-05-21T19:12:28.130Z] 3:12:28 PM [vite] (client) page reload src/lib/trpc.ts
+[2026-05-21T19:12:28.131Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/PricingPage.tsx, /src/pages/Home.tsx, /src/pages/BillingPage.tsx, /src/pages/AccountPage.tsx, /src/pages/ChatPage.tsx
+[2026-05-21T19:12:28.131Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminAssets.tsx
+[2026-05-21T19:12:28.131Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminAudit.tsx
+[2026-05-21T19:12:28.132Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminCapabilities.tsx
+[2026-05-21T19:12:28.132Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminConversations.tsx
+[2026-05-21T19:12:28.132Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminDashboard.tsx
+[2026-05-21T19:12:28.133Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminInstructions.tsx
+[2026-05-21T19:12:28.133Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminKnowledge.tsx
+[2026-05-21T19:12:28.133Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminLayout.tsx
+[2026-05-21T19:12:28.134Z] 3:12:28 PM [vite] (client) hmr update /src/pages/admin/AdminLearning.tsx, /src/index.css
+[2026-05-21T19:12:28.134Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminLogs.tsx
+[2026-05-21T19:12:28.134Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminProviders.tsx
+[2026-05-21T19:12:28.135Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminUsers.tsx
+[2026-05-21T19:12:28.135Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/admin/AdminWhiteLabel.tsx
+[2026-05-21T19:12:28.135Z] 3:12:28 PM [vite] (client) hmr update /src/App.tsx, /src/index.css
+[2026-05-21T19:12:28.136Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/pages/LoginPage.tsx, /src/pages/PricingPage.tsx, /src/pages/Home.tsx, /src/pages/BillingPage.tsx, /src/pages/AccountPage.tsx, /src/pages/ChatPage.tsx
+[2026-05-21T19:12:28.136Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/alert-dialog.tsx
+[2026-05-21T19:12:28.137Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/avatar.tsx
+[2026-05-21T19:12:28.137Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/badge.tsx
+[2026-05-21T19:12:28.138Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/button.tsx
+[2026-05-21T19:12:28.139Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/card.tsx
+[2026-05-21T19:12:28.140Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/checkbox.tsx
+[2026-05-21T19:12:28.141Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/context-menu.tsx
+[2026-05-21T19:12:28.141Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/dialog.tsx
+[2026-05-21T19:12:28.141Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/dropdown-menu.tsx
+[2026-05-21T19:12:28.143Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/input.tsx
+[2026-05-21T19:12:28.147Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/scroll-area.tsx
+[2026-05-21T19:12:28.148Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/select.tsx
+[2026-05-21T19:12:28.149Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/separator.tsx
+[2026-05-21T19:12:28.149Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/skeleton.tsx
+[2026-05-21T19:12:28.151Z] 3:12:28 PM [vite] (client) hmr update /src/components/ui/sonner.tsx, /src/index.css
+[2026-05-21T19:12:28.151Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/switch.tsx
+[2026-05-21T19:12:28.152Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/table.tsx
+[2026-05-21T19:12:28.152Z] 3:12:28 PM [vite] (client) hmr update /src/index.css, /src/components/ui/textarea.tsx
+[2026-05-21T19:12:28.153Z] 3:12:28 PM [vite] (client) hmr update /src/components/ui/tooltip.tsx, /src/index.css
+[2026-05-21T19:12:28.212Z] 3:12:28 PM [tsx] unlink in ./vite.config.ts Restarting...
+[2026-05-21T19:12:29.460Z] c[LLM Config] ─────────────────────────────────────
+[2026-05-21T19:12:29.461Z] [LLM Config] Provider active: forge
+[2026-05-21T19:12:29.462Z] [LLM Config] Cloud URL configured: yes
+[2026-05-21T19:12:29.462Z] [LLM Config] Cloud Key configured: yes (AGi9...)
+[2026-05-21T19:12:29.463Z] [LLM Config] Cloud Model: gemini-2.5-flash
+[2026-05-21T19:12:29.463Z] [LLM Config] Fallback provider: none
+[2026-05-21T19:12:29.464Z] [LLM Config] Forge fallback enabled: yes
+[2026-05-21T19:12:29.464Z] [LLM Config] Local GPU: disabled
+[2026-05-21T19:12:29.465Z] [LLM Config] Local GPU fallback: enabled
+[2026-05-21T19:12:29.465Z] [LLM Config] Local GPU timeout: 120s
+[2026-05-21T19:12:29.465Z] [LLM Config] ─────────────────────────────────────
+[2026-05-21T19:12:30.105Z] [RateLimiter] Rate limiting enabled
+[2026-05-21T19:12:30.106Z] [Storage] Asset proxy registered at /api/assets/:key
+[2026-05-21T19:12:30.106Z] [OAuth] Google OAuth: enabled
+[2026-05-21T19:12:30.107Z] [OAuth] AUTH_BASE_URL: (auto-detect from request)
+[2026-05-21T19:12:30.107Z] [OAuth] GOOGLE_CLIENT_ID is empty — Google OAuth will not work
+[2026-05-21T19:12:30.107Z] [LocalAuth] Local login enabled
+[2026-05-21T19:12:30.108Z] [EmailVerification] Routes registered
+[2026-05-21T19:12:30.905Z] [LLM Config] ─────────────────────────────────────
+[2026-05-21T19:12:30.905Z] [LLM Config] Provider active: forge
+[2026-05-21T19:12:30.906Z] [LLM Config] Cloud URL configured: yes
+[2026-05-21T19:12:30.906Z] [LLM Config] Cloud Key configured: yes (AGi9...)
+[2026-05-21T19:12:30.907Z] [LLM Config] Cloud Model: gemini-2.5-flash
+[2026-05-21T19:12:30.908Z] [LLM Config] Fallback provider: none
+[2026-05-21T19:12:30.908Z] [LLM Config] Forge fallback enabled: yes
+[2026-05-21T19:12:30.909Z] [LLM Config] Local GPU: disabled
+[2026-05-21T19:12:30.909Z] [LLM Config] Local GPU fallback: enabled
+[2026-05-21T19:12:30.910Z] [LLM Config] Local GPU timeout: 120s
+[2026-05-21T19:12:30.910Z] [LLM Config] ─────────────────────────────────────
+[2026-05-21T19:12:30.911Z] Server running on http://localhost:3000/
+[2026-05-21T19:12:30.926Z] [Database] Connection test FAILED: There was an error establishing an SSL connection
+[2026-05-21T19:12:30.927Z] [Database]   DATABASE_URL host: gateway02.us-east-1.prod.aws.tidbcloud.com
+[2026-05-21T19:12:30.927Z] [Database]   DATABASE_URL user: pNiV3hkTGADEQu8.7c5e28ef3035
+[2026-05-21T19:12:30.928Z] [Database]   Likely cause: password mismatch. Run: bash scripts/sync-postgres-password.sh
+[2026-05-21T19:12:30.949Z] [Boot] Database connection FAILED: Failed query: SELECT 1
+[2026-05-21T19:12:30.950Z] params:
+[2026-05-21T19:12:30.950Z] [Boot]   Fix: bash scripts/sync-postgres-password.sh
