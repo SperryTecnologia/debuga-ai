@@ -48,9 +48,9 @@ A plataforma é oferecida como **white label**, permitindo que MSPs, provedores 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  CLOUDFLARE (DNS + WAF + Turnstile)          │
+│                  CLOUDFLARE (DNS + WAF + Turnstile)         │
 ├─────────────────────────────────────────────────────────────┤
-│                  NGINX (TLS 1.3 + Rate Limiting + CSP)       │
+│                  NGINX (TLS 1.3 + Rate Limiting + CSP)      │
 ├─────────────────────────────────────────────────────────────┤
 │  Frontend (React 19 + Tailwind 4 + shadcn/ui)               │
 │  ├── Chat UI com streaming SSE                              │
