@@ -74,7 +74,14 @@ class SDKServer {
         appId: (appId as string) || ENV.appId,
         name: (name as string) || "",
       };
-    } catch {
+    } catch (err: any) {
+      // Log specific JWT errors for debugging (only once per unique error)
+      const errName = err?.code || err?.name || "unknown";
+      if (errName === "ERR_JWS_SIGNATURE_VERIFICATION_FAILED") {
+        console.warn("[SDK] JWT signature mismatch — likely old cookie from previous JWT_SECRET. Will be cleared.");
+      } else if (errName === "ERR_JWT_EXPIRED") {
+        console.warn("[SDK] JWT expired. Will be cleared.");
+      }
       return null;
     }
   }
@@ -85,18 +92,24 @@ class SDKServer {
     const session = await this.verifySession(sessionCookie);
 
     if (!session) {
+      // If there was a cookie but it failed verification, signal to clear it
+      if (sessionCookie) {
+        // Attach a flag so the caller can clear the cookie if needed
+        (req as any).__invalidSession = true;
+      }
       throw ForbiddenError("Invalid session cookie");
     }
 
     const user = await db.getUserByOpenId(session.openId);
     if (!user) {
-      throw ForbiddenError("User not found");
+      throw ForbiddenError("User not found in database");
     }
 
-    await db.upsertUser({
+    // Update lastSignedIn (non-blocking, don't throw on failure)
+    db.upsertUser({
       openId: user.openId,
       lastSignedIn: new Date(),
-    });
+    }).catch(() => { /* ignore update failures */ });
 
     return user;
   }

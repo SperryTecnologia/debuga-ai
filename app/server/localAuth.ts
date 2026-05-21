@@ -132,7 +132,10 @@ export function registerLocalAuthRoutes(app: Express) {
   // ─────────────────────────────────────────────────────────────────
   app.post("/api/auth/local/register", async (req: Request, res: Response) => {
     try {
+      console.log("[LocalAuth] Register request received");
       const { name, email, password, phone, acceptTerms, turnstileToken } = req.body;
+
+      console.log(`[LocalAuth] Turnstile token present: ${!!turnstileToken}`);
 
       if (!email || !password) {
         res.status(400).json({ error: "E-mail e senha são obrigatórios." });
@@ -170,22 +173,19 @@ export function registerLocalAuthRoutes(app: Express) {
       }
 
       // Verify Turnstile CAPTCHA (if configured and token provided)
-      // Graceful degradation: if secret is set but no site key was exposed to frontend,
-      // the widget won't render and no token will be sent — skip verification in that case.
       if (ENV.turnstileSecretKey && ENV.enableTurnstile) {
         if (turnstileToken) {
-          // Token provided — verify it
           const captchaValid = await verifyTurnstile(turnstileToken, req.ip || "");
           if (!captchaValid) {
-            res.status(400).json({ error: "Falha na verificação CAPTCHA. Tente novamente." });
+            console.warn("[LocalAuth] Turnstile verification failed");
+            res.status(400).json({ error: "Não foi possível concluir a verificação de segurança. Tente novamente." });
             return;
           }
+          console.log("[LocalAuth] Turnstile verified OK");
         } else if (ENV.turnstileSiteKey) {
-          // Site key is configured (widget should have rendered) but no token sent
           res.status(400).json({ error: "Complete a verificação de segurança (CAPTCHA)." });
           return;
         }
-        // If no site key configured, skip — widget couldn't render
       }
 
       const normalizedEmail = email.toLowerCase().trim();
@@ -198,18 +198,22 @@ export function registerLocalAuthRoutes(app: Express) {
       }
 
       // Hash password
+      console.log("[LocalAuth] Hashing password...");
       const passwordHash = await hashPassword(password);
+      console.log("[LocalAuth] Password hash OK");
 
       // Determine role
       const role = shouldBeAdmin(normalizedEmail) ? "admin" : "user";
 
       // Create user
+      console.log(`[LocalAuth] Creating user: ${normalizedEmail} (role: ${role})`);
       const newUser = await db.createLocalUser({
         email: normalizedEmail,
         name: name.trim(),
         passwordHash,
         role,
       });
+      console.log(`[LocalAuth] User created OK: id=${newUser.id}`);
 
       // Save phone and terms acceptance
       const dbConn = await db.getDb();
@@ -226,6 +230,7 @@ export function registerLocalAuthRoutes(app: Express) {
       }
 
       // Create session token
+      console.log("[LocalAuth] Creating session token...");
       const sessionToken = await sdk.createSessionToken(newUser.openId, {
         name: newUser.name || "",
         expiresInMs: ONE_YEAR_MS,
@@ -233,6 +238,7 @@ export function registerLocalAuthRoutes(app: Express) {
 
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      console.log("[LocalAuth] Session cookie set OK");
 
       // Send verification email (non-blocking)
       if (ENV.emailVerificationEnabled) {
@@ -271,13 +277,17 @@ export function registerLocalAuthRoutes(app: Express) {
         requiresEmailVerification: ENV.emailVerificationEnabled,
       });
     } catch (err: any) {
-      console.error("[LocalAuth] Register error:", err);
+      console.error("[LocalAuth] Register error:", err.message || err);
+      console.error("[LocalAuth] Register error stack:", err.stack);
       if (err.code === "23505") {
-        // Unique constraint violation (race condition)
-        res.status(409).json({ error: "Este e-mail já está cadastrado." });
+        res.status(409).json({ error: "Este e-mail já possui uma conta. Tente entrar ou recuperar sua senha." });
         return;
       }
-      res.status(500).json({ error: "Erro interno ao criar conta. Tente novamente." });
+      if (err.message?.includes("Database connection unavailable") || err.message?.includes("Database not available")) {
+        res.status(503).json({ error: "Não foi possível criar sua conta agora. Nossa equipe já pode analisar o erro pelos registros internos." });
+        return;
+      }
+      res.status(500).json({ error: "Não foi possível criar sua conta agora. Tente novamente em instantes." });
     }
   });
 
@@ -286,6 +296,7 @@ export function registerLocalAuthRoutes(app: Express) {
   // ─────────────────────────────────────────────────────────────────
   app.post("/api/auth/local/login", async (req: Request, res: Response) => {
     try {
+      console.log("[LocalAuth] Login request received");
       const { email, password, turnstileToken } = req.body;
 
       if (!email || !password) {
@@ -414,8 +425,13 @@ export function registerLocalAuthRoutes(app: Express) {
           emailVerified: user.emailVerified ?? false,
         },
       });
-    } catch (err) {
-      console.error("[LocalAuth] Login error:", err);
+    } catch (err: any) {
+      console.error("[LocalAuth] Login error:", err.message || err);
+      console.error("[LocalAuth] Login error stack:", err.stack);
+      if (err.message?.includes("Database connection unavailable") || err.message?.includes("Database not available")) {
+        res.status(503).json({ error: "Serviço temporário indisponível. Tente novamente em instantes." });
+        return;
+      }
       res.status(500).json({ error: "Erro interno. Tente novamente." });
     }
   });
@@ -454,6 +470,11 @@ export function registerLocalAuthRoutes(app: Express) {
         },
       });
     } catch (err) {
+      // Clear stale/invalid cookie so browser stops sending it
+      if ((req as any).__invalidSession) {
+        const cookieOptions = getSessionCookieOptions(req);
+        res.clearCookie(COOKIE_NAME, cookieOptions);
+      }
       res.status(401).json({ error: "Sessão inválida.", user: null });
     }
   });

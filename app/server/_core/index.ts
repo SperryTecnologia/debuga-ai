@@ -17,6 +17,7 @@ import { serveStatic, setupVite } from "./vite";
 import { registerRateLimiting } from "../rateLimiter";
 import { requireEmailVerification } from "../verificationGate";
 import { logLLMConfig, ENV } from "./env";
+import { getDb, getDbStatus, testDbConnection } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -47,6 +48,48 @@ async function startServer() {
   // Configure body parser with larger size limit
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // ── Health check REST endpoint (real DB test) ──
+  app.get("/api/health", async (_req, res) => {
+    const dbStatus = getDbStatus();
+    
+    // If DATABASE_URL is set, test real connection
+    if (dbStatus.databaseUrlSet) {
+      const connTest = await testDbConnection();
+      if (connTest.ok) {
+        res.json({
+          status: "healthy",
+          timestamp: new Date().toISOString(),
+          database: {
+            ...dbStatus,
+            connectionTested: true,
+            connectionError: null,
+            dbUser: connTest.user,
+            dbName: connTest.database,
+          },
+        });
+      } else {
+        res.status(503).json({
+          status: "degraded",
+          timestamp: new Date().toISOString(),
+          database: {
+            ...dbStatus,
+            connectionTested: false,
+            connectionError: connTest.error,
+          },
+        });
+      }
+    } else {
+      res.status(503).json({
+        status: "degraded",
+        timestamp: new Date().toISOString(),
+        database: {
+          ...dbStatus,
+          connectionError: "DATABASE_URL not configured",
+        },
+      });
+    }
+  });
 
   // Rate limiting on auth and chat endpoints
   registerRateLimiting(app);
@@ -103,6 +146,17 @@ async function startServer() {
 
   // Log LLM configuration at boot
   logLLMConfig();
+
+  // Warmup DB connection on boot (non-blocking)
+  getDb().then(db => {
+    if (db) {
+      console.log("[Boot] Database pool initialized successfully.");
+    } else {
+      console.error("[Boot] Database pool NOT initialized. Auth will fail.");
+    }
+  }).catch(err => {
+    console.error("[Boot] Database init error:", err.message);
+  });
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);

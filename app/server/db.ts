@@ -5,15 +5,79 @@ import { InsertUser, users, conversations, messages, subscriptions, credits, usa
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: pg.Pool | null = null;
+let _connectionTested = false;
+let _lastConnectionError: string | null = null;
+
+/**
+ * Get database connection status for health checks.
+ */
+export function getDbStatus() {
+  return {
+    poolCreated: _pool !== null,
+    connectionTested: _connectionTested,
+    connectionError: _lastConnectionError,
+    databaseUrlSet: !!process.env.DATABASE_URL,
+  };
+}
+
+/**
+ * Test the real database connection by executing a simple query.
+ * Returns true if connection works, false otherwise.
+ */
+export async function testDbConnection(): Promise<{ ok: boolean; user?: string; database?: string; error?: string }> {
+  if (!process.env.DATABASE_URL) {
+    return { ok: false, error: "DATABASE_URL not set" };
+  }
+  try {
+    const pool = _pool || new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+    const result = await pool.query("SELECT current_user AS u, current_database() AS db");
+    const row = result.rows[0];
+    if (!_pool) await pool.end();
+    _connectionTested = true;
+    _lastConnectionError = null;
+    return { ok: true, user: row.u, database: row.db };
+  } catch (err: any) {
+    const msg = err.message || String(err);
+    _lastConnectionError = msg;
+    console.error("[Database] Connection test failed:", msg);
+    return { ok: false, error: msg };
+  }
+}
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-      _db = drizzle(pool);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      // Mask password for logging
+      const urlForLog = process.env.DATABASE_URL.replace(/:\/\/([^:]+):([^@]+)@/, "://$1:***@");
+      console.log(`[Database] Connecting to: ${urlForLog}`);
+
+      _pool = new pg.Pool({
+        connectionString: process.env.DATABASE_URL,
+        max: 10,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+      });
+
+      // Test connection immediately
+      const client = await _pool.connect();
+      const res = await client.query("SELECT current_user AS u, current_database() AS db");
+      client.release();
+
+      _connectionTested = true;
+      _lastConnectionError = null;
+      _db = drizzle(_pool);
+
+      console.log(`[Database] ✓ Connected as ${res.rows[0].u} to ${res.rows[0].db}`);
+    } catch (error: any) {
+      const msg = error.message || String(error);
+      _lastConnectionError = msg;
+      _connectionTested = false;
+      console.error(`[Database] ✗ Connection failed: ${msg}`);
+      console.error(`[Database] Hint: Check POSTGRES_PASSWORD for special characters that need URL-encoding.`);
+      console.error(`[Database] Hint: Ensure postgres container is reachable at postgres:5432 on debuga-net.`);
       _db = null;
+      _pool = null;
     }
   }
   return _db;
@@ -26,8 +90,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
+    console.error("[Database] Cannot upsert user: database not available");
+    throw new Error("Database connection unavailable. Cannot save user.");
   }
 
   try {
@@ -86,7 +150,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
+    console.error("[Database] Cannot get user by openId: database not available");
     return undefined;
   }
 

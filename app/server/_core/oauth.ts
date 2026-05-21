@@ -57,6 +57,10 @@ export function registerOAuthRoutes(app: Express) {
     }
 
     try {
+      console.log("[OAuth] Exchanging code for tokens...");
+      const callbackUrl = getCallbackUrl(req);
+      console.log(`[OAuth] Callback URL: ${callbackUrl}`);
+
       const tokenResponse = await fetch(GOOGLE_TOKEN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -64,14 +68,14 @@ export function registerOAuthRoutes(app: Express) {
           code,
           client_id: ENV.googleClientId,
           client_secret: ENV.googleClientSecret,
-          redirect_uri: getCallbackUrl(req),
+          redirect_uri: callbackUrl,
           grant_type: "authorization_code",
         }),
       });
 
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text();
-        console.error("[OAuth] Token exchange failed:", errorText);
+        console.error("[OAuth] Token exchange failed:", tokenResponse.status, errorText);
         res.redirect("/?error=token_exchange_failed");
         return;
       }
@@ -80,12 +84,14 @@ export function registerOAuthRoutes(app: Express) {
         access_token: string;
         id_token?: string;
       };
+      console.log("[OAuth] Token exchange OK");
 
       const userInfoResponse = await fetch(GOOGLE_USERINFO_URL, {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       });
 
       if (!userInfoResponse.ok) {
+        console.error("[OAuth] UserInfo fetch failed:", userInfoResponse.status);
         res.redirect("/?error=userinfo_failed");
         return;
       }
@@ -93,16 +99,25 @@ export function registerOAuthRoutes(app: Express) {
       const googleUser = (await userInfoResponse.json()) as {
         id: string; email: string; name: string; picture?: string;
       };
+      console.log(`[OAuth] Google user: ${googleUser.email} (${googleUser.id})`);
 
       const openId = `google_${googleUser.id}`;
 
-      await db.upsertUser({
-        openId,
-        name: googleUser.name || null,
-        email: googleUser.email ?? null,
-        loginMethod: "google",
-        lastSignedIn: new Date(),
-      });
+      // Upsert user — will throw if DB is unavailable
+      try {
+        await db.upsertUser({
+          openId,
+          name: googleUser.name || null,
+          email: googleUser.email ?? null,
+          loginMethod: "google",
+          lastSignedIn: new Date(),
+        });
+        console.log(`[OAuth] User upserted: ${openId}`);
+      } catch (dbErr: any) {
+        console.error("[OAuth] DB upsert failed:", dbErr.message);
+        res.redirect("/?error=db_unavailable");
+        return;
+      }
 
       const sessionToken = await sdk.createSessionToken(openId, {
         name: googleUser.name || "",
@@ -111,6 +126,7 @@ export function registerOAuthRoutes(app: Express) {
 
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      console.log("[OAuth] Session cookie set OK");
 
       let returnPath = "/chat";
       if (stateParam) {
@@ -119,10 +135,12 @@ export function registerOAuthRoutes(app: Express) {
           if (parsed.returnPath) returnPath = parsed.returnPath;
         } catch { /* ignore */ }
       }
+      console.log(`[OAuth] Redirecting to: ${returnPath}`);
       res.redirect(302, returnPath);
-    } catch (err) {
-      console.error("[OAuth] Callback failed:", err);
-      res.status(500).json({ error: "OAuth callback failed" });
+    } catch (err: any) {
+      console.error("[OAuth] Callback failed:", err.message || err);
+      console.error("[OAuth] Stack:", err.stack);
+      res.redirect("/?error=oauth_internal_error");
     }
   });
 
