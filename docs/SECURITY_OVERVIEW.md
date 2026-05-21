@@ -58,6 +58,30 @@
 
 ---
 
+## Fluxo de Segurança — Requisição HTTP
+
+```mermaid
+flowchart TD
+    REQ["Requisição HTTP"] --> CF["Cloudflare WAF"]
+    CF -->|Bloqueado| DROP1["Drop + Log"]
+    CF -->|Permitido| NGINX["NGINX"]
+    NGINX --> RATE{"Rate Limit?"}
+    RATE -->|Excedido| DROP2["429 Too Many Requests"]
+    RATE -->|OK| TLS["TLS 1.3 Termination"]
+    TLS --> APP["Express App"]
+    APP --> AUTH{"Rota protegida?"}
+    AUTH -->|Não| PUBLIC["Resposta pública"]
+    AUTH -->|Sim| JWT{"JWT válido?"}
+    JWT -->|Não| DENY["401 Unauthorized"]
+    JWT -->|Sim| ROLE{"Permissão?"}
+    ROLE -->|Não| FORBID["403 Forbidden"]
+    ROLE -->|Sim| HANDLER["Handler + Auditoria"]
+    HANDLER --> LOG["Log Imutável"]
+    HANDLER --> RESP["Resposta"]
+```
+
+---
+
 ## Auditoria
 
 Todas as ações são registradas com:
@@ -73,10 +97,7 @@ Logs são imutáveis e exportáveis para SIEM.
 
 ## Reporte de Vulnerabilidades
 
-Para reportar vulnerabilidades de segurança:
-- Email: seguranca@sperrytecnologia.com.br
-- Não divulgar publicamente antes da correção
-- Resposta em até 48 horas úteis
+Para reportar vulnerabilidades de segurança, utilize o canal de contato disponível em [sperrytecnologia.com.br](https://www.sperrytecnologia.com.br). Solicitamos que não divulgue publicamente antes da correção. Resposta em até 48 horas úteis.
 
 ---
 

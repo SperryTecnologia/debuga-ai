@@ -1,6 +1,6 @@
-# debuga.ai — Plataforma de IA Operacional White Label
+# debuga.ai — Plataforma de IA Operacional para TI, Segurança e Infraestrutura
 
-**Inteligência artificial projetada para operações técnicas reais — infraestrutura, segurança, DevOps, telecomunicações e suporte — com governança, auditoria e controle total.**
+**Agente de IA para diagnóstico técnico, documentação, automação, análise de ambientes e white label para empresas, MSPs e operações de suporte.**
 
 Desenvolvida por [Sperry Tecnologia](https://www.sperrytecnologia.com.br).
 
@@ -190,6 +190,23 @@ Documentação complementar neste repositório:
 | WhatsApp Business | Planejado |
 | SSO/SAML | Planejado |
 | Multi-tenant enterprise | Planejado |
+
+---
+
+## Scripts de Validação
+
+Este repositório inclui scripts de validação para verificar a integridade de deploys e configurações públicas:
+
+| Script | Descrição |
+|--------|----------|
+| `scripts/check-seo-analytics.sh` | Valida GA4, meta tags, sitemap e robots.txt |
+| `scripts/check-public-links.sh` | Verifica links públicos retornam HTTP 200 |
+| `scripts/check-sitemap.sh` | Valida estrutura e URLs do sitemap.xml |
+| `scripts/check-robots.sh` | Verifica conformidade do robots.txt |
+| `scripts/check-security-headers.sh` | Audita headers de segurança (HSTS, CSP, X-Frame) |
+| `scripts/check-docs-links.sh` | Verifica links internos da documentação |
+
+Para detalhes de uso, consulte [docs/VALIDATION_SCRIPTS.md](docs/VALIDATION_SCRIPTS.md).
 
 ---
 
