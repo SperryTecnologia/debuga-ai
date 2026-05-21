@@ -200,12 +200,3 @@ Documentação pública sob licença MIT. O código de produção da plataforma 
 Para informações sobre licenciamento, demonstrações ou implantação, entre em contato com a Sperry Tecnologia.
 
 ---
-
-## Contato
-
-**Sperry Tecnologia**
-- Site: [sperrytecnologia.com.br](https://www.sperrytecnologia.com.br)
-- Plataforma: [debuga.ai](https://debuga.ai)
-- E-mail: contato@sperry.dev.br
-- GitHub: [SperryTecnologia](https://github.com/SperryTecnologia)
-- WhatsApp: [+55 48 99161-0953](https://wa.me/5548991610953)
