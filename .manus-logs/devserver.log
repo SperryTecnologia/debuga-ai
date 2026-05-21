@@ -3060,3 +3060,106 @@
 [2026-05-21T07:42:57.667Z] }
 [2026-05-21T07:42:57.668Z] 
 [2026-05-21T07:42:57.668Z] Node.js v22.13.0
+[2026-05-21T19:07:32.917Z] 3:07:32 PM [vite] (client) hmr update /src/App.tsx, /src/index.css
+[2026-05-21T19:07:32.928Z] 3:07:32 PM [vite] (client) hmr update /src/pages/Home.tsx, /src/index.css
+[2026-05-21T19:09:29.732Z] 3:09:29 PM [vite] (client) hmr update /src/index.css
+[2026-05-21T19:10:16.501Z] 3:10:16 PM [tsx] change in ./server/routers.ts Restarting...
+[2026-05-21T19:10:18.126Z] c[LLM Config] ─────────────────────────────────────
+[2026-05-21T19:10:18.127Z] [LLM Config] Provider active: forge
+[2026-05-21T19:10:18.127Z] [LLM Config] Cloud URL configured: yes
+[2026-05-21T19:10:18.128Z] [LLM Config] Cloud Key configured: yes (AGi9...)
+[2026-05-21T19:10:18.128Z] [LLM Config] Cloud Model: gemini-2.5-flash
+[2026-05-21T19:10:18.128Z] [LLM Config] Fallback provider: none
+[2026-05-21T19:10:18.129Z] [LLM Config] Forge fallback enabled: yes
+[2026-05-21T19:10:18.129Z] [LLM Config] Local GPU: disabled
+[2026-05-21T19:10:18.129Z] [LLM Config] Local GPU fallback: enabled
+[2026-05-21T19:10:18.130Z] [LLM Config] Local GPU timeout: 120s
+[2026-05-21T19:10:18.130Z] [LLM Config] ─────────────────────────────────────
+[2026-05-21T19:10:18.966Z] [RateLimiter] Rate limiting enabled
+[2026-05-21T19:10:18.967Z] [Storage] Asset proxy registered at /api/assets/:key
+[2026-05-21T19:10:18.968Z] [OAuth] Google OAuth: enabled
+[2026-05-21T19:10:18.968Z] [OAuth] AUTH_BASE_URL: (auto-detect from request)
+[2026-05-21T19:10:18.969Z] [OAuth] GOOGLE_CLIENT_ID is empty — Google OAuth will not work
+[2026-05-21T19:10:18.969Z] [LocalAuth] Local login enabled
+[2026-05-21T19:10:18.970Z] [EmailVerification] Routes registered
+[2026-05-21T19:10:19.853Z] [LLM Config] ─────────────────────────────────────
+[2026-05-21T19:10:19.854Z] [LLM Config] Provider active: forge
+[2026-05-21T19:10:19.855Z] [LLM Config] Cloud URL configured: yes
+[2026-05-21T19:10:19.855Z] [LLM Config] Cloud Key configured: yes (AGi9...)
+[2026-05-21T19:10:19.856Z] [LLM Config] Cloud Model: gemini-2.5-flash
+[2026-05-21T19:10:19.856Z] [LLM Config] Fallback provider: none
+[2026-05-21T19:10:19.857Z] [LLM Config] Forge fallback enabled: yes
+[2026-05-21T19:10:19.857Z] [LLM Config] Local GPU: disabled
+[2026-05-21T19:10:19.857Z] [LLM Config] Local GPU fallback: enabled
+[2026-05-21T19:10:19.858Z] [LLM Config] Local GPU timeout: 120s
+[2026-05-21T19:10:19.859Z] [LLM Config] ─────────────────────────────────────
+[2026-05-21T19:10:19.859Z] Server running on http://localhost:3000/
+[2026-05-21T19:10:19.881Z] [Database] Connection test FAILED: There was an error establishing an SSL connection
+[2026-05-21T19:10:19.882Z] [Database]   DATABASE_URL host: gateway02.us-east-1.prod.aws.tidbcloud.com
+[2026-05-21T19:10:19.883Z] [Database]   DATABASE_URL user: pNiV3hkTGADEQu8.7c5e28ef3035
+[2026-05-21T19:10:19.883Z] [Database]   Likely cause: password mismatch. Run: bash scripts/sync-postgres-password.sh
+[2026-05-21T19:10:19.900Z] [Boot] Database connection FAILED: Failed query: SELECT 1
+[2026-05-21T19:10:19.902Z] params:
+[2026-05-21T19:10:19.903Z] [Boot]   Fix: bash scripts/sync-postgres-password.sh
+[2026-05-21T19:11:47.974Z] Dev server process group stopped
+[2026-05-21T19:11:47.980Z] ELIFECYCLE  Command failed.
+[2026-05-21T19:11:48.064Z] Dev server exited with code -15
+[2026-05-21T19:11:51.020Z] Starting dev server with command: pnpm run dev
+[2026-05-21T19:11:51.980Z] 
+[2026-05-21T19:11:51.981Z] > debuga-ai@1.0.0 dev /home/ubuntu/debuga-ai
+[2026-05-21T19:11:51.982Z] > NODE_ENV=development tsx watch server/_core/index.ts
+[2026-05-21T19:11:51.982Z] 
+[2026-05-21T19:11:53.964Z] [LLM Config] ─────────────────────────────────────
+[2026-05-21T19:11:53.965Z] [LLM Config] Provider active: forge
+[2026-05-21T19:11:53.966Z] [LLM Config] Cloud URL configured: yes
+[2026-05-21T19:11:53.967Z] [LLM Config] Cloud Key configured: yes (AGi9...)
+[2026-05-21T19:11:53.968Z] [LLM Config] Cloud Model: gemini-2.5-flash
+[2026-05-21T19:11:53.968Z] [LLM Config] Fallback provider: none
+[2026-05-21T19:11:53.968Z] [LLM Config] Forge fallback enabled: yes
+[2026-05-21T19:11:53.969Z] [LLM Config] Local GPU: disabled
+[2026-05-21T19:11:53.969Z] [LLM Config] Local GPU fallback: enabled
+[2026-05-21T19:11:53.970Z] [LLM Config] Local GPU timeout: 120s
+[2026-05-21T19:11:53.970Z] [LLM Config] ─────────────────────────────────────
+[2026-05-21T19:11:54.748Z] [RateLimiter] Rate limiting enabled
+[2026-05-21T19:11:54.749Z] [Storage] Asset proxy registered at /api/assets/:key
+[2026-05-21T19:11:54.750Z] [OAuth] Google OAuth: enabled
+[2026-05-21T19:11:54.750Z] [OAuth] AUTH_BASE_URL: (auto-detect from request)
+[2026-05-21T19:11:54.750Z] [OAuth] GOOGLE_CLIENT_ID is empty — Google OAuth will not work
+[2026-05-21T19:11:54.752Z] [LocalAuth] Local login enabled
+[2026-05-21T19:11:54.752Z] [EmailVerification] Routes registered
+[2026-05-21T19:11:55.601Z] [LLM Config] ─────────────────────────────────────
+[2026-05-21T19:11:55.602Z] [LLM Config] Provider active: forge
+[2026-05-21T19:11:55.602Z] [LLM Config] Cloud URL configured: yes
+[2026-05-21T19:11:55.603Z] [LLM Config] Cloud Key configured: yes (AGi9...)
+[2026-05-21T19:11:55.603Z] [LLM Config] Cloud Model: gemini-2.5-flash
+[2026-05-21T19:11:55.603Z] [LLM Config] Fallback provider: none
+[2026-05-21T19:11:55.604Z] [LLM Config] Forge fallback enabled: yes
+[2026-05-21T19:11:55.604Z] [LLM Config] Local GPU: disabled
+[2026-05-21T19:11:55.604Z] [LLM Config] Local GPU fallback: enabled
+[2026-05-21T19:11:55.605Z] [LLM Config] Local GPU timeout: 120s
+[2026-05-21T19:11:55.605Z] [LLM Config] ─────────────────────────────────────
+[2026-05-21T19:11:55.605Z] Server running on http://localhost:3000/
+[2026-05-21T19:11:55.631Z] [Database] Connection test FAILED: There was an error establishing an SSL connection
+[2026-05-21T19:11:55.632Z] [Database]   DATABASE_URL host: gateway02.us-east-1.prod.aws.tidbcloud.com
+[2026-05-21T19:11:55.633Z] [Database]   DATABASE_URL user: pNiV3hkTGADEQu8.7c5e28ef3035
+[2026-05-21T19:11:55.633Z] [Database]   Likely cause: password mismatch. Run: bash scripts/sync-postgres-password.sh
+[2026-05-21T19:11:55.652Z] [Boot] Database connection FAILED: Failed query: SELECT 1
+[2026-05-21T19:11:55.653Z] params:
+[2026-05-21T19:11:55.654Z] [Boot]   Fix: bash scripts/sync-postgres-password.sh
+[2026-05-21T19:12:28.066Z] 3:12:28 PM [vite] (client) page reload index.html
+[2026-05-21T19:12:28.073Z] 3:12:28 PM [vite] (client) page reload src/const.ts
+[2026-05-21T19:12:28.074Z] 3:12:28 PM [vite] (client) hmr update /src/index.css
+[2026-05-21T19:12:28.074Z] 3:12:28 PM [vite] (client) page reload src/main.tsx
+[2026-05-21T19:12:28.075Z] 3:12:28 PM [vite] (client) hmr update /src/pages/AccountPage.tsx, /src/index.css
+[2026-05-21T19:12:28.075Z] 3:12:28 PM [vite] (client) hmr update /src/pages/BillingPage.tsx, /src/index.css
+[2026-05-21T19:12:28.076Z] 3:12:28 PM [vite] (client) hmr update /src/pages/ChatPage.tsx, /src/index.css
+[2026-05-21T19:12:28.077Z] 3:12:28 PM [vite] (client) hmr update /src/pages/DemoWebAnalysis.tsx, /src/index.css
+[2026-05-21T19:12:28.077Z] 3:12:28 PM [vite] (client) hmr update /src/pages/ForgotPasswordPage.tsx, /src/index.css
+[2026-05-21T19:12:28.077Z] 3:12:28 PM [vite] (client) hmr update /src/pages/LoginPage.tsx, /src/index.css
+[2026-05-21T19:12:28.078Z] 3:12:28 PM [vite] (client) hmr update /src/pages/LogoutSuccess.tsx, /src/index.css
+[2026-05-21T19:12:28.078Z] 3:12:28 PM [vite] (client) hmr update /src/pages/NotFound.tsx, /src/index.css
+[2026-05-21T19:12:28.078Z] 3:12:28 PM [vite] (client) hmr update /src/pages/PricingPage.tsx, /src/index.css
+[2026-05-21T19:12:28.079Z] 3:12:28 PM [vite] (client) hmr update /src/pages/PrivacyPage.tsx, /src/index.css
+[2026-05-21T19:12:28.079Z] 3:12:28 PM [vite] (client) hmr update /src/pages/ResetPasswordPage.tsx, /src/index.css
+[2026-05-21T19:12:28.079Z] 3:12:28 PM [vite] (client) hmr update /src/pages/TermsPage.tsx, /src/index.css
+[2026-05-21T19:12:28.089Z] 3:12:28 PM [vite] changed tsconfig file detected: /home/ubuntu/debuga-ai/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.

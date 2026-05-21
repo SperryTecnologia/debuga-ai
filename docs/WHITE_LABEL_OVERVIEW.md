@@ -18,7 +18,7 @@ Este documento detalha os modelos de implantação disponíveis, a matriz de per
 
 ```mermaid
 mindmap
-  root((White Label<br/>debuga.ai))
+  root((White Label - debuga.ai))
     Receita
       Produto próprio
       Precificação livre
@@ -53,9 +53,9 @@ A plataforma suporta três modelos de implantação, cada um adequado a um perfi
 graph TB
     subgraph "Modelo 1 — Infraestrutura Própria"
         OP1[Operador]
-        SRV1[Servidor Dedicado<br/>Cloud / VPS / On-premise]
-        APP1[debuga.ai<br/>Docker Compose]
-        GPU1[GPU Local<br/>Ollama + CUDA]
+        SRV1["Servidor Dedicado - Cloud / VPS / On-premise"]
+        APP1[debuga.ai - Docker Compose]
+        GPU1[GPU Local - Ollama + CUDA]
         OP1 -->|Gerencia| SRV1
         SRV1 --> APP1
         SRV1 --> GPU1
@@ -63,8 +63,8 @@ graph TB
 
     subgraph "Modelo 2 — SaaS Gerenciado"
         OP2[Operador]
-        SPERRY[Sperry Tecnologia<br/>Infraestrutura gerenciada]
-        APP2[debuga.ai<br/>Instância dedicada]
+        SPERRY[Sperry Tecnologia - Infraestrutura gerenciada]
+        APP2[debuga.ai - Instância dedicada]
         OP2 -->|Contrata| SPERRY
         SPERRY -->|Opera| APP2
     end
@@ -72,8 +72,8 @@ graph TB
     subgraph "Modelo 3 — Híbrido"
         OP3[Operador]
         SRV3[Servidor do Operador]
-        APP3[debuga.ai<br/>Docker Compose]
-        SUPORTE[Sperry<br/>Suporte + Updates]
+        APP3[debuga.ai - Docker Compose]
+        SUPORTE[Sperry - Suporte + Updates]
         OP3 -->|Infraestrutura| SRV3
         SRV3 --> APP3
         SUPORTE -->|Mantém| APP3
@@ -114,31 +114,31 @@ O operador fornece a infraestrutura e a Sperry realiza a operação remota: moni
 ```mermaid
 graph LR
     subgraph "Identidade Visual"
-        LOGO[Logo<br/>Upload via Admin]
-        CORES[Paleta de Cores<br/>CSS Variables]
-        FONTE[Tipografia<br/>Google Fonts]
-        FAVICON[Favicon<br/>Upload via Admin]
+        LOGO[Logo - Upload via Admin]
+        CORES[Paleta de Cores - CSS Variables]
+        FONTE[Tipografia - Google Fonts]
+        FAVICON[Favicon - Upload via Admin]
     end
 
     subgraph "Domínio e Comunicação"
-        DOMAIN[Domínio Próprio<br/>DNS + SSL automático]
-        EMAIL[Email Transacional<br/>SMTP / Brevo]
-        LANDING[Landing Page<br/>Textos + CTAs]
-        LEGAL[Páginas Legais<br/>Termos + Privacidade]
+        DOMAIN[Domínio Próprio - DNS + SSL automático]
+        EMAIL["Email Transacional - SMTP / Brevo"]
+        LANDING[Landing Page - Textos + CTAs]
+        LEGAL[Páginas Legais - Termos + Privacidade]
     end
 
     subgraph "Produto e Billing"
-        PLANS[Planos<br/>Stripe Products]
-        LIMITS[Limites de Uso<br/>Diário + Mensal]
-        FEATURES[Features por Plano<br/>Granular]
-        TRIAL[Trial Period<br/>Configurável]
+        PLANS[Planos - Stripe Products]
+        LIMITS[Limites de Uso - Diário + Mensal]
+        FEATURES[Features por Plano - Granular]
+        TRIAL[Trial Period - Configurável]
     end
 
     subgraph "Técnico"
-        PROVIDERS[Providers de IA<br/>Prioridade configurável]
-        GPUCONF[GPU Local<br/>Modelo + Quantização]
-        TOOLS[Ferramentas<br/>Habilitação por plano]
-        RETENTION[Retenção de Dados<br/>Políticas do operador]
+        PROVIDERS[Providers de IA - Prioridade configurável]
+        GPUCONF[GPU Local - Modelo + Quantização]
+        TOOLS[Ferramentas - Habilitação por plano]
+        RETENTION[Retenção de Dados - Políticas do operador]
     end
 ```
 
@@ -229,30 +229,30 @@ sequenceDiagram
 ```mermaid
 graph TB
     subgraph "Papéis LGPD"
-        CONTROLADOR[Operador = Controlador<br/>Define finalidade do tratamento]
-        OPERADOR_LGPD[Sperry = Operador<br/>Trata dados sob instrução]
-        TITULAR[Usuário Final = Titular<br/>Direitos garantidos]
+        CONTROLADOR[Operador = Controlador - Define finalidade do tratamento]
+        OPERADOR_LGPD[Sperry = Operador - Trata dados sob instrução]
+        TITULAR[Usuário Final = Titular - Direitos garantidos]
     end
 
     subgraph "Bases Legais"
-        CONSENTIMENTO[Consentimento<br/>Termos de uso aceitos]
-        CONTRATO[Execução de Contrato<br/>Prestação do serviço]
-        LEGITIMO[Interesse Legítimo<br/>Segurança e auditoria]
+        CONSENTIMENTO[Consentimento - Termos de uso aceitos]
+        CONTRATO[Execução de Contrato - Prestação do serviço]
+        LEGITIMO[Interesse Legítimo - Segurança e auditoria]
     end
 
     subgraph "Direitos do Titular"
         ACESSO[Acesso aos dados]
         CORRECAO[Correção]
-        EXCLUSAO[Exclusão / Portabilidade]
+        EXCLUSAO["Exclusão / Portabilidade"]
         REVOGACAO[Revogação de consentimento]
     end
 
     subgraph "Medidas Técnicas"
-        CRYPTO[Criptografia<br/>Trânsito + Repouso]
-        ISOLAMENTO[Isolamento<br/>Por tenant]
-        AUDITORIA[Auditoria<br/>Logs imutáveis]
-        RETENCAO[Retenção<br/>Configurável]
-        ANONIMIZACAO[Anonimização<br/>Dados de analytics]
+        CRYPTO[Criptografia - Trânsito + Repouso]
+        ISOLAMENTO[Isolamento - Por tenant]
+        AUDITORIA[Auditoria - Logs imutáveis]
+        RETENCAO[Retenção - Configurável]
+        ANONIMIZACAO[Anonimização - Dados de analytics]
     end
 
     CONTROLADOR --> CONSENTIMENTO
@@ -310,21 +310,21 @@ A adoção da debuga.ai como produto white label gera retorno em múltiplas dime
 ```mermaid
 graph LR
     subgraph "Investimento"
-        LICENCA[Licença<br/>White Label]
-        INFRA[Infraestrutura<br/>Servidor + GPU]
-        SETUP[Setup<br/>Implantação]
+        LICENCA[Licença - White Label]
+        INFRA[Infraestrutura - Servidor + GPU]
+        SETUP[Setup - Implantação]
     end
 
     subgraph "Retorno Direto"
-        RECEITA[Receita de<br/>Assinaturas]
-        UPSELL[Upsell de<br/>Planos Premium]
-        RETENCAO2[Retenção de<br/>Clientes]
+        RECEITA[Receita de - Assinaturas]
+        UPSELL[Upsell de - Planos Premium]
+        RETENCAO2[Retenção de - Clientes]
     end
 
     subgraph "Retorno Indireto"
-        EFICIENCIA[Eficiência<br/>Operacional]
-        DIFERENCIAL[Diferencial<br/>Competitivo]
-        ESCALA[Escala sem<br/>Contratação]
+        EFICIENCIA[Eficiência - Operacional]
+        DIFERENCIAL[Diferencial - Competitivo]
+        ESCALA[Escala sem - Contratação]
     end
 
     LICENCA --> RECEITA
@@ -361,30 +361,30 @@ graph LR
 ```mermaid
 graph TB
     subgraph "Monitoramento"
-        ZABBIX[Zabbix<br/>Alertas + Métricas]
-        GRAFANA[Grafana<br/>Dashboards]
-        PROMETHEUS[Prometheus<br/>Time Series]
+        ZABBIX[Zabbix - Alertas + Métricas]
+        GRAFANA[Grafana - Dashboards]
+        PROMETHEUS[Prometheus - Time Series]
     end
 
     subgraph "ITSM"
-        GLPI[GLPI<br/>Tickets]
-        OTRS[OTRS<br/>Service Desk]
-        JIRA[Jira<br/>Issues]
+        GLPI[GLPI - Tickets]
+        OTRS[OTRS - Service Desk]
+        JIRA[Jira - Issues]
     end
 
     subgraph "Comunicação"
-        WHATSAPP[WhatsApp<br/>Business API]
-        TELEGRAM[Telegram<br/>Bot API]
-        TEAMS[Microsoft Teams<br/>Webhook]
+        WHATSAPP[WhatsApp - Business API]
+        TELEGRAM[Telegram - Bot API]
+        TEAMS[Microsoft Teams - Webhook]
     end
 
     subgraph "Infraestrutura"
-        ANSIBLE[Ansible<br/>Automação]
-        MIKROTIK[MikroTik<br/>RouterOS API]
-        UNIFI[UniFi<br/>Network API]
+        ANSIBLE[Ansible - Automação]
+        MIKROTIK[MikroTik - RouterOS API]
+        UNIFI[UniFi - Network API]
     end
 
-    DEBUGA[debuga.ai<br/>Agente Autônomo]
+    DEBUGA[debuga.ai - Agente Autônomo]
     ZABBIX --> DEBUGA
     GRAFANA --> DEBUGA
     PROMETHEUS --> DEBUGA
@@ -440,7 +440,7 @@ Para iniciar o processo de implantação white label:
 4. **Implantação** — Deploy, personalização e validação
 5. **Go-live** — Produto ativo com sua marca
 
-**Contato:** contato@sperrytecnologia.com.br
+**Contato:** [sperrytecnologia.com.br](https://www.sperrytecnologia.com.br)
 
 ---
 
@@ -456,4 +456,4 @@ Para iniciar o processo de implantação white label:
 
 ---
 
-*Sperry Tecnologia — [sperrytecnologia.com.br](https://www.sperrytecnologia.com.br) — contato@sperrytecnologia.com.br*
+*Sperry Tecnologia — [sperrytecnologia.com.br](https://www.sperrytecnologia.com.br)*

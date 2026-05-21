@@ -694,3 +694,34 @@
 - [x] Replicar no pacote homolog
 - [x] Atualizar docs (.env.example, 02-CONFIGURACAO-ENV.md, 13-WHITE-LABEL.md)
 - [x] Validar builds e gerar ZIP
+
+## Revisão UX Chat + Diagram Studio Premium (Mai 2026)
+
+### UX Chat - Empty State
+- [x] Sugestões colapsadas com botão "Ver mais" (inicialmente mostra 3)
+- [x] Input como centro visual da tela no empty state
+- [x] Atalhos discretos abaixo do input (Shift+Enter, Ctrl+V)
+- [x] Placeholder atualizado: "Descreva seu problema de TI, infraestrutura ou segurança..."
+
+### Parser Robusto de diagram-spec
+- [x] Detectar JSON sem fence (unfenced diagram-spec)
+- [x] Validar campos obrigatórios (nodes, edges, title)
+- [x] Normalizar formatos legados (groups→zones, source/target→from/to)
+- [x] Reparar automaticamente JSON com campos faltantes
+
+### Visual Premium NetworkDiagramRenderer
+- [x] Swimlanes enterprise com cores por zona
+- [x] Ícones SVG para cada tipo de node (firewall, router, switch, etc.)
+- [x] Badges de metadados (IP, VLAN, porta)
+- [x] Legenda automática de tipos de nodes
+- [x] Fullscreen modal com zoom/pan
+- [x] Suporte a edge styles (solid, dashed, animated)
+- [x] Painel de metadados premium (summary, securityNotes, nextSteps)
+
+### Provider Premium para Diagramas
+- [x] Prompt backend atualizado com novos campos (zones, from/to, summary, securityNotes, nextSteps)
+- [x] Novos tipos de nodes: backup, monitor, waf, cdn, vpn, cache
+- [x] Template de diagrama premium no ChatPage atualizado com novo formato
+
+### Testes
+- [x] Testes unitários para diagramProvider (17 testes passando)

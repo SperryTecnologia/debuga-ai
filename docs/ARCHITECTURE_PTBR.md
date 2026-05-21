@@ -13,50 +13,50 @@ A debuga.ai é construída sobre uma arquitetura em camadas com separação clar
 ```mermaid
 graph TB
     subgraph "Internet"
-        USER[Usuário / Operador]
+        USER["Usuário / Operador"]
     end
 
     subgraph "Perímetro — Cloudflare"
-        CF[WAF + DDoS<br/>DNS Proxy]
+        CF[WAF + DDoS - DNS Proxy]
     end
 
     subgraph "Proxy Reverso — NGINX"
-        NGINX[TLS Termination<br/>Rate Limiting<br/>Static Files]
+        NGINX[TLS Termination - Rate Limiting - Static Files]
     end
 
     subgraph "Aplicação — Node.js"
         direction TB
         subgraph "Frontend — React 19"
-            CHAT[Chat UI<br/>Streaming SSE]
-            ADMIN[Admin Panel<br/>shadcn/ui]
-            LAND[Landing Page<br/>White Label]
+            CHAT[Chat UI - Streaming SSE]
+            ADMIN["Admin Panel - shadcn/ui"]
+            LAND[Landing Page - White Label]
         end
         subgraph "Backend — Express + tRPC"
-            AUTH[Auth Module<br/>JWT + OAuth 2.0]
-            BILLING[Billing Module<br/>Stripe Webhooks]
-            STREAM[Stream Module<br/>SSE + Tool Calling]
-            APIADM[Admin API<br/>Gestão + Métricas]
+            AUTH[Auth Module - JWT + OAuth 2.0]
+            BILLING[Billing Module - Stripe Webhooks]
+            STREAM[Stream Module - SSE + Tool Calling]
+            APIADM[Admin API - Gestão + Métricas]
         end
     end
 
     subgraph "Orquestração"
-        AGENT[Agente Autônomo<br/>Reasoning Loop]
-        ROUTER[LLM Router<br/>Priority + Fallback]
-        TOOLKIT[Toolkit<br/>DNS/SSL/HTTP/WHOIS/Port]
+        AGENT[Agente Autônomo - Reasoning Loop]
+        ROUTER[LLM Router - Priority + Fallback]
+        TOOLKIT["Toolkit - DNS/SSL/HTTP/WHOIS/Port"]
     end
 
     subgraph "Inferência"
-        OLLAMA[Ollama<br/>GPU Local + CUDA]
-        OPENAI[OpenAI<br/>GPT-4o / o1]
-        ANTHROPIC[Anthropic<br/>Claude 3.5]
-        GEMINI[Google Gemini<br/>2.0 Flash / Pro]
-        OPENROUTER[OpenRouter<br/>Multi-model]
+        OLLAMA[Ollama - GPU Local + CUDA]
+        OPENAI["OpenAI - GPT-4o / o1"]
+        ANTHROPIC[Anthropic - Claude 3.5]
+        GEMINI["Google Gemini - 2.0 Flash / Pro"]
+        OPENROUTER[OpenRouter - Multi-model]
     end
 
     subgraph "Persistência"
-        PG[(PostgreSQL 16<br/>Dados + Auditoria)]
-        MINIO[(MinIO / S3<br/>Objetos + Uploads)]
-        REDIS[(Redis<br/>Cache + Sessions)]
+        PG[(PostgreSQL 16 - Dados + Auditoria)]
+        MINIO[("MinIO S3 - Objetos + Uploads")]
+        REDIS[(Redis - Cache + Sessions)]
     end
 
     USER --> CF --> NGINX
@@ -93,24 +93,24 @@ graph LR
     subgraph "React 19 SPA"
         direction TB
         ROUTER2[Wouter Router]
-        ROUTER2 --> HOME[Home / Landing]
-        ROUTER2 --> LOGIN[Login / Register]
+        ROUTER2 --> HOME["Home / Landing"]
+        ROUTER2 --> LOGIN["Login / Register"]
         ROUTER2 --> CHATPAGE[Chat Interface]
         ROUTER2 --> ADMINPAGE[Admin Dashboard]
-        ROUTER2 --> ACCOUNT[Account / Billing]
+        ROUTER2 --> ACCOUNT["Account / Billing"]
     end
 
     subgraph "Componentes Core"
-        CHATBOX[AIChatBox<br/>Streaming + Markdown]
-        TURNSTILE[Turnstile Widget<br/>Anti-bot]
-        SIDEBAR[Dashboard Layout<br/>Sidebar + Nav]
-        THEME[Theme Provider<br/>Dark / Light]
+        CHATBOX[AIChatBox - Streaming + Markdown]
+        TURNSTILE[Turnstile Widget - Anti-bot]
+        SIDEBAR[Dashboard Layout - Sidebar + Nav]
+        THEME["Theme Provider - Dark / Light"]
     end
 
     subgraph "Estado e Comunicação"
-        TRPC[tRPC Client<br/>Type-safe RPC]
-        AUTHCTX[Auth Context<br/>useAuth Hook]
-        QUERY[TanStack Query<br/>Cache + Revalidation]
+        TRPC[tRPC Client - Type-safe RPC]
+        AUTHCTX[Auth Context - useAuth Hook]
+        QUERY[TanStack Query - Cache + Revalidation]
     end
 
     CHATPAGE --> CHATBOX
@@ -140,26 +140,26 @@ A API utiliza tRPC para comunicação type-safe end-to-end entre frontend e back
 graph TB
     subgraph "Express Server"
         direction TB
-        CORS[CORS + Trust Proxy]
-        COOKIE[Cookie Parser<br/>Signed Cookies]
-        TRPCMW[tRPC Middleware<br/>Context Builder]
+        CORS["CORS + Trust Proxy"]
+        COOKIE["Cookie Parser - Signed Cookies"]
+        TRPCMW["tRPC Middleware - Context Builder"]
     end
 
     subgraph "tRPC Router"
         direction TB
-        AUTHROUTER[auth.*<br/>me / logout]
-        CHATROUTER[chat.*<br/>list / create / stream]
-        ADMINROUTER[admin.*<br/>users / settings / metrics]
-        ACCOUNTROUTER[account.*<br/>profile / billing / usage]
-        SYSTEMROUTER[system.*<br/>health / notify]
+        AUTHROUTER["auth.* — me / logout"]
+        CHATROUTER["chat.* — list / create / stream"]
+        ADMINROUTER["admin.* — users / settings / metrics"]
+        ACCOUNTROUTER["account.* — profile / billing / usage"]
+        SYSTEMROUTER["system.* — health / notify"]
     end
 
     subgraph "Endpoints REST"
-        OAUTH[/api/oauth/callback<br/>Google OAuth]
-        LOCALAUTH[/api/auth/*<br/>register / login / verify]
-        STRIPE[/api/stripe/webhook<br/>Stripe Events]
-        HEALTH[/api/health<br/>Health Check]
-        STREAMEP[/api/stream<br/>SSE Streaming]
+        OAUTH["OAuth callback — Google"]
+        LOCALAUTH["Auth — register / login / verify"]
+        STRIPE["Stripe webhook — Events"]
+        HEALTH["Health — status check"]
+        STREAMEP["Stream — SSE Streaming"]
     end
 
     CORS --> COOKIE --> TRPCMW
@@ -236,29 +236,29 @@ O roteador seleciona o provider mais adequado com base em uma cadeia de priorida
 
 ```mermaid
 flowchart TD
-    START[Nova Requisição<br/>de Inferência] --> CHECK1{GPU Local<br/>disponível?}
+    START[Nova Requisição - de Inferência] --> CHECK1{GPU Local - disponível?}
 
-    CHECK1 -->|Sim| OLLAMA[Ollama<br/>Custo: Zero<br/>Latência: Baixa]
-    CHECK1 -->|Não| CHECK2{Gemini<br/>configurado?}
+    CHECK1 -->|Sim| OLLAMA[Ollama - Custo: Zero - Latência: Baixa]
+    CHECK1 -->|Não| CHECK2{Gemini - configurado?}
 
-    CHECK2 -->|Sim| GEMINI[Google Gemini<br/>Custo: Baixo<br/>Contexto: 1M tokens]
-    CHECK2 -->|Não| CHECK3{OpenAI<br/>configurado?}
+    CHECK2 -->|Sim| GEMINI[Google Gemini - Custo: Baixo - Contexto: 1M tokens]
+    CHECK2 -->|Não| CHECK3{OpenAI - configurado?}
 
-    CHECK3 -->|Sim| OPENAI[OpenAI<br/>Custo: Médio<br/>Raciocínio: Excelente]
-    CHECK3 -->|Não| CHECK4{Anthropic<br/>configurado?}
+    CHECK3 -->|Sim| OPENAI[OpenAI - Custo: Médio - Raciocínio: Excelente]
+    CHECK3 -->|Não| CHECK4{Anthropic - configurado?}
 
-    CHECK4 -->|Sim| ANTHROPIC[Anthropic<br/>Custo: Médio<br/>Análise: Excelente]
-    CHECK4 -->|Não| CHECK5{OpenRouter<br/>configurado?}
+    CHECK4 -->|Sim| ANTHROPIC[Anthropic - Custo: Médio - Análise: Excelente]
+    CHECK4 -->|Não| CHECK5{OpenRouter - configurado?}
 
-    CHECK5 -->|Sim| OPENROUTER[OpenRouter<br/>Custo: Variável<br/>Multi-model]
-    CHECK5 -->|Não| ERROR[Erro: Nenhum<br/>provider disponível]
+    CHECK5 -->|Sim| OPENROUTER[OpenRouter - Custo: Variável - Multi-model]
+    CHECK5 -->|Não| ERROR[Erro: Nenhum - provider disponível]
 
-    OLLAMA --> LOG[Registra provider<br/>+ tokens + latência]
+    OLLAMA --> LOG[Registra provider - + tokens + latência]
     GEMINI --> LOG
     OPENAI --> LOG
     ANTHROPIC --> LOG
     OPENROUTER --> LOG
-    LOG --> RETURN[Retorna resposta<br/>ao agente]
+    LOG --> RETURN[Retorna resposta - ao agente]
 ```
 
 | Provider | Prioridade | Tipo | Modelo Padrão | Caso de Uso |
@@ -281,17 +281,17 @@ A inferência local utiliza Ollama com suporte a NVIDIA CUDA, permitindo que dad
 graph LR
     subgraph "Servidor do Operador"
         subgraph "Docker — Ollama Container"
-            OLLAMA2[Ollama Server<br/>:11434]
-            MODEL[Modelo Ativo<br/>Qwen 2.5 Coder 32B]
-            CUDA[NVIDIA CUDA<br/>GPU Runtime]
+            OLLAMA2[Ollama Server - :11434]
+            MODEL[Modelo Ativo - Qwen 2.5 Coder 32B]
+            CUDA[NVIDIA CUDA - GPU Runtime]
         end
         subgraph "Docker — App Container"
-            APP[debuga-app<br/>Node.js]
+            APP[debuga-app - Node.js]
         end
         subgraph "Hardware"
-            GPU2[NVIDIA GPU<br/>24+ GB VRAM]
-            RAM2[RAM do Sistema<br/>32+ GB]
-            NVME[NVMe Storage<br/>Modelos + Dados]
+            GPU2[NVIDIA GPU - 24+ GB VRAM]
+            RAM2[RAM do Sistema - 32+ GB]
+            NVME[NVMe Storage - Modelos + Dados]
         end
     end
 
@@ -412,42 +412,42 @@ erDiagram
 ```mermaid
 graph TB
     subgraph "Camada 1 — Perímetro"
-        CF2[Cloudflare WAF<br/>DDoS + Bot Management]
-        DNS2[DNS Proxy<br/>IP oculto]
+        CF2[Cloudflare WAF - DDoS + Bot Management]
+        DNS2[DNS Proxy - IP oculto]
     end
 
     subgraph "Camada 2 — Transporte"
-        TLS2[TLS 1.3<br/>Let's Encrypt + HSTS]
-        NGINX2[NGINX<br/>Headers de Segurança]
+        TLS2[TLS 1.3 - Let's Encrypt + HSTS]
+        NGINX2[NGINX - Headers de Segurança]
     end
 
     subgraph "Camada 3 — Aplicação"
-        RATE2[Rate Limiting<br/>express-rate-limit]
-        TURNSTILE2[Cloudflare Turnstile<br/>Anti-bot invisível]
-        CORS2[CORS Restritivo<br/>Origin whitelist]
-        CSP[Content Security Policy<br/>script-src + frame-src]
+        RATE2[Rate Limiting - express-rate-limit]
+        TURNSTILE2[Cloudflare Turnstile - Anti-bot invisível]
+        CORS2[CORS Restritivo - Origin whitelist]
+        CSP[Content Security Policy - script-src + frame-src]
     end
 
     subgraph "Camada 4 — Autenticação"
-        BCRYPT[bcrypt<br/>Custo 12]
-        JWT3[JWT Assinado<br/>HS256 + Expiração]
-        OAUTH2[OAuth 2.0<br/>Google]
-        VERIFY[Verificação de Email<br/>Token temporário]
-        LOCKOUT[Account Lockout<br/>Tentativas falhas]
+        BCRYPT[bcrypt - Custo 12]
+        JWT3[JWT Assinado - HS256 + Expiração]
+        OAUTH2[OAuth 2.0 - Google]
+        VERIFY[Verificação de Email - Token temporário]
+        LOCKOUT[Account Lockout - Tentativas falhas]
     end
 
     subgraph "Camada 5 — Autorização"
-        RBAC2[RBAC<br/>admin / user]
-        PLANS2[Planos<br/>Limites por funcionalidade]
-        USAGE[Controle de Uso<br/>Diário + Mensal]
+        RBAC2["RBAC - admin / user"]
+        PLANS2[Planos - Limites por funcionalidade]
+        USAGE[Controle de Uso - Diário + Mensal]
     end
 
     subgraph "Camada 6 — Dados"
-        ENCRYPT2[Criptografia<br/>Em repouso + trânsito]
-        ISOLATE2[Isolamento<br/>Por tenant]
-        AUDIT2[Auditoria<br/>Imutável + UTC]
-        BACKUP2[Backups<br/>Criptografados]
-        MASK[Mascaramento<br/>Secrets em logs]
+        ENCRYPT2[Criptografia - Em repouso + trânsito]
+        ISOLATE2[Isolamento - Por tenant]
+        AUDIT2[Auditoria - Imutável + UTC]
+        BACKUP2[Backups - Criptografados]
+        MASK[Mascaramento - Secrets em logs]
     end
 
     CF2 --> TLS2 --> RATE2 --> TURNSTILE2
@@ -478,25 +478,25 @@ graph TB
 ```mermaid
 graph TB
     subgraph "Internet"
-        USERS2[Usuários]
-        CLOUDFLARE[Cloudflare<br/>DNS + WAF + CDN]
+        USERS2["Usuários"]
+        CLOUDFLARE["Cloudflare - DNS + WAF + CDN"]
     end
 
     subgraph "Servidor do Operador"
         subgraph "Docker Compose"
-            NGINXC[debuga-nginx<br/>:80 / :443<br/>TLS + Proxy]
-            APPC[debuga-app<br/>:3000<br/>Node.js]
-            PGC[debuga-postgres<br/>:5432<br/>PostgreSQL 16]
-            MINIOC[debuga-minio<br/>:9000 / :9001<br/>Object Storage]
-            OLLAMAC[debuga-ollama<br/>:11434<br/>GPU Inference]
-            REDISC[debuga-redis<br/>:6379<br/>Cache]
+            NGINXC["debuga-nginx :80/:443 - TLS + Proxy"]
+            APPC["debuga-app :3000 - Node.js"]
+            PGC["debuga-postgres :5432 - PostgreSQL 16"]
+            MINIOC["debuga-minio :9000/:9001 - Object Storage"]
+            OLLAMAC["debuga-ollama :11434 - GPU Inference"]
+            REDISC["debuga-redis :6379 - Cache"]
         end
 
         subgraph "Volumes Persistentes"
-            PGDATA[/data/debuga/postgres]
-            MINIODATA[/data/debuga/minio]
-            OLLAMADATA[/data/debuga/ollama/models]
-            CERTDATA[/data/debuga/certbot]
+            PGDATA["postgres data"]
+            MINIODATA["minio data"]
+            OLLAMADATA["ollama models"]
+            CERTDATA["certbot certs"]
         end
     end
 
@@ -544,22 +544,22 @@ A GPU é **opcional**. Sem GPU, a plataforma opera exclusivamente com providers 
 ```mermaid
 graph LR
     subgraph "Coleta"
-        APPLOG[App Logs<br/>Structured JSON]
-        NGINXLOG[NGINX Access Log<br/>+ Error Log]
-        PGLOG[PostgreSQL<br/>Slow Queries]
-        DOCKERLOG[Docker<br/>Container Stats]
+        APPLOG[App Logs - Structured JSON]
+        NGINXLOG[NGINX Access Log - + Error Log]
+        PGLOG[PostgreSQL - Slow Queries]
+        DOCKERLOG[Docker - Container Stats]
     end
 
     subgraph "Processamento"
-        AUDIT3[Audit Trail<br/>PostgreSQL]
-        METRICS[Métricas de Uso<br/>Tokens / Latência / Custo]
-        HEALTH2[Health Checks<br/>/api/health]
+        AUDIT3[Audit Trail - PostgreSQL]
+        METRICS["Métricas de Uso - Tokens / Latência / Custo"]
+        HEALTH2["Health Checks - /api/health"]
     end
 
     subgraph "Visualização"
-        ADMINPANEL[Admin Panel<br/>Dashboard integrado]
-        ALERTS[Alertas<br/>Limites de uso]
-        EXPORT[Export<br/>CSV / JSON / SIEM]
+        ADMINPANEL[Admin Panel - Dashboard integrado]
+        ALERTS[Alertas - Limites de uso]
+        EXPORT["Export - CSV / JSON / SIEM"]
     end
 
     APPLOG --> AUDIT3
@@ -674,4 +674,4 @@ A arquitetura suporta crescimento em múltiplas dimensões:
 
 ---
 
-*Sperry Tecnologia — [sperrytecnologia.com.br](https://www.sperrytecnologia.com.br) — contato@sperrytecnologia.com.br*
+*Sperry Tecnologia — [sperrytecnologia.com.br](https://www.sperrytecnologia.com.br)*

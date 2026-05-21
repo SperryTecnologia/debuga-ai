@@ -20,7 +20,7 @@ Equipes técnicas de infraestrutura enfrentam uma convergência de desafios que 
 
 ```mermaid
 mindmap
-  root((Desafios<br/>Operacionais))
+  root((Desafios - Operacionais))
     Complexidade
       Ambientes híbridos
       Multi-cloud
@@ -54,18 +54,18 @@ A debuga.ai resolve esses desafios oferecendo um agente de IA que opera como um 
 ```mermaid
 graph LR
     subgraph "Entrada"
-        A[Consulta do<br/>Operador] --> B[Agente<br/>Autônomo]
+        A[Consulta do - Operador] --> B[Agente - Autônomo]
     end
     subgraph "Processamento"
-        B --> C{Análise de<br/>Contexto}
-        C --> D[Ferramentas<br/>de Diagnóstico]
-        C --> E[Inferência<br/>LLM]
-        C --> F[Geração<br/>Multimodal]
+        B --> C{Análise de - Contexto}
+        C --> D[Ferramentas - de Diagnóstico]
+        C --> E[Inferência - LLM]
+        C --> F[Geração - Multimodal]
     end
     subgraph "Saída"
-        D --> G[Diagnóstico<br/>Técnico]
-        E --> H[Recomendação<br/>Acionável]
-        F --> I[Documentação<br/>Automática]
+        D --> G[Diagnóstico - Técnico]
+        E --> H[Recomendação - Acionável]
+        F --> I[Documentação - Automática]
     end
 ```
 
@@ -108,19 +108,19 @@ A debuga.ai opera em modelo B2B white label, onde o **operador** (MSP, ISP, cons
 ```mermaid
 flowchart TB
     subgraph "Sperry Tecnologia"
-        A[Plataforma<br/>debuga.ai] --> B[Licenciamento<br/>White Label]
-        A --> C[Suporte<br/>Técnico]
-        A --> D[Atualizações<br/>Contínuas]
+        A[Plataforma - debuga.ai] --> B[Licenciamento - White Label]
+        A --> C[Suporte - Técnico]
+        A --> D[Atualizações - Contínuas]
     end
     subgraph "Operador — MSP / ISP / Consultoria"
-        B --> E[Implantação<br/>Marca Própria]
-        E --> F[Definição de<br/>Planos e Preços]
-        F --> G[Billing via<br/>Stripe]
+        B --> E[Implantação - Marca Própria]
+        E --> F[Definição de - Planos e Preços]
+        F --> G[Billing via - Stripe]
     end
     subgraph "Usuários Finais"
-        G --> H[Equipe<br/>Técnica A]
-        G --> I[Equipe<br/>Técnica B]
-        G --> J[Equipe<br/>Técnica C]
+        G --> H[Equipe - Técnica A]
+        G --> I[Equipe - Técnica B]
+        G --> J[Equipe - Técnica C]
     end
 ```
 
@@ -174,28 +174,28 @@ A plataforma é composta por camadas independentes que se comunicam via APIs int
 ```mermaid
 graph TB
     subgraph "Camada de Apresentação"
-        UI[Chat UI<br/>React 19 + Tailwind 4]
-        ADMIN[Painel Admin<br/>shadcn/ui]
-        LP[Landing Page<br/>White Label]
+        UI[Chat UI - React 19 + Tailwind 4]
+        ADMIN["Painel Admin - shadcn/ui"]
+        LP[Landing Page - White Label]
     end
     subgraph "Camada de API"
-        API[tRPC + Express<br/>Type-safe]
-        AUTH[Auth<br/>JWT + OAuth 2.0]
-        BILL[Billing<br/>Stripe Webhooks]
+        API[tRPC + Express - Type-safe]
+        AUTH[Auth - JWT + OAuth 2.0]
+        BILL[Billing - Stripe Webhooks]
     end
     subgraph "Camada de Orquestração"
-        AGENT[Agente Autônomo<br/>Tool Calling Loop]
-        ROUTER[Roteamento LLM<br/>Multi-provider]
-        TOOLS[Ferramentas<br/>DNS/SSL/HTTP/WHOIS/Port]
+        AGENT[Agente Autônomo - Tool Calling Loop]
+        ROUTER[Roteamento LLM - Multi-provider]
+        TOOLS["Ferramentas - DNS/SSL/HTTP/WHOIS/Port"]
     end
     subgraph "Camada de Inferência"
-        GPU[GPU Local<br/>Ollama + CUDA]
-        CLOUD[Providers Cloud<br/>OpenAI / Anthropic / Gemini]
-        IMG[Geração de Imagens<br/>Multimodal]
+        GPU[GPU Local - Ollama + CUDA]
+        CLOUD["Providers Cloud - OpenAI / Anthropic / Gemini"]
+        IMG[Geração de Imagens - Multimodal]
     end
     subgraph "Camada de Persistência"
         PG[(PostgreSQL 16)]
-        S3[(MinIO / S3)]
+        S3["(MinIO / S3)"]
         REDIS[(Redis)]
     end
     UI --> API
@@ -225,22 +225,22 @@ O agente possui acesso a ferramentas especializadas que executa autonomamente du
 ```mermaid
 graph LR
     subgraph "Ferramentas de Rede"
-        DNS[DNS Lookup<br/>A/AAAA/MX/TXT/NS]
-        SSL[SSL Check<br/>Certificados + Chain]
-        HTTP[HTTP Check<br/>Status/Headers/Timing]
-        WHOIS[WHOIS<br/>Domínios + IPs]
-        PORT[Port Scan<br/>TCP/UDP]
+        DNS["DNS Lookup - A/AAAA/MX/TXT/NS"]
+        SSL[SSL Check - Certificados + Chain]
+        HTTP["HTTP Check - Status/Headers/Timing"]
+        WHOIS[WHOIS - Domínios + IPs]
+        PORT["Port Scan - TCP/UDP"]
     end
     subgraph "Ferramentas de Conteúdo"
-        FETCH[Web Fetch<br/>Scraping inteligente]
-        CODE[Execução de Código<br/>Python + Bash]
-        IMGGEN[Geração de Imagens<br/>Diagramas + Topologias]
-        MERMAID[Diagramas Mermaid<br/>Renderização inline]
+        FETCH[Web Fetch - Scraping inteligente]
+        CODE[Execução de Código - Python + Bash]
+        IMGGEN[Geração de Imagens - Diagramas + Topologias]
+        MERMAID[Diagramas Mermaid - Renderização inline]
     end
     subgraph "Ferramentas de Análise"
-        UPLOAD[Análise de Documentos<br/>12+ formatos]
-        VISION[Análise Visual<br/>Screenshots + Topologias]
-        SEARCH[Pesquisa Web<br/>Contexto atualizado]
+        UPLOAD[Análise de Documentos - 12+ formatos]
+        VISION[Análise Visual - Screenshots + Topologias]
+        SEARCH[Pesquisa Web - Contexto atualizado]
     end
 ```
 
@@ -264,20 +264,20 @@ graph LR
 ```mermaid
 graph TB
     subgraph "Perímetro Externo"
-        CF[Cloudflare<br/>WAF + DDoS Protection]
-        TLS[TLS 1.3<br/>Let's Encrypt + HSTS]
+        CF[Cloudflare - WAF + DDoS Protection]
+        TLS[TLS 1.3 - Let's Encrypt + HSTS]
     end
     subgraph "Camada de Aplicação"
-        RATE[Rate Limiting<br/>IP + Usuário]
-        CAPTCHA[Cloudflare Turnstile<br/>Anti-bot]
-        JWT2[JWT Assinado<br/>Sessões com expiração]
-        RBAC[RBAC<br/>Admin / User]
+        RATE[Rate Limiting - IP + Usuário]
+        CAPTCHA[Cloudflare Turnstile - Anti-bot]
+        JWT2[JWT Assinado - Sessões com expiração]
+        RBAC["RBAC - Admin / User"]
     end
     subgraph "Camada de Dados"
-        ENCRYPT[Criptografia<br/>em repouso + trânsito]
-        AUDIT[Auditoria<br/>Logs imutáveis]
-        ISOLATE[Isolamento<br/>Por tenant]
-        BACKUP[Backups<br/>Criptografados + offsite]
+        ENCRYPT[Criptografia - em repouso + trânsito]
+        AUDIT[Auditoria - Logs imutáveis]
+        ISOLATE[Isolamento - Por tenant]
+        BACKUP[Backups - Criptografados + offsite]
     end
     CF --> TLS --> RATE --> CAPTCHA --> JWT2 --> RBAC
     RBAC --> ENCRYPT
@@ -368,4 +368,4 @@ A plataforma está em produção, com operadores ativos e roadmap de evolução 
 
 ---
 
-*Sperry Tecnologia — [sperrytecnologia.com.br](https://www.sperrytecnologia.com.br) — contato@sperrytecnologia.com.br*
+*Sperry Tecnologia — [sperrytecnologia.com.br](https://www.sperrytecnologia.com.br)*
