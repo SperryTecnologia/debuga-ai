@@ -1,6 +1,6 @@
-# debuga.ai — Plataforma White Label de IA Operacional
+# debuga.ai — Plataforma de IA Operacional White Label
 
-**IA operacional para infraestrutura de TI, segurança da informação, DevOps, telecomunicações, automação técnica e suporte especializado.**
+**Inteligência artificial projetada para operações técnicas reais — infraestrutura, segurança, DevOps, telecomunicações e suporte — com governança, auditoria e controle total.**
 
 Desenvolvida por [Sperry Tecnologia](https://www.sperrytecnologia.com.br).
 
@@ -8,7 +8,7 @@ Desenvolvida por [Sperry Tecnologia](https://www.sperrytecnologia.com.br).
 
 ## O que é a debuga.ai
 
-A **debuga.ai** é uma plataforma de inteligência artificial projetada para equipes técnicas que operam infraestrutura, redes, servidores, segurança e telecomunicações. Diferente de assistentes genéricos, a debuga.ai foi construída para o contexto operacional: diagnóstico de falhas, análise de logs, auditoria de segurança, geração de diagramas técnicos e automação de rotinas repetitivas.
+A **debuga.ai** é uma plataforma de IA operacional que combina modelos de linguagem de última geração com base de conhecimento proprietária, automação de tarefas e suporte humano sênior. Diferente de chatbots genéricos, foi construída para o contexto operacional: diagnóstico de falhas, análise de logs, auditoria de segurança, geração de documentação técnica e automação de rotinas.
 
 A plataforma é oferecida como **white label**, permitindo que MSPs, provedores de internet, consultorias de TI e equipes internas operem a solução com marca própria, em infraestrutura dedicada, com controle total sobre dados e custos.
 
@@ -24,28 +24,23 @@ A plataforma é oferecida como **white label**, permitindo que MSPs, provedores 
 | DevOps e SRE | Automação de infraestrutura, troubleshooting |
 | Consultorias de TI | Ferramenta interna de produtividade técnica |
 | Telecomunicações | Configuração de equipamentos, análise de topologia |
+| Cartórios e Governo | Automação de processos, consulta a legislação, atendimento |
 
 ---
 
 ## Principais Capacidades
 
-A plataforma oferece um agente de IA especializado com as seguintes capacidades operacionais:
+**Diagnóstico e Troubleshooting** — Análise de logs de sistemas, firewalls, switches e servidores. Diagnóstico de falhas de rede, conectividade e serviços. Correlação de eventos entre múltiplas fontes.
 
-**Diagnóstico e Troubleshooting** — Análise de logs de sistemas, firewalls, switches e servidores. Diagnóstico de falhas de rede, conectividade e serviços. Correlação de eventos entre múltiplas fontes. Sugestões de resolução baseadas em contexto técnico.
-
-**Segurança da Informação** — Auditoria de configurações e hardening. Análise de vulnerabilidades (CVE). Revisão de políticas de firewall e ACLs. Geração de relatórios de conformidade.
+**Segurança da Informação** — Auditoria de configurações e hardening. Análise de vulnerabilidades (CVE). Revisão de políticas de firewall e ACLs. Relatórios de conformidade.
 
 **Automação Técnica** — Geração de scripts (Bash, Python, PowerShell). Configuração de equipamentos de rede. Templates de IaC (Terraform, Ansible, Docker). Automação de rotinas operacionais.
 
-**Geração Multimodal** — Diagramas de rede e topologia. Documentação técnica estruturada. Imagens e assets para relatórios. Exportação em múltiplos formatos (PDF, PNG, SVG, Markdown).
+**Geração Multimodal** — Diagramas de rede e topologia. Documentação técnica estruturada. Imagens e assets para relatórios. Exportação em múltiplos formatos.
 
-**Ferramentas de Rede Integradas** — DNS lookup, SSL check, HTTP check, WHOIS lookup, port scan, web fetch. Invocadas autonomamente pelo agente durante o loop de raciocínio.
+**Ferramentas de Rede Integradas** — DNS lookup, SSL check, HTTP check, WHOIS, port scan, web fetch — invocadas autonomamente pelo agente durante o raciocínio.
 
-**Análise de Documentos e Imagens** — Suporte a 12+ formatos (PDF, DOCX, TXT, MD, LOG, CONF, JSON, CSV, YAML, XML, SQL). Screenshots, prints de erro, dashboards e topologias analisados visualmente.
-
-**Billing e Planos** — Integração Stripe com assinaturas, controle de consumo por plano, webhooks de ciclo de vida e upgrade/downgrade automático.
-
-**Painel Administrativo** — Gestão de usuários, logs de auditoria, métricas de uso e configuração de planos.
+**Análise de Documentos e Imagens** — Suporte a 12+ formatos (PDF, DOCX, TXT, MD, LOG, CONF, JSON, CSV, YAML, XML, SQL). Screenshots, prints de erro e dashboards analisados visualmente.
 
 ---
 
@@ -53,27 +48,44 @@ A plataforma oferece um agente de IA especializado com as seguintes capacidades 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     NGINX (TLS + Rate Limiting)             │
+│                  CLOUDFLARE (DNS + WAF + Turnstile)          │
+├─────────────────────────────────────────────────────────────┤
+│                  NGINX (TLS 1.3 + Rate Limiting + CSP)       │
 ├─────────────────────────────────────────────────────────────┤
 │  Frontend (React 19 + Tailwind 4 + shadcn/ui)               │
 │  ├── Chat UI com streaming SSE                              │
-│  ├── Painel administrativo                                  │
-│  ├── Landing page white label                               │
-│  └── Renderização de diagramas Mermaid                      │
+│  ├── Painel administrativo completo                         │
+│  ├── Documentação interativa                                │
+│  └── Landing page white label                               │
 ├─────────────────────────────────────────────────────────────┤
-│  Backend (Express 4 + tRPC 11)                              │
+│  Backend (Express 4 + tRPC 11 + TypeScript)                 │
 │  ├── Agente autônomo (loop de raciocínio + tool calling)    │
-│  ├── Roteamento LLM (local → cloud fallback)                │
-│  ├── Billing (Stripe webhooks)                              │
-│  └── Auth (local + OAuth + verificação)                     │
+│  ├── Orquestrador LLM (GPU local → cloud fallback)          │
+│  ├── Billing (Stripe webhooks + quotas)                     │
+│  └── Auth (email/senha + Google OAuth + Turnstile)          │
 ├─────────────────────────────────────────────────────────────┤
 │  Serviços                                                   │
 │  ├── PostgreSQL 16 (dados, sessões, auditoria)              │
-│  ├── MinIO (S3-compatible storage)                          │
-│  ├── Ollama (inferência local GPU)                          │
-│  └── SMTP/Brevo (email transacional)                        │
+│  ├── MinIO (S3-compatible object storage)                   │
+│  ├── Ollama / vLLM (inferência local GPU)                   │
+│  └── SMTP / Brevo (email transacional)                      │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## GPU Local + Fallback Cloud
+
+O debuga.ai opera com arquitetura híbrida: modelos locais (Ollama/vLLM em GPU dedicada) processam requisições sensíveis sem enviar dados para fora. Quando a carga excede a capacidade local ou o modelo requerido não está disponível, o sistema faz fallback transparente para providers cloud.
+
+| Cenário | Comportamento |
+|---------|--------------|
+| GPU disponível e saudável | Inferência local (latência baixa, custo zero) |
+| GPU em cold start | Aguarda warmup ou aciona fallback |
+| GPU indisponível | Fallback automático para provider cloud |
+| Sem GPU instalada | Apenas providers cloud |
+
+Providers cloud suportados: OpenAI (GPT-4o), Anthropic (Claude 3.5), Google (Gemini 2.0), OpenRouter (diversos).
 
 ---
 
@@ -84,39 +96,22 @@ A plataforma foi projetada para personalização completa:
 | Aspecto | Personalização |
 |---------|---------------|
 | Marca | Nome, logo, cores, domínio próprio |
-| Infraestrutura | Servidor dedicado do operador |
-| Dados | Isolamento total, sem compartilhamento |
-| Planos | Definidos pelo operador (free, pro, enterprise) |
+| Infraestrutura | VM dedicada ou on-premise |
+| Dados | Isolamento total por instância |
+| Planos | Definidos pelo operador |
 | Billing | Stripe integrado, configurável |
-| Suporte | Canal próprio do operador |
-| Idioma | Português, inglês (extensível) |
-
-O operador controla quais funcionalidades estão habilitadas, limites por plano, providers de IA disponíveis, políticas de retenção de dados e integrações com sistemas internos.
+| Knowledge Base | Runbooks, documentação e procedimentos próprios |
+| Suporte | Canal próprio + escalação para sênior |
 
 ---
 
-## GPU Local + Fallback Cloud
+## Segurança, Auditoria e Governança
 
-O debuga.ai suporta inferência local com GPU dedicada (NVIDIA) via Ollama, com fallback automático para providers cloud quando necessário.
+**Segurança** — TLS 1.3, HSTS preload, CSP restritiva, Cloudflare WAF, Turnstile CAPTCHA, rate limiting por endpoint, JWT httpOnly com sameSite:lax.
 
-| Cenário | Comportamento |
-|---------|--------------|
-| GPU disponível e saudável | Inferência local (latência baixa, custo zero) |
-| GPU em cold start | Aguarda warmup ou aciona fallback |
-| GPU indisponível | Fallback automático para provider cloud |
-| Sem GPU instalada | Apenas providers cloud |
+**Auditoria** — Registro completo de todas as interações com metadados (usuário, provider, tokens, custo, latência). Exportação de logs. Conformidade com políticas internas.
 
-Providers cloud suportados: OpenAI, Anthropic, Google Gemini, OpenRouter.
-
----
-
-## Segurança, Auditoria e Controle de Custos
-
-**Segurança** — Dados permanecem no ambiente do operador (GPU local). Comunicação criptografada (TLS 1.3). Autenticação e autorização por papel (RBAC). Logs de auditoria imutáveis. Sem compartilhamento de dados entre tenants.
-
-**Auditoria** — Registro completo de todas as interações. Rastreabilidade de decisões do agente. Exportação de logs para SIEM. Conformidade com políticas internas.
-
-**Controle de Custos** — Limites diários e mensais configuráveis (USD). Alertas ao atingir thresholds. Bloqueio automático ao atingir limite. Relatório de consumo por usuário e por plano. Priorização de GPU local (custo zero).
+**Controle de Custos** — Limites configuráveis por usuário e plano. Alertas de consumo. Bloqueio automático. Relatório de custo por provider.
 
 ---
 
@@ -125,76 +120,76 @@ Providers cloud suportados: OpenAI, Anthropic, Google Gemini, OpenRouter.
 | Camada | Tecnologia |
 |--------|-----------|
 | Frontend | React 19 + Tailwind CSS 4 + shadcn/ui |
-| Backend | Express 4 + tRPC 11 |
+| Backend | Express 4 + tRPC 11 + TypeScript |
 | ORM | Drizzle ORM |
 | Banco de dados | PostgreSQL 16 |
-| Inferência local | Ollama (NVIDIA GPU) |
+| Inferência local | Ollama / vLLM (NVIDIA GPU) |
 | Storage | MinIO (S3-compatible) |
 | Containerização | Docker + Docker Compose |
 | Reverse proxy | NGINX + Let's Encrypt |
+| CDN/WAF | Cloudflare |
 | Billing | Stripe |
 | Email | SMTP / Brevo |
+| CAPTCHA | Cloudflare Turnstile |
 
 ---
 
 ## Ecossistema de Repositórios
 
-| Repositório | Visibilidade | Tipo | Status | Função |
-|-------------|--------------|------|--------|--------|
-| [debuga-ai](https://github.com/SperryTecnologia/debuga-ai) | Público | Vitrine/documentação | Ativo | Visão geral pública da plataforma |
-| debuga-ai-prod | **Privado** | Produto comercial | Production-ready | Código white label para deploy |
-| [debuga-llm-stack](https://github.com/SperryTecnologia/debuga-llm-stack) | Público | Arquitetura | Ativo | Estratégia LLM híbrida |
-| [debuga-qwen-coder-lab](https://github.com/SperryTecnologia/debuga-qwen-coder-lab) | Público | Pesquisa aplicada | Lab | Avaliação de modelos técnicos |
-| [debuga-vllm-engine](https://github.com/SperryTecnologia/debuga-vllm-engine) | Público | Experimental | Lab | Serving local com vLLM |
-| [debuga-llm-gateway](https://github.com/SperryTecnologia/debuga-llm-gateway) | Público | Experimental | Lab | Gateway OpenAI-compatible |
-
-Os repositórios públicos documentam visão, pesquisa e componentes auxiliares. A versão comercial production-ready é mantida em repositório privado por segurança e governança.
+| Repositório | Tipo | Descrição |
+|-------------|------|-----------|
+| [debuga-ai](https://github.com/SperryTecnologia/debuga-ai) | Vitrine | Documentação pública e visão geral |
+| debuga-ai-prod | Privado | Código de produção white label |
+| [debuga-llm-stack](https://github.com/SperryTecnologia/debuga-llm-stack) | Arquitetura | Estratégia LLM híbrida (GPU + cloud) |
+| [debuga-qwen-coder-lab](https://github.com/SperryTecnologia/debuga-qwen-coder-lab) | Pesquisa | Avaliação de modelos para code generation |
+| [debuga-vllm-engine](https://github.com/SperryTecnologia/debuga-vllm-engine) | Experimental | Serving local com vLLM |
+| [debuga-llm-gateway](https://github.com/SperryTecnologia/debuga-llm-gateway) | Experimental | Gateway OpenAI-compatible |
 
 ---
 
-## Código de Produção
+## Documentação
 
-A versão production-ready da plataforma é mantida em repositório privado por segurança, governança, proteção da arquitetura e operação comercial:
+A documentação completa está disponível na plataforma:
 
-> **SperryTecnologia/debuga-ai-prod** (privado)
+| Documento | Link |
+|-----------|------|
+| Whitepaper | [debuga.ai/docs/whitepaper](https://debuga.ai/docs/whitepaper) |
+| Arquitetura Técnica | [debuga.ai/docs/architecture](https://debuga.ai/docs/architecture) |
+| White Label Enterprise | [debuga.ai/docs/white-label-enterprise](https://debuga.ai/docs/white-label-enterprise) |
 
-Para acesso comercial, entre em contato com a Sperry Tecnologia.
-
----
-
-## Documentação Pública
+Documentação complementar neste repositório:
 
 | Documento | Descrição |
 |-----------|-----------|
-| [Whitepaper PT-BR](docs/WHITEPAPER_PTBR.md) | Visão estratégica, mercado, proposta de valor e modelo de negócio |
-| [Whitepaper EN](docs/WHITEPAPER_EN.md) | English version of the strategic whitepaper |
-| [Arquitetura PT-BR](docs/ARCHITECTURE_PTBR.md) | Arquitetura de referência da plataforma |
-| [Arquitetura EN](docs/ARCHITECTURE_EN.md) | English version of the reference architecture |
-| [Estratégia LLM](docs/R_AND_D_LLM_STACK.md) | Pesquisa e decisões sobre stack de inferência |
-| [Roadmap](docs/ROADMAP.md) | Roadmap público detalhado |
-| [Providers](docs/PROVIDERS_OVERVIEW.md) | Visão geral dos providers de IA suportados |
-| [White Label](docs/WHITE_LABEL_OVERVIEW.md) | Modelo de implantação white label |
-| [Segurança](docs/SECURITY_OVERVIEW.md) | Políticas de segurança e conformidade |
-
-> Documentos públicos contêm visão estratégica e roadmap. A versão production-ready comercial é mantida em repositório privado.
+| [Whitepaper PT-BR](docs/WHITEPAPER_PTBR.md) | Visão estratégica e proposta de valor |
+| [Whitepaper EN](docs/WHITEPAPER_EN.md) | English version |
+| [Arquitetura PT-BR](docs/ARCHITECTURE_PTBR.md) | Arquitetura de referência |
+| [Architecture EN](docs/ARCHITECTURE_EN.md) | English version |
+| [Estratégia LLM](docs/R_AND_D_LLM_STACK.md) | Pesquisa e decisões sobre inferência |
+| [Roadmap](docs/ROADMAP.md) | Roadmap público |
+| [Providers](docs/PROVIDERS_OVERVIEW.md) | Providers de IA suportados |
+| [White Label](docs/WHITE_LABEL_OVERVIEW.md) | Modelo de implantação |
+| [Segurança](docs/SECURITY_OVERVIEW.md) | Políticas de segurança |
 
 ---
 
-## Roadmap Público
+## Roadmap
 
-| Item | Status | Horizonte |
-|------|--------|----------|
-| Agente conversacional com contexto técnico | Produção | — |
-| Inferência local via GPU (Ollama) | Produção | — |
-| Fallback multi-provider cloud | Produção | — |
-| Geração de imagens e diagramas | Produção | — |
-| Controle de custos e billing | Produção | — |
-| White label com marca própria | Produção | — |
-| Auditoria e logs estruturados | Produção | — |
-| Integração com Zabbix/Grafana/Prometheus | Em desenvolvimento | Q3 2025 |
-| RAG com documentação interna | Em desenvolvimento | Q3 2025 |
-| Fine-tuning para domínio técnico | Pesquisa | 2026 |
-| Multi-tenant enterprise | Planejado | 2026 |
+| Item | Status |
+|------|--------|
+| Agente conversacional com contexto técnico | Produção |
+| Inferência local via GPU (Ollama/vLLM) | Produção |
+| Fallback multi-provider cloud | Produção |
+| Geração de imagens e diagramas | Produção |
+| Controle de custos e billing (Stripe) | Produção |
+| White label com marca própria | Produção |
+| Auditoria e logs estruturados | Produção |
+| Auth completa (email + Google OAuth + Turnstile) | Produção |
+| Integração com Zabbix/Grafana/Prometheus | Em desenvolvimento |
+| RAG com documentação interna | Em desenvolvimento |
+| WhatsApp Business | Planejado |
+| SSO/SAML | Planejado |
+| Multi-tenant enterprise | Planejado |
 
 ---
 
@@ -202,7 +197,7 @@ Para acesso comercial, entre em contato com a Sperry Tecnologia.
 
 Documentação pública sob licença MIT. O código de produção da plataforma é privado e comercial.
 
-Para informações sobre licenciamento, demonstrações ou acesso ao repositório de produção, entre em contato com a Sperry Tecnologia.
+Para informações sobre licenciamento, demonstrações ou implantação, entre em contato com a Sperry Tecnologia.
 
 ---
 
