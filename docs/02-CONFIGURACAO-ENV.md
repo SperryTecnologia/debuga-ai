@@ -1,6 +1,6 @@
 # 02 - Configuração do Ambiente (.env)
 
-O arquivo `.env` é o ponto central de configuração do debuga.ai homolog. Ele contém todas as credenciais, URLs e flags que os serviços Docker precisam para funcionar. Este documento explica **cada variável**, onde obtê-la, e os cuidados de segurança associados.
+O arquivo `.env` é o ponto central de configuração do debuga.ai. Ele contém todas as credenciais, URLs e flags que os serviços Docker precisam para funcionar. Este documento explica **cada variável**, onde obtê-la, e os cuidados de segurança associados.
 
 > **Referência completa e atualizada:** Consulte também `docs/24-ENV-REFERENCE.md` para a lista canônica de todas as variáveis, incluindo Auth Hardening, SMTP, Turnstile e Rate Limiting.
 
@@ -35,7 +35,7 @@ nano .env         # Preencher os valores
 | `VITE_APP_ID` | Não | `debuga-ai` | Identificador interno da aplicação. | Não alterar. | — |
 | `VITE_APP_TITLE` | Não | `debuga.ai` | Título exibido na interface (navbar, PWA, aba do browser). | Personalizar se desejar. | — |
 | `VITE_APP_LOGO` | Não | (vazio) | URL do logo customizado. Se vazio, usa o logo padrão. | Upload de imagem e usar URL pública. | — |
-| `VITE_OAUTH_PORTAL_URL` | Sim | `/api/auth/google` | Rota do portal OAuth no frontend. No homolog, aponta para a rota interna de Google OAuth. | Usar `/api/auth/google`. | Não alterar para deploy homolog. |
+| `VITE_OAUTH_PORTAL_URL` | Sim | `/api/auth/google` | Rota do portal OAuth no frontend. Aponta para a rota interna de Google OAuth. | Usar `/api/auth/google`. | Não alterar para deploy. |
 
 ### Autenticação (Google OAuth 2.0)
 
@@ -52,7 +52,7 @@ nano .env         # Preencher os valores
 |----------|:-----------:|--------------|--------|------------|----------|
 | `POSTGRES_USER` | Não | `debuga` | Usuário do PostgreSQL. | Personalizar se desejar. | Evite `postgres` (superusuário padrão). |
 | `POSTGRES_PASSWORD` | **Sim** | (vazio) | Senha do PostgreSQL. Mínimo 16 caracteres recomendado. | Gerar: `openssl rand -base64 24` | **Nunca use a senha padrão em produção.** Evite caracteres especiais de shell (`$`, `!`, `` ` ``). |
-| `POSTGRES_DB` | Não | `debuga_homolog` | Nome do banco de dados. | Personalizar se desejar. | — |
+| `POSTGRES_DB` | Não | `debuga_prod` | Nome do banco de dados. | Personalizar se desejar. | — |
 
 > **Nota:** `DATABASE_URL` é construída automaticamente pelo `docker-compose.yml` a partir das variáveis acima. Não defina manualmente.
 
@@ -64,7 +64,7 @@ nano .env         # Preencher os valores
 | `S3_REGION` | Não | `us-east-1` | Região S3 (MinIO aceita qualquer valor). | Não alterar. | — |
 | `S3_ACCESS_KEY` | Sim | (vazio) | Chave de acesso do MinIO. **Deve ser igual a `MINIO_ROOT_USER`.** | Definir junto com `MINIO_ROOT_USER`. | **Trocar do padrão `minioadmin`.** |
 | `S3_SECRET_KEY` | Sim | (vazio) | Chave secreta do MinIO. **Deve ser igual a `MINIO_ROOT_PASSWORD`.** | Definir junto com `MINIO_ROOT_PASSWORD`. | **Trocar do padrão `minioadmin`.** |
-| `S3_BUCKET` | Não | `debuga-homolog` | Nome do bucket S3 para armazenamento de arquivos. | Personalizar se desejar. | — |
+| `S3_BUCKET` | Não | `debuga-prod` | Nome do bucket S3 para armazenamento de arquivos. | Personalizar se desejar. | — |
 | `MINIO_ROOT_USER` | Sim | (vazio) | Usuário admin do MinIO (console web na porta 9001). | Definir credencial forte. | **Trocar do padrão.** Mínimo 8 caracteres. |
 | `MINIO_ROOT_PASSWORD` | Sim | (vazio) | Senha admin do MinIO. | Definir credencial forte. | **Trocar do padrão.** Mínimo 8 caracteres. |
 
@@ -88,10 +88,10 @@ nano .env         # Preencher os valores
 
 | Variável | Obrigatória | Valor padrão | Função | Onde obter | Cuidados |
 |----------|:-----------:|--------------|--------|------------|----------|
-| `BUILT_IN_FORGE_API_URL` | Não | (vazio) | URL da API Forge (server-side). Se preenchido, tem prioridade sobre `LLM_CLOUD_API_URL`. | — | Opcional no homolog. |
+| `BUILT_IN_FORGE_API_URL` | Não | (vazio) | URL da API Forge (server-side). Se preenchido, tem prioridade sobre `LLM_CLOUD_API_URL`. | — | Opcional. |
 | `BUILT_IN_FORGE_API_KEY` | Não | (vazio) | Chave da API Forge (server-side). | — | **Secret sensível.** |
-| `VITE_FRONTEND_FORGE_API_KEY` | Não | (vazio) | Chave Forge para frontend (chamadas client-side). | — | Opcional no homolog. |
-| `VITE_FRONTEND_FORGE_API_URL` | Não | (vazio) | URL Forge para frontend. | — | Opcional no homolog. |
+| `VITE_FRONTEND_FORGE_API_KEY` | Não | (vazio) | Chave Forge para frontend (chamadas client-side). | — | Opcional. |
+| `VITE_FRONTEND_FORGE_API_URL` | Não | (vazio) | URL Forge para frontend. | — | Opcional. |
 
 ### Stripe (Pagamentos)
 

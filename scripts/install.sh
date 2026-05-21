@@ -52,11 +52,22 @@ cd docker
 docker compose up -d postgres minio
 log "Waiting for services to be healthy..."
 sleep 10
+cd "$PROJECT_DIR"
+
+# ── Ensure database exists (idempotent) ──
+# Resolve o problema de PGDATA existente onde Postgres pula init e não cria o banco
+log "Ensuring database '${POSTGRES_DB:-debuga_prod}' exists..."
+bash scripts/ensure-database.sh --env .env
+
+cd docker
 
 # ── MinIO bucket setup ──
 log "Setting up MinIO bucket..."
-MINIO_USER="${MINIO_ROOT_USER:-minioadmin}"
-MINIO_PASS="${MINIO_ROOT_PASSWORD:-minioadmin}"
+MINIO_USER="${MINIO_ROOT_USER:-}"
+MINIO_PASS="${MINIO_ROOT_PASSWORD:-}"
+if [ -z "$MINIO_USER" ] || [ -z "$MINIO_PASS" ]; then
+  err "MINIO_ROOT_USER e MINIO_ROOT_PASSWORD devem estar definidos no .env"
+fi
 S3_BUCKET="${S3_BUCKET:-debuga-prod}"
 
 # Install mc (MinIO client) if not present

@@ -1,8 +1,8 @@
-# 00 - Visao Geral do Ambiente Homolog
+# 00 - Visao Geral do Ambiente
 
 ## Objetivo
 
-O ambiente **seu-dominio.com.br** e um laboratorio de homologacao isolado da producao. Ele permite testar novas funcionalidades, validar integracoes e experimentar com inferencia local de LLM sem risco para os usuarios finais.
+O ambiente **seu-dominio.com.br** e um laboratorio de ambiente isolado para validação. Ele permite testar novas funcionalidades, validar integracoes e experimentar com inferencia local de LLM sem risco para os usuarios finais.
 
 ## Arquitetura
 

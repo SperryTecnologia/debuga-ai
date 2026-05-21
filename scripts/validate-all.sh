@@ -148,6 +148,31 @@ echo -e "    Vídeo:     $( [ "$VIDEO_ENABLED" = "true" ] && echo -e "${GREEN}ha
 echo -e "    Stripe:    $( [ "$STRIPE_ENABLED" = "true" ] && echo -e "${GREEN}habilitado${NC}" || echo -e "${YELLOW}desabilitado${NC}" )"
 echo -e "    Turnstile: $( [ "$TURNSTILE_ENABLED" = "true" ] && echo -e "${GREEN}habilitado${NC}" || echo -e "${YELLOW}desabilitado${NC}" )"
 echo -e "    GPU local: $( [ "$GPU_ENABLED" = "true" ] && echo -e "${GREEN}habilitado${NC}" || echo -e "${YELLOW}desabilitado${NC}" )"
+# ── Pre-flight security checks ──
+PREFLIGHT_WARNINGS=0
+
+# Check MinIO default credentials
+if [ "${MINIO_ROOT_USER:-}" = "minioadmin" ] || [ "${MINIO_ROOT_PASSWORD:-}" = "minioadmin" ]; then
+  echo -e "  ${RED}✗ SEGURANÇA: MinIO usando credenciais padrão (minioadmin)${NC}"
+  echo -e "    Ação: Definir MINIO_ROOT_USER e MINIO_ROOT_PASSWORD no .env"
+  BLOCKING_FAILURES=$((BLOCKING_FAILURES + 1))
+  FAILED_SCRIPTS+=("pre-flight-minio-credentials")
+  FAILED_REASONS+=("Credenciais padrão minioadmin detectadas")
+  FAILED_BLOCKING+=("SIM")
+  FAILED_ACTIONS+=("Definir MINIO_ROOT_USER e MINIO_ROOT_PASSWORD com valores seguros no .env")
+fi
+
+# Check weak Postgres password
+if [ "${POSTGRES_PASSWORD:-}" = "debuga_secret" ] || [ "${POSTGRES_PASSWORD:-}" = "postgres" ] || [ -z "${POSTGRES_PASSWORD:-}" ]; then
+  echo -e "  ${RED}✗ SEGURANÇA: PostgreSQL usando senha fraca ou vazia${NC}"
+  echo -e "    Ação: Definir POSTGRES_PASSWORD com valor forte no .env"
+  BLOCKING_FAILURES=$((BLOCKING_FAILURES + 1))
+  FAILED_SCRIPTS+=("pre-flight-postgres-password")
+  FAILED_REASONS+=("Senha fraca/padrão detectada")
+  FAILED_BLOCKING+=("SIM")
+  FAILED_ACTIONS+=("Gerar senha forte: openssl rand -base64 48")
+fi
+
 echo ""
 echo "──────────────────────────────────────────────────────────"
 echo ""
