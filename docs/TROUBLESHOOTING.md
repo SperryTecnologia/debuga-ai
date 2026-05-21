@@ -1,6 +1,6 @@
-# 10 - Troubleshooting
+# Troubleshooting
 
-Este documento reúne problemas reais encontrados durante o desenvolvimento e deploy do ambiente de homologação, com diagnóstico e solução para cada um.
+Este documento reúne problemas reais encontrados durante o deploy, com diagnóstico e solução para cada um.
 
 ## Diagnóstico Rápido
 
@@ -281,7 +281,7 @@ docker exec debuga-app env | grep JWT_SECRET
 
 **Solução:** A URL deve ser exatamente: `https://seu-dominio.com.br/api/stripe/webhook`
 
-### Chaves live no homolog
+### Chaves live em ambiente de teste
 
 **Sintoma:** Cobranças reais aparecem no Stripe.
 
@@ -323,7 +323,7 @@ docker compose -f docker/docker-compose.yml ps minio
 
 ```bash
 # Verificar health
-docker exec debuga-postgres pg_isready -U debuga -d debuga_homolog
+docker exec debuga-postgres pg_isready -U debuga -d debuga_prod
 
 # Verificar logs
 docker logs debuga-postgres --tail=20

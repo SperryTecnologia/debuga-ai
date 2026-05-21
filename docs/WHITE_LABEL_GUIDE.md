@@ -1,4 +1,4 @@
-# 13 - Customização White Label
+# Customização White Label
 
 Este guia ensina como transformar o pacote debuga-ai em uma implantação White Label para outro cliente, marca ou empresa. O processo envolve substituição de identidade visual, domínio, nome da aplicação, textos, configurações de OAuth e Stripe, e-mails de suporte e documentação pública.
 

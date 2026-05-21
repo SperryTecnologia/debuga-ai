@@ -1,14 +1,20 @@
 # ============================================================
-# debuga.ai - Docker Compose (Single VM GPU Mode)
-# Services: app, postgres, minio, ollama (GPU), nginx, backup
+# debuga.ai — Docker Compose (Produção VM Própria)
 #
-# Volumes: /data/debuga/* (persistent across rebuilds)
-# GPU: nvidia runtime for Ollama (requires nvidia-container-toolkit)
+# Serviços: app, postgres, minio, ollama (GPU), nginx, certbot
+# Volumes persistentes: /data/debuga/*
+# GPU: nvidia runtime para Ollama (requer nvidia-container-toolkit)
 #
-# Usage:
-#   docker compose up -d                    # Core services (app, postgres, minio, nginx)
-#   docker compose --profile gpu up -d      # All services including Ollama GPU
-#   docker compose --profile gpu up -d ollama  # Start only Ollama
+# Uso:
+#   docker compose up -d                       # Core (app, postgres, minio, nginx)
+#   docker compose --profile gpu up -d         # Core + Ollama GPU
+#   docker compose --profile gpu up -d ollama  # Apenas Ollama
+#   docker compose logs -f app                 # Logs da aplicação
+#
+# Pré-requisitos:
+#   - .env preenchido (sem CHANGE_ME em variáveis obrigatórias)
+#   - /data/debuga/ criado (scripts/install.sh faz isso)
+#   - Certificado TLS em /etc/letsencrypt/live/${DOMAIN}/
 # ============================================================
 
 services:
@@ -34,7 +40,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-debuga}:${POSTGRES_PASSWORD:-debuga_secret}@postgres:5432/${POSTGRES_DB:-debuga_prod}?sslmode=disable
+      - DATABASE_URL=postgresql://${POSTGRES_USER:?POSTGRES_USER required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}@postgres:5432/${POSTGRES_DB:-debuga_prod}?sslmode=disable
       - S3_ENDPOINT=http://minio:9000
       - LOCAL_LLM_BASE_URL=http://ollama:11434
     ports:
@@ -44,12 +50,11 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      # Ollama is NOT a dependency — app works without it when ENABLE_LOCAL_INFERENCE=false
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
       timeout: 5s
-      start_period: 15s
+      start_period: 20s
       retries: 3
     networks:
       - debuga-net
@@ -65,8 +70,8 @@ services:
     container_name: debuga-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-debuga}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-debuga_secret}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
       POSTGRES_DB: ${POSTGRES_DB:-debuga_prod}
     volumes:
       - /data/debuga/postgres:/var/lib/postgresql/data
@@ -94,8 +99,8 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER must be set in .env}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set in .env}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD required}
     volumes:
       - /data/debuga/minio:/data
     ports:
@@ -116,8 +121,8 @@ services:
         max-file: "2"
 
   # ── Ollama (Local GPU LLM inference) ──
-  # Activated with: docker compose --profile gpu up -d
-  # Requires: nvidia-container-toolkit installed on host
+  # Ativado com: docker compose --profile gpu up -d
+  # Requer: nvidia-container-toolkit instalado no host
   ollama:
     image: ollama/ollama:latest
     container_name: debuga-ollama
@@ -136,19 +141,20 @@ services:
     ports:
       - "127.0.0.1:11434:11434"
     environment:
-      # Ollama GPU settings
       OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-2}
       OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MAX_LOADED_MODELS:-1}
       OLLAMA_FLASH_ATTENTION: ${OLLAMA_FLASH_ATTENTION:-1}
       OLLAMA_GPU_OVERHEAD: ${OLLAMA_GPU_OVERHEAD:-0}
-      # Keep model loaded for 10 minutes (reduces cold starts)
-      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-10m}
+      # Manter modelo carregado indefinidamente (elimina cold starts)
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:--1}
     healthcheck:
+      # GET /api/tags é leve e confirma que Ollama está respondendo
+      # start_period alto para tolerar cold start de GPU (modelo carregando)
       test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
       interval: 30s
-      timeout: 10s
-      start_period: 60s
-      retries: 3
+      timeout: 15s
+      start_period: 120s
+      retries: 5
     networks:
       - debuga-net
     logging:
@@ -186,26 +192,18 @@ services:
         max-size: "10m"
         max-file: "5"
 
-  # ── Backup (scheduled PostgreSQL + MinIO backups) ──
-  backup:
-    image: postgres:16-alpine
-    container_name: debuga-backup
+  # ── Certbot (renovação automática de TLS) ──
+  certbot:
+    image: certbot/certbot:latest
+    container_name: debuga-certbot
     restart: "no"
-    entrypoint: /bin/sh
-    command: -c "echo 'Backup container ready. Use scripts/backup.sh to trigger backups.'"
-    environment:
-      PGHOST: postgres
-      PGUSER: ${POSTGRES_USER:-debuga}
-      PGPASSWORD: ${POSTGRES_PASSWORD:-debuga_secret}
-      PGDATABASE: ${POSTGRES_DB:-debuga_prod}
+    profiles:
+      - certbot
     volumes:
-      - /data/debuga/backups:/backups
-      - ../scripts:/scripts:ro
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - debuga-net
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot
+    entrypoint: /bin/sh
+    command: -c "certbot renew --webroot -w /var/www/certbot --quiet && echo 'Renewal complete'"
 
 networks:
   debuga-net:

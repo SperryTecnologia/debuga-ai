@@ -22,27 +22,67 @@ O **debuga.ai** é uma plataforma completa de IA operacional que combina:
 
 ## Arquitetura
 
+```mermaid
+graph TB
+    subgraph Internet
+        User[Usuário / Browser]
+    end
+
+    subgraph VM["VM Produção"]
+        Nginx["NGINX<br/>Reverse Proxy + TLS"]
+        
+        subgraph App["Aplicação"]
+            Frontend["Frontend<br/>React 19 + Tailwind 4"]
+            Backend["Backend<br/>Express 4 + tRPC 11"]
+        end
+        
+        subgraph Services["Serviços"]
+            Postgres[("PostgreSQL")]
+            MinIO[("MinIO / S3")]
+            Ollama["Ollama<br/>GPU Local"]
+        end
+    end
+
+    subgraph Cloud["Providers Cloud (Fallback)"]
+        OpenAI[OpenAI]
+        Anthropic[Anthropic]
+        Gemini[Google Gemini]
+        OpenRouter[OpenRouter]
+    end
+
+    User --> Nginx
+    Nginx --> Frontend
+    Nginx --> Backend
+    Backend --> Postgres
+    Backend --> MinIO
+    Backend --> Ollama
+    Backend -.->|fallback| OpenAI
+    Backend -.->|fallback| Anthropic
+    Backend -.->|fallback| Gemini
+    Backend -.->|fallback| OpenRouter
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        NGINX (reverse proxy)                 │
-├─────────────────────────────────────────────────────────────┤
-│  Frontend (React 19 + Tailwind 4)                           │
-│  ├── Chat UI com streaming                                  │
-│  ├── Painel Admin                                           │
-│  └── Landing page white label                               │
-├─────────────────────────────────────────────────────────────┤
-│  Backend (Express 4 + tRPC 11)                              │
-│  ├── Stream SSE (LLM routing)                               │
-│  ├── Auth (local + OAuth)                                   │
-│  ├── Billing (Stripe)                                       │
-│  └── Admin API                                              │
-├─────────────────────────────────────────────────────────────┤
-│  Serviços                                                   │
-│  ├── PostgreSQL (dados)                                     │
-│  ├── MinIO/S3 (storage)                                     │
-│  ├── Ollama (inferência local GPU)                          │
-│  └── SMTP/Brevo (email)                                     │
-└─────────────────────────────────────────────────────────────┘
+
+### Fluxo de Requisição LLM
+
+```mermaid
+sequenceDiagram
+    participant U as Usuário
+    participant B as Backend
+    participant O as Ollama (Local)
+    participant C as Cloud Provider
+
+    U->>B: POST /api/chat (mensagem)
+    B->>B: Verificar plano/limites
+    B->>O: Tentar inferência local
+    alt Ollama disponível
+        O-->>B: Stream tokens (SSE)
+        B-->>U: Stream response
+    else Ollama indisponível/timeout
+        B->>C: Fallback para cloud
+        C-->>B: Stream tokens
+        B-->>U: Stream response
+    end
+    B->>B: Salvar no histórico (PostgreSQL)
 ```
 
 ---
@@ -81,6 +121,26 @@ GPU é opcional. Sem GPU, o sistema usa providers cloud como fallback.
 
 ---
 
+### Containers Docker
+
+```mermaid
+graph LR
+    subgraph docker["Docker Compose"]
+        nginx["debuga-nginx<br/>:80/:443"]
+        app["debuga-app<br/>:3000"]
+        pg["debuga-postgres<br/>:5432"]
+        minio["debuga-minio<br/>:9000/:9001"]
+        ollama["debuga-ollama<br/>:11434<br/>(profile: gpu)"]
+    end
+
+    nginx --> app
+    app --> pg
+    app --> minio
+    app --> ollama
+```
+
+---
+
 ## Deploy Rápido
 
 ```bash
@@ -91,25 +151,20 @@ cd /opt/debuga-ai
 # 2. Configurar ambiente
 cp templates/.env.production.template .env
 chmod 600 .env
-nano .env  # preencher secrets
+nano .env  # preencher secrets obrigatórios
 
-# 3. Criar diretórios de dados
-mkdir -p /data/debuga/{postgres,minio,ollama,nginx-logs,backups}
+# 3. Instalar (cria diretórios, valida .env, sobe postgres/minio)
+sudo bash scripts/install.sh --env .env
 
-# 4. Instalar dependências do host
-bash scripts/install.sh
+# 4. Deploy (build + sobe todos os serviços)
+bash scripts/deploy.sh              # sem GPU
+bash scripts/deploy.sh --gpu         # com GPU
 
-# 5. Subir serviços
-docker compose -f docker/docker-compose.yml up -d
+# 5. (Com GPU) Baixar modelos
+bash scripts/pull-models.sh
 
-# 6. (Com GPU) Subir com profile GPU
-docker compose -f docker/docker-compose.yml --profile gpu up -d
-
-# 7. Baixar modelo local
-docker exec debuga-ollama ollama pull qwen2.5:7b-instruct
-
-# 8. Validar
-bash scripts/validate-all.sh --env /opt/debuga-ai/.env
+# 6. Validar
+bash scripts/validate-all.sh --env .env
 ```
 
 Para instruções detalhadas, consulte **docs/PRODUCTION_DEPLOY.md**.

@@ -1,4 +1,4 @@
-# 19. Segurança
+# Segurança
 
 Guia de hardening e boas práticas de segurança para o debuga.ai em ambiente self-hosted.
 

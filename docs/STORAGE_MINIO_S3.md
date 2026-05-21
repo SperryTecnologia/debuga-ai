@@ -1,46 +1,98 @@
-# 08 - Storage (MinIO)
+# Storage — MinIO (S3-Compatível)
 
-## Visao Geral
+Documentação do subsistema de storage de arquivos do debuga.ai.
 
-O MinIO é o backend S3-compatível para storage de arquivos. A interface `storagePut` / `storageGet` permanece identica para o codigo da aplicacao.
+---
 
-## Mudancas Tecnicas
+## Arquitetura
 
-| Aspecto | Producao | Homolog |
-|---------|----------|---------|
-| Backend | API cloud Proxy | MinIO (S3-compativel) |
-| Autenticacao | Bearer token | Access Key / Secret Key |
-| Client | fetch + FormData | @aws-sdk/client-s3 |
-| URLs | Proxy URL | Presigned URLs |
-
-## Acesso ao Console MinIO
-
-O console web do MinIO esta disponivel em `http://localhost:9001` (apenas acesso local).
-
+```mermaid
+graph LR
+    App[debuga-app] -->|storagePut/storageGet| SDK["@aws-sdk/client-s3"]
+    SDK --> MinIO["debuga-minio<br/>:9000"]
+    MinIO --> Disk["/data/debuga/minio"]
+    
+    Console["Admin Console<br/>:9001"] --> MinIO
 ```
-Usuario: minioadmin (ou MINIO_ROOT_USER do .env)
-Senha:   minioadmin (ou MINIO_ROOT_PASSWORD do .env)
-```
+
+---
+
+## Configuração (.env)
+
+| Variável | Descrição | Exemplo |
+|----------|-----------|---------|
+| `S3_ENDPOINT` | URL interna do MinIO | `http://minio:9000` |
+| `S3_ACCESS_KEY` | Access key (= MINIO_ROOT_USER) | `debuga_s3_prod` |
+| `S3_SECRET_KEY` | Secret key (= MINIO_ROOT_PASSWORD) | (gerado com openssl) |
+| `S3_BUCKET` | Nome do bucket | `debuga-prod` |
+| `S3_REGION` | Região (qualquer valor) | `us-east-1` |
+| `MINIO_ROOT_USER` | Mesmo que S3_ACCESS_KEY | `debuga_s3_prod` |
+| `MINIO_ROOT_PASSWORD` | Mesmo que S3_SECRET_KEY | (gerado com openssl) |
+
+**IMPORTANTE:** Nunca use `minioadmin` como credencial em produção. O `validate-all.sh` bloqueia deploy com credenciais padrão.
+
+---
 
 ## Bucket
 
-O bucket `debuga-homolog` e criado automaticamente pelo script `install.sh` com politica de download publico.
+O bucket é criado automaticamente pelo `install.sh`. Para criar manualmente:
 
-## Dependencias Adicionais
-
-O homolog requer dois pacotes npm adicionais no `package.json`:
-
-```json
-"@aws-sdk/client-s3": "^3.x",
-"@aws-sdk/s3-request-presigner": "^3.x"
+```bash
+docker exec debuga-minio mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+docker exec debuga-minio mc mb local/debuga-prod
+docker exec debuga-minio mc anonymous set download local/debuga-prod  # acesso público de leitura (opcional)
 ```
 
-Estes ja estao incluidos no `package.json` do pacote homolog.
+---
+
+## Uso no Código
+
+```typescript
+import { storagePut, storageGet } from "../server/storage";
+
+// Upload
+const { url, key } = await storagePut(
+  `uploads/${userId}/${filename}`,
+  fileBuffer,
+  "image/png"
+);
+
+// Download (presigned URL)
+const { url } = await storageGet(`uploads/${userId}/${filename}`);
+```
+
+---
+
+## Console Web
+
+O console administrativo do MinIO está disponível em `http://127.0.0.1:9001` (apenas acesso local via SSH tunnel ou VPN).
+
+```bash
+# SSH tunnel para acessar remotamente
+ssh -L 9001:127.0.0.1:9001 user@servidor
+# Abrir http://localhost:9001 no browser
+```
+
+---
+
+## Backup
+
+```bash
+# Backup do volume MinIO
+tar -czf /data/debuga/backups/minio-$(date +%Y%m%d).tar.gz /data/debuga/minio/
+
+# Ou via mc mirror
+docker exec debuga-minio mc mirror local/debuga-prod /tmp/minio-backup/
+```
+
+---
 
 ## Troubleshooting
 
-**"S3_ENDPOINT not configured"**: Verifique que `S3_ENDPOINT=http://minio:9000` esta no `.env` ou no `docker-compose.yml`.
-
-**"Access Denied"**: Verifique `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD` no `.env`.
-
-**Upload falha**: Verifique se o bucket existe: `mc ls debuga-minio/debuga-homolog`.
+| Problema | Causa | Solução |
+|----------|-------|---------|
+| `S3_ENDPOINT not configured` | Variável não definida no .env | Adicionar `S3_ENDPOINT=http://minio:9000` |
+| `Access Denied` | Credenciais incorretas | Verificar MINIO_ROOT_USER/PASSWORD |
+| Upload falha | Bucket não existe | `bash scripts/install.sh --env .env` |
+| Timeout | MinIO não está rodando | `docker compose up -d minio` |
+| Arquivos inacessíveis | Política do bucket | Configurar anonymous access ou usar presigned URLs |

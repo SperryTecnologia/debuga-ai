@@ -1,8 +1,13 @@
 # ============================================================
-# debuga.ai - Nginx Site Configuration
-# Template processado automaticamente pelo nginx:alpine via envsubst
+# debuga.ai — Nginx Site Configuration
+#
+# Este arquivo é um TEMPLATE processado pelo nginx:alpine via envsubst.
 # Variáveis substituídas: ${DOMAIN}
 # Resultado gerado em: /etc/nginx/conf.d/app.conf
+#
+# IMPORTANTE: Variáveis Nginx nativas ($host, $request_uri, etc.)
+# NÃO são substituídas porque o nginx:alpine só processa variáveis
+# listadas em NGINX_ENVSUBST_TEMPLATE_SUFFIX (padrão: todas as env vars).
 # ============================================================
 
 # HTTP → HTTPS redirect
@@ -11,7 +16,7 @@ server {
     listen [::]:80;
     server_name ${DOMAIN} www.${DOMAIN};
 
-    # ACME challenge for Let's Encrypt
+    # ACME challenge for Let's Encrypt (certbot webroot)
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
@@ -40,10 +45,10 @@ server {
     ssl_session_timeout 1d;
     ssl_session_tickets off;
 
-    # HSTS
-    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+    # HSTS (2 anos)
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 
-    # CSP (adjust as needed)
+    # CSP
     add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.stripe.com wss: https:; frame-src https://js.stripe.com https://hooks.stripe.com;" always;
 
     # ── Auth endpoints (strict rate limit) ──
@@ -56,7 +61,7 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # ── Stripe webhook (no rate limit, raw body) ──
+    # ── Stripe webhook (no rate limit, raw body passthrough) ──
     location /api/stripe/webhook {
         proxy_pass http://debuga-app:3000;
         proxy_set_header Host $host;
@@ -76,7 +81,7 @@ server {
         proxy_read_timeout 120s;
         proxy_send_timeout 120s;
 
-        # SSE support for streaming
+        # SSE support for streaming LLM responses
         proxy_buffering off;
         proxy_cache off;
         proxy_set_header Connection '';
@@ -84,7 +89,7 @@ server {
         chunked_transfer_encoding off;
     }
 
-    # ── Static assets with caching ──
+    # ── Static assets with aggressive caching ──
     location /assets/ {
         proxy_pass http://debuga-app:3000;
         proxy_set_header Host $host;
@@ -101,5 +106,4 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-
 }

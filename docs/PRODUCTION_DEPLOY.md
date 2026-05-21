@@ -116,18 +116,39 @@ openssl rand -base64 48  # para senhas de banco e MinIO
 
 ---
 
-## 4. Deploy com Docker Compose
+## 4. Instalar e Deploy
+
+### Pipeline de Deploy
+
+```mermaid
+flowchart LR
+    A["1. install.sh"] --> B["2. deploy.sh"]
+    B --> C["3. pull-models.sh"]
+    C --> D["4. validate-all.sh"]
+    
+    A -->|"Valida .env<br/>Cria dirs<br/>Sobe postgres+minio"| A
+    B -->|"Build app<br/>Sobe todos<br/>Garante banco"| B
+    C -->|"Baixa modelos<br/>Ollama"| C
+    D -->|"Verifica tudo<br/>Gera relatório"| D
+```
+
+### Instalação (primeira vez)
+
+```bash
+# Valida .env, cria diretórios, sobe serviços base
+sudo bash scripts/install.sh --env .env
+```
 
 ### Deploy padrão (sem GPU)
 
 ```bash
-docker compose up -d
+bash scripts/deploy.sh
 ```
 
 ### Deploy com GPU (Ollama)
 
 ```bash
-# Instalar NVIDIA Container Toolkit
+# Instalar NVIDIA Container Toolkit (se ainda não instalado)
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
 curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
@@ -137,22 +158,27 @@ sudo apt update && sudo apt install -y nvidia-container-toolkit
 sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 
-# Deploy com profile GPU
-docker compose --profile gpu up -d
+# Deploy com GPU
+bash scripts/deploy.sh --gpu
+
+# Baixar modelos
+bash scripts/pull-models.sh
 ```
 
 ---
 
-## 5. Aplicar Migrações do Banco
+## 5. Banco de Dados
+
+O `install.sh` e `deploy.sh` já garantem que o banco existe via `ensure-database.sh`. Migrations são aplicadas automaticamente pela aplicação no startup (Drizzle ORM).
 
 ```bash
-# Verificar que o PostgreSQL está rodando
-docker compose exec db pg_isready
+# Verificar manualmente se necessário
+bash scripts/ensure-database.sh --env .env
 
-# Aplicar migrações (em ordem)
+# Aplicar migrations manualmente (se necessário)
 for f in app/drizzle/00*.sql; do
   echo "Aplicando: $f"
-  docker compose exec -T db psql -U $POSTGRES_USER -d $POSTGRES_DB < "$f"
+  docker exec debuga-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < "$f"
 done
 ```
 
@@ -186,18 +212,29 @@ done
 ## 8. Validar Deploy
 
 ```bash
-# Executar checklist de produção
-./scripts/check-pre-production.sh
+# Validação completa (recomendado)
+bash scripts/validate-all.sh --env .env
+
+# Validação rápida (sem chamadas de rede)
+bash scripts/validate-all.sh --quick --env .env
 
 # Verificar logs
-docker compose logs --tail=50 app
+docker compose -f docker/docker-compose.yml logs --tail=50 app
 
 # Testar health
-curl -s https://SEU_DOMINIO/api/trpc/system.health?input=%7B%22timestamp%22:1%7D
+curl -sf https://SEU_DOMINIO/api/health
 
 # Testar login
 # Abrir https://SEU_DOMINIO no navegador e fazer login com Google
 ```
+
+### Resultados Possíveis
+
+| Resultado | Significado | Ação |
+|-----------|-------------|------|
+| APROVADO PARA PRODUÇÃO | Tudo OK | Nenhuma |
+| APROVADO COM AVISOS | Features opcionais desabilitadas | Configurar se necessário |
+| NÃO APROVADO | Falhas bloqueantes | Corrigir itens listados |
 
 ---
 
@@ -253,14 +290,17 @@ docker compose exec ollama nvidia-smi
 ```bash
 cd /opt/debuga-ai
 git pull origin main
-docker compose build app
-docker compose up -d app
 
-# Se houver novas migrações
-for f in app/drizzle/00*.sql; do
-  docker compose exec -T db psql -U $POSTGRES_USER -d $POSTGRES_DB < "$f" 2>/dev/null || true
-done
+# Rebuild e redeploy
+bash scripts/deploy.sh
+# ou com GPU:
+bash scripts/deploy.sh --gpu
+
+# Validar após atualização
+bash scripts/validate-all.sh --env .env
 ```
+
+Para rollback em caso de problemas, consulte **docs/ROLLBACK.md**.
 
 ---
 

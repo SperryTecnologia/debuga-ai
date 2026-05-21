@@ -1,10 +1,10 @@
 # 11 - Stripe em Modo Teste
 
-Este documento explica como configurar o Stripe em modo teste para o ambiente de homologação. O modo teste permite simular pagamentos completos sem cobranças reais, usando cartões e dados fictícios fornecidos pelo próprio Stripe.
+Este documento explica como configurar o Stripe para o debuga.ai. Cobre tanto o modo teste (para validação) quanto o modo live (produção).
 
 ## Visão Geral
 
-O debuga.ai homolog usa Stripe para processar assinaturas e pagamentos. No ambiente de homologação, **sempre** usamos o modo teste do Stripe, que é completamente isolado do modo live (produção). Dados de teste nunca afetam dados reais e vice-versa.
+O debuga.ai usa Stripe para processar assinaturas e pagamentos. O modo teste é completamente isolado do modo live (produção). Dados de teste nunca afetam dados reais e vice-versa.
 
 | Aspecto | Modo Teste | Modo Live |
 |---------|-----------|-----------|
@@ -14,7 +14,7 @@ O debuga.ai homolog usa Stripe para processar assinaturas e pagamentos. No ambie
 | Webhooks | Endpoint separado | Endpoint separado |
 | Dashboard | Barra roxa "TEST MODE" | Sem barra |
 
-> **Regra absoluta:** nunca use chaves `sk_live_` ou `pk_live_` no ambiente de homologação. Se misturar, você pode cobrar clientes reais acidentalmente.
+> **Regra absoluta:** nunca use chaves `sk_live_` ou `pk_live_` no ambiente de homologação ou testes. Se misturar, você pode cobrar clientes reais acidentalmente.
 
 ## Passo 1 — Criar Conta Stripe
 

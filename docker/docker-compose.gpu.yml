@@ -1,6 +1,12 @@
 # ============================================================
-# GPU Override - Use with: docker compose -f docker-compose.yml -f docker-compose.gpu.yml up
-# Requires: NVIDIA Container Toolkit (nvidia-container-toolkit)
+# debuga.ai — GPU Override
+#
+# Uso:
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.gpu.yml up -d
+#
+# Requer: NVIDIA Container Toolkit
+#   sudo apt install nvidia-container-toolkit
+#   sudo systemctl restart docker
 # ============================================================
 
 services:
@@ -10,7 +16,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: 1
+              count: all
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all

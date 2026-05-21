@@ -1,4 +1,4 @@
-# 26. Single VM GPU — Inferência Local com Ollama
+# GPU e Ollama — Inferência Local com Ollama
 
 > **Objetivo:** Rodar inferência de LLM na mesma VM da aplicação usando GPU NVIDIA + Ollama, com fallback automático para API cloud quando a GPU estiver indisponível.
 
@@ -6,28 +6,15 @@
 
 ## Visão Geral da Arquitetura
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    VM Single (GPU)                           │
-│                                                             │
-│  ┌─────────┐    ┌──────────┐    ┌──────────┐              │
-│  │  Nginx  │───▶│   App    │───▶│ Postgres │              │
-│  │  :443   │    │  :3000   │    │  :5432   │              │
-│  └─────────┘    └────┬─────┘    └──────────┘              │
-│                      │                                      │
-│              ┌───────┴───────┐                             │
-│              │               │                             │
-│         ┌────▼────┐    ┌────▼────┐                        │
-│         │ Ollama  │    │  Cloud  │                        │
-│         │ :11434  │    │  API    │                        │
-│         │ (GPU)   │    │(fallback)│                        │
-│         └─────────┘    └─────────┘                        │
-│              │                                             │
-│         ┌────▼────┐                                       │
-│         │  NVIDIA │                                       │
-│         │   GPU   │                                       │
-│         └─────────┘                                       │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph VM["VM Produção"]
+        Nginx["Nginx :443"] --> App["App :3000"]
+        App --> Postgres[("PostgreSQL :5432")]
+        App --> Ollama["Ollama :11434"]
+        App -.->|fallback| CloudAPI["Cloud API"]
+        Ollama --> GPU["NVIDIA GPU"]
+    end
 ```
 
 ---
@@ -96,15 +83,12 @@ LOCAL_LLM_TIMEOUT_SECONDS=30
 LOCAL_LLM_FALLBACK_ENABLED=true
 ```
 
-### 4. Subir Serviços com GPU
 
 ```bash
 cd docker
 
-# Subir tudo incluindo Ollama com GPU
 docker compose --profile gpu up -d
 
-# Verificar que Ollama está usando GPU
 docker logs debuga-ollama 2>&1 | grep -i "gpu\|cuda\|nvidia"
 
 # Baixar o modelo configurado
@@ -139,9 +123,6 @@ curl -s http://localhost:11434/v1/chat/completions \
 
 | Modo | `LOCAL_LLM_PRIORITY` | Comportamento |
 |---|---|---|
-| **GPU Primeiro** | `first` | Tenta GPU local → se timeout/erro → fallback cloud |
-| **Cloud Primeiro** | `last` | Tenta cloud → se erro → fallback GPU local |
-| **Apenas GPU** | `only` | Apenas GPU local, sem fallback (falha = erro ao usuário) |
 
 ### Fluxo de Fallback (priority=first)
 
@@ -177,7 +158,6 @@ docker exec debuga-ollama ollama pull qwen2.5:14b-instruct
 # Atualizar .env
 LOCAL_LLM_MODEL=qwen2.5:14b-instruct
 
-# Reiniciar app (não precisa reiniciar Ollama)
 docker compose restart app
 ```
 
@@ -229,7 +209,7 @@ nvidia-smi --query-compute-apps=pid,used_memory --format=csv
 docker logs -f debuga-ollama --tail 50
 
 # Métricas de provider no banco
-docker exec debuga-postgres psql -U debuga -d debuga_homolog -c \
+docker exec debuga-postgres psql -U debuga -d debuga_prod -c \
   "SELECT provider, fallback_used, COUNT(*) as total, 
    AVG(response_time_ms) as avg_latency 
    FROM ai_provider_logs 
@@ -243,10 +223,8 @@ docker exec debuga-postgres psql -U debuga -d debuga_homolog -c \
 
 | Problema | Causa Provável | Solução |
 |---|---|---|
-| Ollama OFFLINE no admin | Container não rodando | `docker compose --profile gpu up -d ollama` |
 | "MODELO AUSENTE" | Modelo não baixado | `docker exec debuga-ollama ollama pull <modelo>` |
 | Timeout constante | Modelo muito grande para VRAM | Usar modelo menor ou aumentar `LOCAL_LLM_TIMEOUT_SECONDS` |
-| Fallback frequente | GPU sobrecarregada | Reduzir `OLLAMA_NUM_PARALLEL` ou usar modelo menor |
 | "nvidia runtime not found" | nvidia-container-toolkit ausente | Instalar toolkit (seção 1) |
 | CUDA out of memory | VRAM insuficiente | Reduzir `NUM_PARALLEL=1`, usar modelo q4 |
 | Cold start lento (30s+) | Modelo descarregado da VRAM | Aumentar `OLLAMA_KEEP_ALIVE=30m` |
@@ -275,7 +253,7 @@ docker run --rm -v debuga-ai_ollama_data:/source -v /data/debuga/ollama:/dest al
 docker compose --profile gpu up -d
 
 # Verificar dados intactos
-docker exec debuga-postgres psql -U debuga -d debuga_homolog -c "SELECT COUNT(*) FROM users;"
+docker exec debuga-postgres psql -U debuga -d debuga_prod -c "SELECT COUNT(*) FROM users;"
 ```
 
 ---

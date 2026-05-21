@@ -16,8 +16,9 @@ warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
 
 # ── Core models (RTX 3070 8GB VRAM) ──
 CORE_MODELS=(
-  "qwen3.5:latest"                        # General purpose, ~5.5GB, 54-58 t/s
+  "qwen2.5:7b-instruct"                    # Primary model (matches LOCAL_LLM_MODEL), ~4.7GB
   "qwen2.5-coder:7b-instruct-q4_K_M"     # Code specialist, ~4.7GB, 45-50 t/s
+  "qwen3.5:latest"                        # General purpose, ~5.5GB, 54-58 t/s
 )
 
 # ── Optional models ──

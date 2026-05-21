@@ -1,4 +1,4 @@
-# 09 - Backup e Restore
+# Backup e Restore
 
 ## Backup Automatico
 
@@ -54,7 +54,7 @@ tar -xzf backups/20260512_120000.tar.gz
 
 # Restaurar
 docker exec -i debuga-postgres pg_restore \
-  -U debuga -d debuga_homolog --clean --if-exists \
+  -U debuga -d debuga_prod --clean --if-exists \
   < 20260512_120000/postgres.dump
 ```
 

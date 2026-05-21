@@ -1,4 +1,4 @@
-# 15. Provedores de LLM
+# Provedores de LLM
 
 Guia completo de configuração dos provedores de LLM (Large Language Model) suportados pelo debuga.ai, incluindo opções locais, cloud e híbridas.
 
@@ -8,31 +8,28 @@ Guia completo de configuração dos provedores de LLM (Large Language Model) sup
 
 O debuga.ai usa a variável `LLM_PROVIDER` para definir o provider principal e `LLM_FALLBACK_PROVIDER` para fallback automático.
 
+```mermaid
+flowchart TD
+    Request["Requisição LLM"] --> Priority{"LOCAL_LLM_PRIORITY?"}
+    
+    Priority -->|first| Ollama1["Tentar Ollama Local"]
+    Ollama1 -->|OK| Response["Resposta"]
+    Ollama1 -->|Falha/Timeout| Cloud1["Fallback: Cloud Provider"]
+    Cloud1 --> Response
+    
+    Priority -->|last| Cloud2["Tentar Cloud Provider"]
+    Cloud2 -->|OK| Response
+    Cloud2 -->|Falha| Ollama2["Fallback: Ollama Local"]
+    Ollama2 --> Response
+    
+    Priority -->|only| Ollama3["APENAS Ollama Local"]
+    Ollama3 -->|OK| Response
+    Ollama3 -->|Falha| Error["Erro (sem fallback)"]
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Resolução de Provider (server/_core/env.ts)                │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  LLM_PROVIDER = gemini | openai | anthropic | openrouter   │
-│                 | cloud | ollama | forge                    │
-│                                                             │
-│  Prioridade quando LOCAL_LLM_PRIORITY=first:               │
-│    1. Tenta Ollama local (com timeout configurável)         │
-│    2. Se falhar → usa LLM_PROVIDER como fallback           │
-│                                                             │
-│  Prioridade quando LOCAL_LLM_PRIORITY=last (default):      │
-│    1. Tenta LLM_PROVIDER (cloud)                           │
-│    2. Se falhar → tenta Ollama local como fallback         │
-│                                                             │
-│  Prioridade quando LOCAL_LLM_PRIORITY=only:                │
-│    1. Usa APENAS Ollama local                              │
-│    2. Se falhar → erro (sem fallback)                      │
-│                                                             │
-│  LLM_FALLBACK_PROVIDER = provider alternativo              │
-│    Usado quando o provider principal falha                  │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+
+**Providers disponíveis para `LLM_PROVIDER`:** `ollama` | `openai` | `anthropic` | `gemini` | `openrouter` | `cloud` | `forge`
+
+**Fallback:** `LLM_FALLBACK_PROVIDER` define o provider alternativo quando o principal falha.
 
 ---
 
@@ -185,7 +182,7 @@ O sistema envia automaticamente os headers recomendados pelo OpenRouter:
 
 ```
 HTTP-Referer: https://seu-dominio.com.br
-X-Title: debuga.ai homolog
+X-Title: debuga.ai
 ```
 
 ### Modelos populares

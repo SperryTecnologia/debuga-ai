@@ -46,6 +46,5 @@ uploads/
 # TLS certs (managed by certbot)
 /etc/letsencrypt/
 
-# Manus/debug artifacts
-.manus-logs/
-.manus/
+# Debug artifacts
+*.debug.log
