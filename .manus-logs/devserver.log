@@ -3567,3 +3567,20 @@
 [2026-05-22T20:22:14.785Z] [Auth]     1. JWT_SECRET changed since cookie was issued
 [2026-05-22T20:22:14.786Z] [Auth]     2. Token expired
 [2026-05-22T20:22:14.786Z] [Auth]     3. User deleted from database
+[2026-05-22T20:22:24.405Z] [Auth] ─── auth.me request ───
+[2026-05-22T20:22:24.406Z] [Auth]   cookie header present: true
+[2026-05-22T20:22:24.407Z] [Auth]   app_session_id cookie present: true
+[2026-05-22T20:22:24.407Z] [Auth]   req.hostname: 127.0.0.1
+[2026-05-22T20:22:24.407Z] [Auth]   req.protocol: http
+[2026-05-22T20:22:24.408Z] [Auth]   x-forwarded-proto: (none)
+[2026-05-22T20:22:24.408Z] [Auth]   origin: (none)
+[2026-05-22T20:22:24.408Z] [Auth]   cookie value length: 223
+[2026-05-22T20:22:24.408Z] [Auth]   cookie value prefix: eyJhbGciOiJIUzI1NiIs...
+[2026-05-22T20:22:24.420Z] [Auth]   ✗ authentication failed: Failed query: select "id", "openId", "name", "email", "phone", "passwordHash", "authProvider", "googleOpenId", "loginMethod", "role", "tenantId", "isActive", "emailVerified", "phoneVerified", "termsAcceptedAt", "privacyAcceptedAt", "lastLoginAt", "failedLoginAttempts", "lockedUntil", "createdAt", "updatedAt", "lastSignedIn", "stripeCustomerId" from "users" where "users"."openId" = $1 limit $2
+[2026-05-22T20:22:24.421Z] params: QuHvVC2Q5rP6ioKPMqwDBZ,1
+[2026-05-22T20:22:24.422Z] [Auth]   → Cookie present but invalid. Possible causes:
+[2026-05-22T20:22:24.422Z] [Auth]     1. JWT_SECRET changed since cookie was issued
+[2026-05-22T20:22:24.422Z] [Auth]     2. Token expired
+[2026-05-22T20:22:24.423Z] [Auth]     3. User deleted from database
+[2026-05-22T20:32:46.664Z] 4:32:46 PM [vite] (client) hmr update /src/index.css, /src/components/MessageWithMermaid.tsx
+[2026-05-22T20:33:12.880Z] 4:33:12 PM [vite] (client) hmr update /src/index.css, /src/components/MessageWithMermaid.tsx

@@ -742,3 +742,11 @@
 - [x] Aplicar limite de 5 items + 8000 chars (~2000 tokens) no path legado (buildDynamicSystemPrompt)
 - [x] Manter comportamento inalterado quando ENABLE_CAPABILITY_ROUTING=true
 - [x] Testes unitários (6 testes passando)
+
+## Timeout Visual no Placeholder de Diagrama (22/05/2026)
+
+- [x] DiagramStreamingPlaceholder com timer de 60s
+- [x] Após 60s: card "O diagrama está demorando mais que o esperado" + botão "Pedir ao agente para regenerar"
+- [x] Prop onRegenerate propagada de MessageWithMermaid para o placeholder
+- [x] Chat não trava, JSON bruto nunca aparece
+- [x] Testes existentes continuam passando (15/15)

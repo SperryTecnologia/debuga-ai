@@ -1,4 +1,4 @@
-import { useMemo, lazy, Suspense, useState, useCallback, useEffect } from "react";
+import { useMemo, lazy, Suspense, useState, useCallback, useEffect, useRef } from "react";
 import { Streamdown } from "streamdown";
 import type { MermaidConfig } from "mermaid";
 import { ImageOff, Loader2, X, Download, ZoomIn, RefreshCw } from "lucide-react";
@@ -13,6 +13,7 @@ interface MessageWithMermaidProps {
   content: string;
   mermaidConfig: MermaidConfig;
   isAnimating?: boolean;
+  onRegenerate?: () => void;
 }
 
 interface ContentPart {
@@ -141,8 +142,46 @@ function DiagramParseFailedCard({ onRetry }: { onRetry?: () => void }) {
 
 /**
  * Placeholder shown during streaming while diagram JSON is being generated.
+ * After 60 seconds, shows a timeout message with a regenerate action.
  */
-function DiagramStreamingPlaceholder() {
+function DiagramStreamingPlaceholder({ onRegenerate }: { onRegenerate?: () => void }) {
+  const [timedOut, setTimedOut] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    timerRef.current = setTimeout(() => setTimedOut(true), 60000);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+
+  if (timedOut) {
+    return (
+      <div className="my-4 rounded-xl border border-amber-500/30 bg-[#0a0f1a] p-6">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+            <RefreshCw className="w-4 h-4 text-amber-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-slate-200">
+              O diagrama está demorando mais que o esperado.
+            </p>
+            <p className="text-xs text-slate-400 mt-1">
+              A geração pode ter encontrado dificuldades com a complexidade solicitada.
+            </p>
+            {onRegenerate && (
+              <button
+                onClick={onRegenerate}
+                className="mt-3 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-400 bg-green-500/10 border border-green-500/30 rounded-md hover:bg-green-500/20 transition-colors"
+              >
+                <RefreshCw className="w-3 h-3" />
+                Pedir ao agente para regenerar
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="my-4 rounded-xl border border-slate-700/50 bg-[#0a0f1a] p-8 flex items-center justify-center">
       <div className="flex items-center gap-3 text-slate-400">
@@ -161,6 +200,7 @@ export default function MessageWithMermaid({
   content,
   mermaidConfig,
   isAnimating = false,
+  onRegenerate,
 }: MessageWithMermaidProps) {
   const [retryKey, setRetryKey] = useState(0);
   const parts = useMemo(() => splitContent(content, isAnimating), [content, isAnimating, retryKey]);
@@ -206,7 +246,7 @@ export default function MessageWithMermaid({
         if (part.type === "diagram-spec") {
           // During streaming with incomplete JSON, show placeholder
           if (isAnimating && !part.diagramSpec) {
-            return <DiagramStreamingPlaceholder key={i} />;
+            return <DiagramStreamingPlaceholder key={i} onRegenerate={onRegenerate} />;
           }
 
           if (part.diagramSpec) {
