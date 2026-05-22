@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `usage_events` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`eventType` varchar(50) NOT NULL,\n\t`conversationId` int,\n\t`periodKey` varchar(20) NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `usage_events_id` PRIMARY KEY(`id`),\n\tINDEX `idx_usage_events_user_type_period` (`userId`, `eventType`, `periodKey`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user pNiV3hkTGADEQu8.7c5e28ef3035 --database JiyqPBx8bCsA9W2jSDpwkK --execute CREATE TABLE IF NOT EXISTS `usage_events` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`eventType` varchar(50) NOT NULL,\n\t`conversationId` int,\n\t`periodKey` varchar(20) NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `usage_events_id` PRIMARY KEY(`id`),\n\tINDEX `idx_usage_events_user_type_period` (`userId`, `eventType`, `periodKey`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 366
+}
