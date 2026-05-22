@@ -26,7 +26,7 @@
 | Controle de custos | Limites diários/mensais com alertas |
 | Auditoria | Logs imutáveis de todas as interações |
 | Aprendizado supervisionado | Sugestões de conhecimento com revisão humana |
-| Base de Conhecimento (RAG) | Conteúdo aprovado usado como contexto em respostas |
+| RAG textual ativo | Recuperação de contexto por relevância antes de cada resposta |
 
 ---
 
@@ -34,7 +34,7 @@
 
 | Funcionalidade | Descrição |
 |---------------|-----------|
-| RAG avançado | Embeddings vetoriais e busca semântica |
+| RAG com embeddings | Busca semântica vetorial para recuperação mais precisa |
 | Integração Zabbix | Consulta de alertas e métricas via agente |
 | Integração Grafana | Visualização de dashboards via agente |
 | Integração Prometheus | Consulta de métricas de infraestrutura |

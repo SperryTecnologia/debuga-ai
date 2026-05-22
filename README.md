@@ -210,9 +210,34 @@ graph LR
 
 ---
 
-## Aprendizado Supervisionado
+## RAG e Aprendizado Supervisionado
 
-O debuga.ai implementa um ciclo de melhoria contínua supervisionada. Interações de alta qualidade, diagnósticos recorrentes e correções humanas geram sugestões de conhecimento que passam por revisão administrativa antes de entrar na base de referência do agente.
+O debuga.ai combina IA generativa com base de conhecimento validada. Em vez de depender apenas da memória do modelo, o agente recupera procedimentos, diagnósticos, scripts e orientações aprovadas antes de responder. Isso aumenta consistência, reduz retrabalho e permite que a operação construa conhecimento próprio ao longo do tempo.
+
+### Recuperação de Contexto (RAG)
+
+Antes de cada resposta, o agente consulta a Base de Conhecimento interna em busca de conteúdo relevante. Itens com alta pontuação de relevância são injetados como contexto no prompt, fundamentando a resposta em conhecimento validado pela equipe.
+
+```mermaid
+flowchart LR
+    A[Pergunta do\nusuário] --> B[Extração de\npalavras-chave]
+    B --> C[Busca na Base\nde Conhecimento]
+    C --> D[Ranking por\nrelevância]
+    D --> E[Contexto injetado\nno prompt]
+    E --> F[Provider LLM\ngera resposta]
+    F --> G[Resposta\nfundamentada]
+```
+
+| Característica | Descrição |
+|----------------|----------|
+| Busca por relevância | Scoring por keyword, tag, categoria e match exato |
+| Limite inteligente | Máximo de itens e tokens para não sobrecarregar o contexto |
+| Agnóstico ao provider | Funciona igualmente com cloud (OpenAI, Gemini) e GPU local |
+| Observabilidade | Cada resposta registra quantos itens da base foram usados |
+
+### Aprendizado Supervisionado
+
+Interações de alta qualidade, diagnósticos recorrentes e correções humanas geram sugestões de conhecimento que passam por revisão administrativa antes de entrar na base de referência do agente.
 
 ```mermaid
 flowchart LR
@@ -231,7 +256,15 @@ flowchart LR
 | Edição antes de aprovar | Admin pode refinar conteúdo e remover dados sensíveis |
 | Múltiplas origens | Chat, documentação, import manual, logs |
 | Auditoria completa | Todas as ações registradas com usuário e timestamp |
-| Integração com RAG | Conteúdo aprovado é usado como contexto em conversas futuras |
+| Ciclo fechado | Conteúdo aprovado fica disponível imediatamente para RAG |
+
+### Evolução Planejada
+
+| Horizonte | Capacidade |
+|-----------|------------|
+| Atual | RAG textual com busca por relevância + base de conhecimento validada |
+| Médio prazo | Busca semântica com embeddings para recuperação mais precisa |
+| Longo prazo | Preparação de datasets para modelos locais especializados |
 
 ---
 
