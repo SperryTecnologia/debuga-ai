@@ -2,7 +2,7 @@
 
 **Visão de evolução da plataforma debuga.ai.**
 
-Última atualização: Maio 2025
+Última atualização: Maio 2026
 
 ---
 
@@ -25,6 +25,8 @@
 | White label | Marca, domínio, cores, planos customizáveis |
 | Controle de custos | Limites diários/mensais com alertas |
 | Auditoria | Logs imutáveis de todas as interações |
+| Aprendizado supervisionado | Sugestões de conhecimento com revisão humana |
+| Base de Conhecimento (RAG) | Conteúdo aprovado usado como contexto em respostas |
 
 ---
 
@@ -32,7 +34,7 @@
 
 | Funcionalidade | Descrição |
 |---------------|-----------|
-| RAG | Retrieval-Augmented Generation com documentação interna |
+| RAG avançado | Embeddings vetoriais e busca semântica |
 | Integração Zabbix | Consulta de alertas e métricas via agente |
 | Integração Grafana | Visualização de dashboards via agente |
 | Integração Prometheus | Consulta de métricas de infraestrutura |

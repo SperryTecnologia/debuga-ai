@@ -210,6 +210,31 @@ graph LR
 
 ---
 
+## Aprendizado Supervisionado
+
+O debuga.ai implementa um ciclo de melhoria contínua supervisionada. Interações de alta qualidade, diagnósticos recorrentes e correções humanas geram sugestões de conhecimento que passam por revisão administrativa antes de entrar na base de referência do agente.
+
+```mermaid
+flowchart LR
+    A[Conversa ocorre] --> B[IA identifica\nconhecimento útil]
+    B --> C[Sugestão pendente]
+    C --> D[Admin revisa\ne edita]
+    D --> E{Decisão}
+    E -->|Aprovar| F[Base de Conhecimento]
+    E -->|Rejeitar| G[Descartada]
+    F --> H[Respostas futuras\nusam como contexto]
+```
+
+| Característica | Descrição |
+|----------------|----------|
+| Revisão humana obrigatória | Nenhum conteúdo entra na base sem aprovação |
+| Edição antes de aprovar | Admin pode refinar conteúdo e remover dados sensíveis |
+| Múltiplas origens | Chat, documentação, import manual, logs |
+| Auditoria completa | Todas as ações registradas com usuário e timestamp |
+| Integração com RAG | Conteúdo aprovado é usado como contexto em conversas futuras |
+
+---
+
 ## Segurança, Auditoria e Governança
 
 **Segurança** — TLS 1.3, HSTS preload, CSP restritiva, Cloudflare WAF, Turnstile CAPTCHA, rate limiting por endpoint, JWT httpOnly com sameSite:lax.
@@ -314,7 +339,8 @@ Para detalhes de uso, consulte [docs/VALIDATION_SCRIPTS.md](docs/VALIDATION_SCRI
 | Ferramentas de rede integradas (DNS, SSL, WHOIS) | Produção |
 | Análise de documentos e imagens | Produção |
 | Integração com Zabbix/Grafana/Prometheus | Em desenvolvimento |
-| RAG com documentação interna | Em desenvolvimento |
+| Aprendizado supervisionado (sugestões → KB) | Produção |
+| RAG com documentação interna | Produção |
 | WhatsApp Business | Planejado |
 | SSO/SAML | Planejado |
 | Multi-tenant enterprise | Planejado |
