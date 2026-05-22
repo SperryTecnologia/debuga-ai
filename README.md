@@ -409,15 +409,6 @@ Para detalhes de uso, consulte [docs/VALIDATION_SCRIPTS.md](docs/VALIDATION_SCRI
 | [SEO e Analytics](docs/SEO_ANALYTICS.md) | Estratégia de SEO e monitoramento |
 | [Scripts de Validação](docs/VALIDATION_SCRIPTS.md) | Documentação dos scripts públicos |
 
----
-
-## Links Úteis
-
-| Recurso | URL |
-|---------|-----|
-| Plataforma | [https://debuga.ai](https://debuga.ai) |
-| Documentação online | [https://debuga.ai/docs](https://debuga.ai/docs) |
-| Sperry Tecnologia | [https://www.sperrytecnologia.com.br](https://www.sperrytecnologia.com.br) |
 
 ---
 
