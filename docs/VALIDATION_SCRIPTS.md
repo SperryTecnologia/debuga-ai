@@ -167,6 +167,34 @@ Verifica links internos da documentação Markdown.
 
 ---
 
+### check-public-repo-clean.sh
+
+Garante que o repositório público não contém referências sensíveis, secrets, paths internos ou artefatos de desenvolvimento.
+
+```bash
+./scripts/check-public-repo-clean.sh
+```
+
+**O que verifica:**
+
+| Verificação | Critério |
+|-------------|----------|
+| Senhas e tokens | Ausência de API keys, secrets, PATs |
+| Paths internos | Ausência de `/opt/debuga-ai` e similares |
+| Artefatos dev | Ausência de `node_modules`, `.manus`, checkpoints |
+| Arquivos .env | Nenhum .env real (apenas .env.example permitido) |
+| Dados pessoais | Ausência de e-mails e dados sensíveis |
+
+**Saída esperada:**
+
+```
+═══════════════════════════════════════════════════
+  ✓ Repositório público está limpo
+═══════════════════════════════════════════════════
+```
+
+---
+
 ## Integração com CI/CD
 
 Os scripts podem ser integrados em pipelines de CI/CD:

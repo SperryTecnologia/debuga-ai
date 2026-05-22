@@ -1,22 +1,37 @@
 # debuga.ai — Plataforma de IA Operacional para TI, Segurança e Infraestrutura
 
-**Agente de IA para diagnóstico técnico, documentação, automação, análise de ambientes e white label para empresas, MSPs e operações de suporte.**
+**Agente de IA para diagnóstico técnico, documentação, automação, análise de ambientes, geração de diagramas e white label para empresas, MSPs, cartórios e operações de suporte.**
 
 Desenvolvida por [Sperry Tecnologia](https://www.sperrytecnologia.com.br).
 
 ---
 
-## O que é a debuga.ai
+## Visão Geral
 
-A **debuga.ai** é uma plataforma de IA operacional que combina modelos de linguagem de última geração com base de conhecimento proprietária, automação de tarefas e suporte humano sênior. Diferente de chatbots genéricos, foi construída para o contexto operacional: diagnóstico de falhas, análise de logs, auditoria de segurança, geração de documentação técnica e automação de rotinas.
+A **debuga.ai** é uma plataforma de inteligência artificial operacional que combina modelos de linguagem de última geração com base de conhecimento proprietária, automação de tarefas e suporte humano sênior. Diferente de chatbots genéricos, foi construída para o contexto operacional: diagnóstico de falhas, análise de logs, auditoria de segurança, geração de documentação técnica, criação de diagramas profissionais e automação de rotinas.
 
-A plataforma é oferecida como **white label**, permitindo que MSPs, provedores de internet, consultorias de TI e equipes internas operem a solução com marca própria, em infraestrutura dedicada, com controle total sobre dados e custos.
+A plataforma opera com arquitetura híbrida — inferência local em GPU dedicada para dados sensíveis e fallback transparente para providers cloud quando necessário — garantindo privacidade, desempenho e disponibilidade.
 
 ---
 
-## Para quem é
+## Problemas que Resolve
 
-| Perfil | Caso de uso |
+Equipes de TI, segurança e infraestrutura enfrentam desafios recorrentes que a debuga.ai endereça diretamente:
+
+| Problema | Solução debuga.ai |
+|----------|-------------------|
+| Diagnóstico lento de incidentes | Análise automatizada de logs, correlação de eventos e sugestão de resolução |
+| Documentação técnica desatualizada | Geração automática de runbooks, topologias e relatórios |
+| Falta de visibilidade em ambientes | Diagramas de rede e arquitetura gerados a partir de descrições |
+| Dependência de especialistas para tarefas repetitivas | Automação de scripts, configurações e validações |
+| Custo elevado de ferramentas de IA genéricas | Inferência local em GPU própria com custo zero por token |
+| Dificuldade de personalização para clientes | White label completo com marca, domínio e infraestrutura dedicada |
+
+---
+
+## Para Quem É
+
+| Perfil | Caso de Uso |
 |--------|-------------|
 | MSPs e provedores de serviços gerenciados | Suporte técnico assistido por IA com marca própria |
 | Provedores de internet (ISPs) | Diagnóstico de rede, automação de NOC |
@@ -25,51 +40,116 @@ A plataforma é oferecida como **white label**, permitindo que MSPs, provedores 
 | Consultorias de TI | Ferramenta interna de produtividade técnica |
 | Telecomunicações | Configuração de equipamentos, análise de topologia |
 | Cartórios e Governo | Automação de processos, consulta a legislação, atendimento |
+| Empresas com dados sensíveis | Inferência local sem envio de dados para cloud |
 
 ---
 
-## Principais Capacidades
+## Capacidades Principais
 
-**Diagnóstico e Troubleshooting** — Análise de logs de sistemas, firewalls, switches e servidores. Diagnóstico de falhas de rede, conectividade e serviços. Correlação de eventos entre múltiplas fontes.
+### Chat Técnico
 
-**Segurança da Informação** — Auditoria de configurações e hardening. Análise de vulnerabilidades (CVE). Revisão de políticas de firewall e ACLs. Relatórios de conformidade.
+Conversação em linguagem natural com contexto técnico profundo. O agente compreende logs, configurações, protocolos de rede e padrões de falha. Suporta envio de arquivos (PDF, DOCX, TXT, LOG, CONF, JSON, CSV, YAML, XML, SQL) e análise visual de screenshots e dashboards.
 
-**Automação Técnica** — Geração de scripts (Bash, Python, PowerShell). Configuração de equipamentos de rede. Templates de IaC (Terraform, Ansible, Docker). Automação de rotinas operacionais.
+### Diagnóstico de Infraestrutura
 
-**Geração Multimodal** — Diagramas de rede e topologia. Documentação técnica estruturada. Imagens e assets para relatórios. Exportação em múltiplos formatos.
+Análise automatizada de logs de sistemas, firewalls, switches e servidores. Correlação de eventos entre múltiplas fontes. Ferramentas de rede integradas (DNS lookup, SSL check, HTTP check, WHOIS, port scan, web fetch) invocadas autonomamente pelo agente durante o raciocínio.
 
-**Ferramentas de Rede Integradas** — DNS lookup, SSL check, HTTP check, WHOIS, port scan, web fetch — invocadas autonomamente pelo agente durante o raciocínio.
+### Diagram Studio
 
-**Análise de Documentos e Imagens** — Suporte a 12+ formatos (PDF, DOCX, TXT, MD, LOG, CONF, JSON, CSV, YAML, XML, SQL). Screenshots, prints de erro e dashboards analisados visualmente.
+Geração de diagramas profissionais a partir de descrições em linguagem natural:
+
+| Tipo | Descrição |
+|------|-----------|
+| Diagramas de Rede | Topologias LAN/WAN, segmentação, VLANs |
+| Diagramas de Arquitetura | Microserviços, cloud, on-premise |
+| Fluxogramas | Processos, workflows, decisões |
+| Diagramas de Sequência | Interações entre sistemas |
+| Diagramas de Infraestrutura | Racks, datacenters, cabeamento |
+
+Exportação em SVG e PNG com qualidade profissional para relatórios e apresentações.
+
+### Geração de Documentação
+
+Criação automática de documentação técnica estruturada: runbooks, procedimentos operacionais, relatórios de auditoria, inventários de ativos e políticas de segurança. Formatação profissional com tabelas, diagramas e referências cruzadas.
+
+### Segurança e Auditoria
+
+Auditoria de configurações e hardening. Análise de vulnerabilidades (CVE). Revisão de políticas de firewall e ACLs. Relatórios de conformidade. Registro completo de todas as interações com metadados para auditoria.
+
+### Geração Multimodal
+
+Geração de imagens técnicas, edição de screenshots, criação de assets para documentação e relatórios. Suporte a múltiplos providers de geração de imagem e vídeo com controle de custos por plano.
+
+### White Label
+
+Personalização completa para operação com marca própria. Domínio dedicado, identidade visual customizada, planos e billing configuráveis, isolamento total de dados por instância.
 
 ---
 
-## Arquitetura de Alto Nível
+## Arquitetura em Alto Nível
 
+```mermaid
+graph TB
+    subgraph Internet
+        USER[Usuário/Cliente]
+        CF[Cloudflare DNS + WAF + Turnstile]
+    end
+
+    subgraph Infraestrutura
+        NGINX[NGINX - TLS 1.3 + Rate Limiting + CSP]
+        
+        subgraph Aplicação
+            FE[Frontend - React 19 + Tailwind 4 + shadcn/ui]
+            BE[Backend - Express 4 + tRPC 11 + TypeScript]
+            AGENT[Agente Autônomo - Loop de Raciocínio + Tool Calling]
+        end
+
+        subgraph Serviços
+            PG[PostgreSQL 16]
+            MINIO[MinIO - S3 Storage]
+            SMTP[SMTP Transacional]
+        end
+
+        subgraph Inferência
+            GPU[GPU Local - Ollama/vLLM]
+            CLOUD[Providers Cloud - OpenAI / Gemini / Anthropic]
+        end
+    end
+
+    USER --> CF --> NGINX --> FE
+    FE --> BE --> AGENT
+    AGENT --> GPU
+    AGENT --> CLOUD
+    BE --> PG
+    BE --> MINIO
+    BE --> SMTP
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                  CLOUDFLARE (DNS + WAF + Turnstile)         │
-├─────────────────────────────────────────────────────────────┤
-│                  NGINX (TLS 1.3 + Rate Limiting + CSP)      │
-├─────────────────────────────────────────────────────────────┤
-│  Frontend (React 19 + Tailwind 4 + shadcn/ui)               │
-│  ├── Chat UI com streaming SSE                              │
-│  ├── Painel administrativo completo                         │
-│  ├── Documentação interativa                                │
-│  └── Landing page white label                               │
-├─────────────────────────────────────────────────────────────┤
-│  Backend (Express 4 + tRPC 11 + TypeScript)                 │
-│  ├── Agente autônomo (loop de raciocínio + tool calling)    │
-│  ├── Orquestrador LLM (GPU local → cloud fallback)          │
-│  ├── Billing (Stripe webhooks + quotas)                     │
-│  └── Auth (email/senha + Google OAuth + Turnstile)          │
-├─────────────────────────────────────────────────────────────┤
-│  Serviços                                                   │
-│  ├── PostgreSQL 16 (dados, sessões, auditoria)              │
-│  ├── MinIO (S3-compatible object storage)                   │
-│  ├── Ollama / vLLM (inferência local GPU)                   │
-│  └── SMTP / Brevo (email transacional)                      │
-└─────────────────────────────────────────────────────────────┘
+
+---
+
+## Fluxo de Uso
+
+```mermaid
+sequenceDiagram
+    participant U as Usuário
+    participant L as Landing Page
+    participant A as Auth
+    participant V as Verificação
+    participant C as Chat
+    participant AG as Agente IA
+    participant P as Provider
+
+    U->>L: Acessa debuga.ai
+    U->>A: Cadastro (email/senha ou Google OAuth)
+    A->>V: Envia código de verificação
+    U->>V: Confirma código
+    V->>C: Acesso liberado ao Chat
+    U->>C: Envia mensagem técnica
+    C->>AG: Processa com contexto
+    AG->>P: Seleciona provider (GPU local ou cloud)
+    P-->>AG: Resposta do modelo
+    AG-->>C: Resposta formatada + ferramentas
+    C-->>U: Resultado com streaming
 ```
 
 ---
@@ -83,15 +163,39 @@ O debuga.ai opera com arquitetura híbrida: modelos locais (Ollama/vLLM em GPU d
 | GPU disponível e saudável | Inferência local (latência baixa, custo zero) |
 | GPU em cold start | Aguarda warmup ou aciona fallback |
 | GPU indisponível | Fallback automático para provider cloud |
+| Tarefa especializada (diagramas, imagem) | Provider cloud otimizado para a tarefa |
 | Sem GPU instalada | Apenas providers cloud |
 
-Providers cloud suportados: OpenAI (GPT-4o), Anthropic (Claude 3.5 Sonnet), Google (Gemini 2.0), DeepSeek, Qwen e outros via gateway proprietário.
+Providers cloud suportados: OpenAI (GPT-4o), Google (Gemini 2.0 Flash/Pro), Anthropic (Claude), DeepSeek, Qwen e outros via gateway proprietário.
 
 ---
 
 ## White Label e Implantação Dedicada
 
-A plataforma foi projetada para personalização completa:
+```mermaid
+graph LR
+    subgraph Plataforma debuga.ai
+        CORE[Core Engine]
+        API[API Gateway]
+        ORCH[Orquestrador LLM]
+    end
+
+    subgraph Cliente A - MSP
+        A_BRAND[Marca Própria]
+        A_DOMAIN[dominio-a.com.br]
+        A_USERS[Usuários do MSP]
+    end
+
+    subgraph Cliente B - ISP
+        B_BRAND[Marca Própria]
+        B_DOMAIN[dominio-b.com.br]
+        B_USERS[Usuários do ISP]
+    end
+
+    A_USERS --> A_DOMAIN --> CORE
+    B_USERS --> B_DOMAIN --> CORE
+    CORE --> API --> ORCH
+```
 
 | Aspecto | Personalização |
 |---------|---------------|
@@ -101,6 +205,7 @@ A plataforma foi projetada para personalização completa:
 | Planos | Definidos pelo operador |
 | Billing | Stripe integrado, configurável |
 | Knowledge Base | Runbooks, documentação e procedimentos próprios |
+| Modelos | Escolha de modelos locais e cloud por capability |
 | Suporte | Canal próprio + escalação para sênior |
 
 ---
@@ -109,9 +214,11 @@ A plataforma foi projetada para personalização completa:
 
 **Segurança** — TLS 1.3, HSTS preload, CSP restritiva, Cloudflare WAF, Turnstile CAPTCHA, rate limiting por endpoint, JWT httpOnly com sameSite:lax.
 
-**Auditoria** — Registro completo de todas as interações com metadados (usuário, provider, tokens, custo, latência). Exportação de logs. Conformidade com políticas internas.
+**Auditoria** — Registro completo de todas as interações com metadados (usuário, provider, tokens consumidos, latência). Exportação de logs. Conformidade com políticas internas.
 
-**Controle de Custos** — Limites configuráveis por usuário e plano. Alertas de consumo. Bloqueio automático. Relatório de custo por provider.
+**Controle de Custos** — Limites configuráveis por usuário e plano. Alertas de consumo. Bloqueio automático ao atingir cota. Relatório de custo por provider no painel administrativo.
+
+**Privacidade** — Inferência local mantém dados sensíveis dentro da infraestrutura do cliente. Sem envio para terceiros quando operando em modo GPU-only.
 
 ---
 
@@ -126,11 +233,91 @@ A plataforma foi projetada para personalização completa:
 | Inferência local | Ollama / vLLM (NVIDIA GPU) |
 | Storage | MinIO (S3-compatible) |
 | Containerização | Docker + Docker Compose |
-| Reverse proxy | NGINX + Let's Encrypt |
+| Reverse proxy | NGINX + TLS |
 | CDN/WAF | Cloudflare |
 | Billing | Stripe |
-| Email | SMTP / Brevo |
+| Email | SMTP transacional |
 | CAPTCHA | Cloudflare Turnstile |
+
+---
+
+## Pipeline do Diagram Studio
+
+```mermaid
+flowchart LR
+    A[Descrição em<br>linguagem natural] --> B[Agente analisa<br>contexto e tipo]
+    B --> C{Tipo de diagrama}
+    C -->|Rede| D[Network Diagram Engine]
+    C -->|Arquitetura| E[Architecture Engine]
+    C -->|Fluxograma| F[Flowchart Engine]
+    D --> G[Renderização SVG/PNG]
+    E --> G
+    F --> G
+    G --> H[Entrega ao usuário<br>com download]
+```
+
+---
+
+## Validação e Saúde Operacional
+
+```mermaid
+flowchart TD
+    A[Deploy] --> B[Health Check]
+    B --> C{Status OK?}
+    C -->|Sim| D[Validar Auth]
+    C -->|Não| X[Rollback]
+    D --> E[Validar Chat]
+    E --> F[Validar Providers]
+    F --> G[Validar SEO/Analytics]
+    G --> H[Validar Segurança]
+    H --> I[Produção Estável]
+    
+    D -->|Falha| X
+    E -->|Falha| X
+    F -->|Falha| X
+```
+
+---
+
+## Scripts de Validação
+
+Este repositório inclui scripts de validação para verificar a integridade de deploys e configurações públicas:
+
+| Script | Descrição |
+|--------|----------|
+| `scripts/check-seo-analytics.sh` | Valida GA4, meta tags, sitemap e robots.txt |
+| `scripts/check-public-links.sh` | Verifica links públicos retornam HTTP 200 |
+| `scripts/check-sitemap.sh` | Valida estrutura e URLs do sitemap.xml |
+| `scripts/check-robots.sh` | Verifica conformidade do robots.txt |
+| `scripts/check-security-headers.sh` | Audita headers de segurança (HSTS, CSP, X-Frame) |
+| `scripts/check-docs-links.sh` | Verifica links internos da documentação |
+| `scripts/check-public-repo-clean.sh` | Garante que o repo público não contém secrets |
+
+Para detalhes de uso, consulte [docs/VALIDATION_SCRIPTS.md](docs/VALIDATION_SCRIPTS.md).
+
+---
+
+## Roadmap Público
+
+| Item | Status |
+|------|--------|
+| Agente conversacional com contexto técnico | Produção |
+| Inferência local via GPU (Ollama/vLLM) | Produção |
+| Fallback multi-provider cloud | Produção |
+| Diagram Studio (rede, arquitetura, fluxograma) | Produção |
+| Geração de imagens e assets | Produção |
+| Controle de custos e billing (Stripe) | Produção |
+| White label com marca própria | Produção |
+| Auditoria e logs estruturados | Produção |
+| Auth completa (email + Google OAuth + Turnstile) | Produção |
+| Multi-modelo por capability (código, análise, chat) | Produção |
+| Ferramentas de rede integradas (DNS, SSL, WHOIS) | Produção |
+| Análise de documentos e imagens | Produção |
+| Integração com Zabbix/Grafana/Prometheus | Em desenvolvimento |
+| RAG com documentação interna | Em desenvolvimento |
+| WhatsApp Business | Planejado |
+| SSO/SAML | Planejado |
+| Multi-tenant enterprise | Planejado |
 
 ---
 
@@ -149,64 +336,29 @@ A plataforma foi projetada para personalização completa:
 
 ## Documentação
 
-A documentação completa está disponível na plataforma:
-
-| Documento | Link |
-|-----------|------|
-| Whitepaper | [debuga.ai/docs/whitepaper](https://debuga.ai/docs/whitepaper) |
-| Arquitetura Técnica | [debuga.ai/docs/architecture](https://debuga.ai/docs/architecture) |
-| White Label Enterprise | [debuga.ai/docs/white-label-enterprise](https://debuga.ai/docs/white-label-enterprise) |
-
-Documentação complementar neste repositório:
-
 | Documento | Descrição |
 |-----------|-----------|
 | [Whitepaper PT-BR](docs/WHITEPAPER_PTBR.md) | Visão estratégica e proposta de valor |
 | [Whitepaper EN](docs/WHITEPAPER_EN.md) | English version |
-| [Arquitetura PT-BR](docs/ARCHITECTURE_PTBR.md) | Arquitetura de referência |
+| [Arquitetura PT-BR](docs/ARCHITECTURE_PTBR.md) | Arquitetura de referência detalhada |
 | [Architecture EN](docs/ARCHITECTURE_EN.md) | English version |
 | [Estratégia LLM](docs/R_AND_D_LLM_STACK.md) | Pesquisa e decisões sobre inferência |
-| [Roadmap](docs/ROADMAP.md) | Roadmap público |
+| [Roadmap](docs/ROADMAP.md) | Roadmap público detalhado |
 | [Providers](docs/PROVIDERS_OVERVIEW.md) | Providers de IA suportados |
-| [White Label](docs/WHITE_LABEL_OVERVIEW.md) | Modelo de implantação |
+| [White Label](docs/WHITE_LABEL_OVERVIEW.md) | Modelo de implantação enterprise |
 | [Segurança](docs/SECURITY_OVERVIEW.md) | Políticas de segurança |
+| [SEO e Analytics](docs/SEO_ANALYTICS.md) | Estratégia de SEO e monitoramento |
+| [Scripts de Validação](docs/VALIDATION_SCRIPTS.md) | Documentação dos scripts públicos |
 
 ---
 
-## Roadmap
+## Links Úteis
 
-| Item | Status |
-|------|--------|
-| Agente conversacional com contexto técnico | Produção |
-| Inferência local via GPU (Ollama/vLLM) | Produção |
-| Fallback multi-provider cloud | Produção |
-| Geração de imagens e diagramas | Produção |
-| Controle de custos e billing (Stripe) | Produção |
-| White label com marca própria | Produção |
-| Auditoria e logs estruturados | Produção |
-| Auth completa (email + Google OAuth + Turnstile) | Produção |
-| Integração com Zabbix/Grafana/Prometheus | Em desenvolvimento |
-| RAG com documentação interna | Em desenvolvimento |
-| WhatsApp Business | Planejado |
-| SSO/SAML | Planejado |
-| Multi-tenant enterprise | Planejado |
-
----
-
-## Scripts de Validação
-
-Este repositório inclui scripts de validação para verificar a integridade de deploys e configurações públicas:
-
-| Script | Descrição |
-|--------|----------|
-| `scripts/check-seo-analytics.sh` | Valida GA4, meta tags, sitemap e robots.txt |
-| `scripts/check-public-links.sh` | Verifica links públicos retornam HTTP 200 |
-| `scripts/check-sitemap.sh` | Valida estrutura e URLs do sitemap.xml |
-| `scripts/check-robots.sh` | Verifica conformidade do robots.txt |
-| `scripts/check-security-headers.sh` | Audita headers de segurança (HSTS, CSP, X-Frame) |
-| `scripts/check-docs-links.sh` | Verifica links internos da documentação |
-
-Para detalhes de uso, consulte [docs/VALIDATION_SCRIPTS.md](docs/VALIDATION_SCRIPTS.md).
+| Recurso | URL |
+|---------|-----|
+| Plataforma | [https://debuga.ai](https://debuga.ai) |
+| Documentação online | [https://debuga.ai/docs](https://debuga.ai/docs) |
+| Sperry Tecnologia | [https://www.sperrytecnologia.com.br](https://www.sperrytecnologia.com.br) |
 
 ---
 
@@ -214,6 +366,6 @@ Para detalhes de uso, consulte [docs/VALIDATION_SCRIPTS.md](docs/VALIDATION_SCRI
 
 Documentação pública sob licença MIT. O código de produção da plataforma é privado e comercial.
 
-Para informações sobre licenciamento, demonstrações ou implantação, entre em contato com a Sperry Tecnologia.
+Para informações sobre licenciamento, demonstrações ou implantação white label, entre em contato com a Sperry Tecnologia.
 
 ---
