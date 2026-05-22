@@ -736,3 +736,9 @@
 - [x] Client: DiagramErrorBoundary com auto-retry (2 tentativas) + retry manual
 - [x] Client: Botão "Tentar renderizar novamente" quando parsing falha
 - [x] Testes unitários (15 testes passando)
+
+## Fix #7 Auditoria: KB sem limite no path legado (22/05/2026)
+
+- [x] Aplicar limite de 5 items + 8000 chars (~2000 tokens) no path legado (buildDynamicSystemPrompt)
+- [x] Manter comportamento inalterado quando ENABLE_CAPABILITY_ROUTING=true
+- [x] Testes unitários (6 testes passando)

@@ -154,14 +154,25 @@ async function buildDynamicSystemPrompt(): Promise<string> {
       }
     }
 
-    // Load active knowledge base items
+    // Load active knowledge base items (with limits matching capability routing path)
+    // Limits: max 5 items, max ~2000 tokens (≈8000 chars) to prevent excessive context consumption
+    const LEGACY_KB_MAX_ITEMS = 5;
+    const LEGACY_KB_MAX_CHARS = 8000; // ~2000 tokens at 4 chars/token
     const knowledge = await listKnowledge("default", { onlyActive: true });
     if (knowledge.length > 0) {
       prompt += "\n\n## Base de Conhecimento:\n";
       prompt += "Use as informações abaixo como referência para responder perguntas dos usuários:\n";
+      let injectedCount = 0;
+      let injectedChars = 0;
       for (const item of knowledge) {
-        prompt += `\n### ${item.title}${item.category ? ` [${item.category}]` : ""}\n${item.content}\n`;
+        if (injectedCount >= LEGACY_KB_MAX_ITEMS) break;
+        const itemText = `\n### ${item.title}${item.category ? ` [${item.category}]` : ""}\n${item.content}\n`;
+        if (injectedChars + itemText.length > LEGACY_KB_MAX_CHARS && injectedCount > 0) break;
+        prompt += itemText;
+        injectedCount++;
+        injectedChars += itemText.length;
       }
+      console.log(`[Stream] Legacy KB: injected ${injectedCount}/${knowledge.length} items (${injectedChars} chars)`);
     }
   } catch (err) {
     console.warn("[Stream] Failed to load dynamic instructions/knowledge:", err);
