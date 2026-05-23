@@ -181,7 +181,7 @@ Garante que o repositório público não contém referências sensíveis, secret
 |-------------|----------|
 | Senhas e tokens | Ausência de API keys, secrets, PATs |
 | Paths internos | Ausência de `/opt/debuga-ai` e similares |
-| Artefatos dev | Ausência de `node_modules`, `.manus`, checkpoints |
+| Artefatos dev | Ausência de `node_modules`, artefatos de build, checkpoints |
 | Arquivos .env | Nenhum .env real (apenas .env.example permitido) |
 | Dados pessoais | Ausência de e-mails e dados sensíveis |
 

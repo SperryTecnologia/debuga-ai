@@ -12,6 +12,16 @@ Thumbs.db
 .env
 .env.*
 
-# Node (if any tooling is added later)
+# Node
 node_modules/
 dist/
+pnpm-lock.yaml
+
+# Internal tooling
+.manus/
+.manus-logs/
+.manus-db/
+todo.md
+
+# Build artifacts
+*.tsbuildinfo
