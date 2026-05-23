@@ -755,3 +755,12 @@
 - [x] Visual feedback spinner com ícone de imagem durante edição/geração de imagem (StepIndicator aprimorado)
 - [x] Cache de classificação de intenção para mensagens repetidas (evita re-processamento)
 - [x] Botão "Refazer" em mensagens de imagem que falharam (retry com mesmo prompt)
+
+### Quota System Refactoring - Premium UX
+- [x] Audit all quota enforcement points (chat, image gen, image edit, audio, uploads, diagrams, document studio)
+- [x] Implement admin bypass completo (mensagens, imagens, cooldown, rate limit, uploads)
+- [x] Ajustar limites do Free Plan para serem mais generosos (mensagens/dia, imagens/dia, uploads/dia)
+- [x] Substituir mensagens explícitas de "plano gratuito" por UX premium neutra
+- [x] Manter proteção contra abuso (rate limit IP, cooldown anti-spam, limite tamanho arquivo, requests simultâneos)
+- [x] Garantir consistência entre frontend e backend nas quotas
+- [x] Testes para admin bypass e novos limites
