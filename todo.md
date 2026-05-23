@@ -764,3 +764,11 @@
 - [x] Manter proteção contra abuso (rate limit IP, cooldown anti-spam, limite tamanho arquivo, requests simultâneos)
 - [x] Garantir consistência entre frontend e backend nas quotas
 - [x] Testes para admin bypass e novos limites
+
+### UX Premium de Quotas e Limites (23/05/2026)
+- [x] Admin UX limpa: esconder barras, contadores, porcentagens, warnings - mostrar apenas "Modo administrativo habilitado"
+- [x] Free plan UX premium: cores suaves (verde→amarelo→vermelho apenas em bloqueio real)
+- [x] Corrigir contador de conversas (40/15 impossível) - cap visual no máximo do limite
+- [x] Reposicionar labels: "limite diário" → "capacidade diária", "limite mensal" → "uso mensal"
+- [x] Diferenciação visual dos planos (Free=guiada, Starter=produtividade, Pro=profissional, Enterprise=implantação)
+- [x] Remover estados visuais de bug (contadores quebrados, limites ultrapassados, mensagens técnicas)
