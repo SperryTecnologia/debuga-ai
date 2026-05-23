@@ -3584,3 +3584,141 @@
 [2026-05-22T20:22:24.423Z] [Auth]     3. User deleted from database
 [2026-05-22T20:32:46.664Z] 4:32:46 PM [vite] (client) hmr update /src/index.css, /src/components/MessageWithMermaid.tsx
 [2026-05-22T20:33:12.880Z] 4:33:12 PM [vite] (client) hmr update /src/index.css, /src/components/MessageWithMermaid.tsx
+[2026-05-22T20:33:56.607Z] [Auth] ─── auth.me request ───
+[2026-05-22T20:33:56.608Z] [Auth]   cookie header present: true
+[2026-05-22T20:33:56.608Z] [Auth]   app_session_id cookie present: true
+[2026-05-22T20:33:56.609Z] [Auth]   req.hostname: 127.0.0.1
+[2026-05-22T20:33:56.609Z] [Auth]   req.protocol: http
+[2026-05-22T20:33:56.609Z] [Auth]   x-forwarded-proto: (none)
+[2026-05-22T20:33:56.610Z] [Auth]   origin: (none)
+[2026-05-22T20:33:56.610Z] [Auth]   cookie value length: 223
+[2026-05-22T20:33:56.610Z] [Auth]   cookie value prefix: eyJhbGciOiJIUzI1NiIs...
+[2026-05-22T20:33:56.623Z] [Auth]   ✗ authentication failed: Failed query: select "id", "openId", "name", "email", "phone", "passwordHash", "authProvider", "googleOpenId", "loginMethod", "role", "tenantId", "isActive", "emailVerified", "phoneVerified", "termsAcceptedAt", "privacyAcceptedAt", "lastLoginAt", "failedLoginAttempts", "lockedUntil", "createdAt", "updatedAt", "lastSignedIn", "stripeCustomerId" from "users" where "users"."openId" = $1 limit $2
+[2026-05-22T20:33:56.624Z] params: QuHvVC2Q5rP6ioKPMqwDBZ,1
+[2026-05-22T20:33:56.624Z] [Auth]   → Cookie present but invalid. Possible causes:
+[2026-05-22T20:33:56.624Z] [Auth]     1. JWT_SECRET changed since cookie was issued
+[2026-05-22T20:33:56.625Z] [Auth]     2. Token expired
+[2026-05-22T20:33:56.625Z] [Auth]     3. User deleted from database
+[2026-05-22T20:34:04.117Z] [Auth] ─── auth.me request ───
+[2026-05-22T20:34:04.118Z] [Auth]   cookie header present: true
+[2026-05-22T20:34:04.118Z] [Auth]   app_session_id cookie present: true
+[2026-05-22T20:34:04.119Z] [Auth]   req.hostname: 3000-izuzjlmr6p6xhy8y13qpm-ccb30902.us2.manus.computer
+[2026-05-22T20:34:04.119Z] [Auth]   req.protocol: https
+[2026-05-22T20:34:04.119Z] [Auth]   x-forwarded-proto: https
+[2026-05-22T20:34:04.120Z] [Auth]   origin: (none)
+[2026-05-22T20:34:04.120Z] [Auth]   cookie value length: 223
+[2026-05-22T20:34:04.120Z] [Auth]   cookie value prefix: eyJhbGciOiJIUzI1NiIs...
+[2026-05-22T20:34:04.140Z] [Auth]   ✗ authentication failed: Failed query: select "id", "openId", "name", "email", "phone", "passwordHash", "authProvider", "googleOpenId", "loginMethod", "role", "tenantId", "isActive", "emailVerified", "phoneVerified", "termsAcceptedAt", "privacyAcceptedAt", "lastLoginAt", "failedLoginAttempts", "lockedUntil", "createdAt", "updatedAt", "lastSignedIn", "stripeCustomerId" from "users" where "users"."openId" = $1 limit $2
+[2026-05-22T20:34:04.141Z] params: QuHvVC2Q5rP6ioKPMqwDBZ,1
+[2026-05-22T20:34:04.141Z] [Auth]   → Cookie present but invalid. Possible causes:
+[2026-05-22T20:34:04.142Z] [Auth]     1. JWT_SECRET changed since cookie was issued
+[2026-05-22T20:34:04.142Z] [Auth]     2. Token expired
+[2026-05-22T20:34:04.142Z] [Auth]     3. User deleted from database
+[2026-05-22T20:34:25.968Z] [Auth] ─── auth.me request ───
+[2026-05-22T20:34:25.968Z] [Auth]   cookie header present: true
+[2026-05-22T20:34:25.969Z] [Auth]   app_session_id cookie present: true
+[2026-05-22T20:34:25.969Z] [Auth]   req.hostname: 3000-izuzjlmr6p6xhy8y13qpm-ccb30902.us2.manus.computer
+[2026-05-22T20:34:25.970Z] [Auth]   req.protocol: https
+[2026-05-22T20:34:25.970Z] [Auth]   x-forwarded-proto: https
+[2026-05-22T20:34:25.970Z] [Auth]   origin: (none)
+[2026-05-22T20:34:25.970Z] [Auth]   cookie value length: 223
+[2026-05-22T20:34:25.971Z] [Auth]   cookie value prefix: eyJhbGciOiJIUzI1NiIs...
+[2026-05-22T20:34:25.987Z] [Auth]   ✗ authentication failed: Failed query: select "id", "openId", "name", "email", "phone", "passwordHash", "authProvider", "googleOpenId", "loginMethod", "role", "tenantId", "isActive", "emailVerified", "phoneVerified", "termsAcceptedAt", "privacyAcceptedAt", "lastLoginAt", "failedLoginAttempts", "lockedUntil", "createdAt", "updatedAt", "lastSignedIn", "stripeCustomerId" from "users" where "users"."openId" = $1 limit $2
+[2026-05-22T20:34:25.987Z] params: QuHvVC2Q5rP6ioKPMqwDBZ,1
+[2026-05-22T20:34:25.988Z] [Auth]   → Cookie present but invalid. Possible causes:
+[2026-05-22T20:34:25.988Z] [Auth]     1. JWT_SECRET changed since cookie was issued
+[2026-05-22T20:34:25.988Z] [Auth]     2. Token expired
+[2026-05-22T20:34:25.988Z] [Auth]     3. User deleted from database
+[2026-05-22T20:42:12.061Z] 4:42:12 PM [tsx] unlink in ./../../../tmp/debuga-ai-prod/app/node_modules/.pnpm/jose@6.1.0/node_modules/jose/dist/webapi/index.js Restarting...
+[2026-05-22T20:42:12.274Z] c4:42:12 PM [tsx] unlink in ./../../../tmp/debuga-ai-prod/app/node_modules/.pnpm/xmlbuilder@10.1.1/node_modules/xmlbuilder/lib/XMLWriterBase.js Restarting...
+[2026-05-22T20:42:12.406Z] c4:42:12 PM [tsx] unlink in ./../../../tmp/debuga-ai-prod/app/node_modules/.pnpm/js-tokens@4.0.0/node_modules/js-tokens/index.js Restarting...
+[2026-05-22T20:42:12.473Z] 
+[2026-05-22T20:42:12.474Z] node:internal/modules/run_main:122
+[2026-05-22T20:42:12.474Z] triggerUncaughtException(
+[2026-05-22T20:42:12.475Z] ^
+[2026-05-22T20:42:12.475Z] Error: ENOENT: no such file or directory, lstat '/tmp/debuga-ai-prod/app/node_modules/.pnpm/tsx@4.22.0/node_modules/tsx/dist/temporary-directory-B83uKxJF.cjs'
+[2026-05-22T20:42:12.475Z] at Object.realpathSync (node:fs:2787:29)
+[2026-05-22T20:42:12.476Z] at toRealPath (node:internal/modules/helpers:61:13)
+[2026-05-22T20:42:12.476Z] at Function._findPath (node:internal/modules/cjs/loader:759:24)
+[2026-05-22T20:42:12.476Z] at Function._resolveFilename (node:internal/modules/cjs/loader:1230:27)
+[2026-05-22T20:42:12.477Z] at Function._load (node:internal/modules/cjs/loader:1070:27)
+[2026-05-22T20:42:12.477Z] at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+[2026-05-22T20:42:12.477Z] at wrapModuleLoad (node:internal/modules/cjs/loader:217:24)
+[2026-05-22T20:42:12.478Z] at Module.require (node:internal/modules/cjs/loader:1335:12)
+[2026-05-22T20:42:12.478Z] at require (node:internal/modules/helpers:136:16)
+[2026-05-22T20:42:12.478Z] at Object.<anonymous> (/tmp/debuga-ai-prod/app/node_modules/.pnpm/tsx@4.22.0/node_modules/tsx/dist/get-pipe-path-D4YM6rQt.cjs:1:142) {
+[2026-05-22T20:42:12.479Z] errno: -2,
+[2026-05-22T20:42:12.479Z] code: 'ENOENT',
+[2026-05-22T20:42:12.479Z] syscall: 'lstat',
+[2026-05-22T20:42:12.480Z] path: '/tmp/debuga-ai-prod/app/node_modules/.pnpm/tsx@4.22.0/node_modules/tsx/dist/temporary-directory-B83uKxJF.cjs'
+[2026-05-22T20:42:12.480Z] }
+[2026-05-22T20:42:12.480Z] 
+[2026-05-22T20:42:12.481Z] Node.js v22.13.0
+[2026-05-22T20:42:12.523Z] cnode:internal/modules/cjs/loader:1247
+[2026-05-22T20:42:12.524Z] throw err;
+[2026-05-22T20:42:12.524Z] ^
+[2026-05-22T20:42:12.524Z] 
+[2026-05-22T20:42:12.525Z] Error: Cannot find module '/tmp/debuga-ai-prod/app/node_modules/.pnpm/tsx@4.22.0/node_modules/tsx/dist/preflight.cjs'
+[2026-05-22T20:42:12.525Z] Require stack:
+[2026-05-22T20:42:12.525Z] - internal/preload
+[2026-05-22T20:42:12.525Z] at Function._resolveFilename (node:internal/modules/cjs/loader:1244:15)
+[2026-05-22T20:42:12.526Z] at Function._load (node:internal/modules/cjs/loader:1070:27)
+[2026-05-22T20:42:12.526Z] at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+[2026-05-22T20:42:12.527Z] at wrapModuleLoad (node:internal/modules/cjs/loader:217:24)
+[2026-05-22T20:42:12.527Z] at Module.require (node:internal/modules/cjs/loader:1335:12)
+[2026-05-22T20:42:12.528Z] at node:internal/modules/cjs/loader:1834:12
+[2026-05-22T20:42:12.528Z] at loadPreloadModules (node:internal/process/pre_execution:726:5)
+[2026-05-22T20:42:12.528Z] at setupUserModules (node:internal/process/pre_execution:206:5)
+[2026-05-22T20:42:12.529Z] at prepareExecution (node:internal/process/pre_execution:159:5)
+[2026-05-22T20:42:12.529Z] at prepareMainThreadExecution (node:internal/process/pre_execution:54:10) {
+[2026-05-22T20:42:12.529Z] code: 'MODULE_NOT_FOUND',
+[2026-05-22T20:42:12.530Z] requireStack: [ 'internal/preload' ]
+[2026-05-22T20:42:12.530Z] }
+[2026-05-22T20:42:12.530Z] 
+[2026-05-22T20:42:12.531Z] Node.js v22.13.0
+[2026-05-22T20:42:12.688Z] 4:42:12 PM [tsx] unlink in ./../../../tmp/debuga-ai-prod/app/node_modules/.pnpm/@tailwindcss+node@4.3.0/node_modules/@tailwindcss/node/dist/index.mjs Rerunning...
+[2026-05-22T20:42:12.716Z] cnode:internal/modules/cjs/loader:1247
+[2026-05-22T20:42:12.717Z] throw err;
+[2026-05-22T20:42:12.717Z] ^
+[2026-05-22T20:42:12.718Z] 
+[2026-05-22T20:42:12.718Z] Error: Cannot find module '/tmp/debuga-ai-prod/app/node_modules/.pnpm/tsx@4.22.0/node_modules/tsx/dist/preflight.cjs'
+[2026-05-22T20:42:12.718Z] Require stack:
+[2026-05-22T20:42:12.719Z] - internal/preload
+[2026-05-22T20:42:12.719Z] at Function._resolveFilename (node:internal/modules/cjs/loader:1244:15)
+[2026-05-22T20:42:12.719Z] at Function._load (node:internal/modules/cjs/loader:1070:27)
+[2026-05-22T20:42:12.719Z] at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+[2026-05-22T20:42:12.720Z] at wrapModuleLoad (node:internal/modules/cjs/loader:217:24)
+[2026-05-22T20:42:12.720Z] at Module.require (node:internal/modules/cjs/loader:1335:12)
+[2026-05-22T20:42:12.721Z] at node:internal/modules/cjs/loader:1834:12
+[2026-05-22T20:42:12.722Z] at loadPreloadModules (node:internal/process/pre_execution:726:5)
+[2026-05-22T20:42:12.722Z] at setupUserModules (node:internal/process/pre_execution:206:5)
+[2026-05-22T20:42:12.722Z] at prepareExecution (node:internal/process/pre_execution:159:5)
+[2026-05-22T20:42:12.723Z] at prepareMainThreadExecution (node:internal/process/pre_execution:54:10) {
+[2026-05-22T20:42:12.723Z] code: 'MODULE_NOT_FOUND',
+[2026-05-22T20:42:12.723Z] requireStack: [ 'internal/preload' ]
+[2026-05-22T20:42:12.724Z] }
+[2026-05-22T20:42:12.724Z] 
+[2026-05-22T20:42:12.724Z] Node.js v22.13.0
+[2026-05-22T22:42:20.930Z] 6:42:20 PM [tsx] unlink in ./../../../tmp/debuga-ai-prod/app/node_modules/.pnpm/drizzle-orm@0.44.7_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/index.js Rerunning...
+[2026-05-22T22:42:20.965Z] cnode:internal/modules/cjs/loader:1247
+[2026-05-22T22:42:20.966Z] throw err;
+[2026-05-22T22:42:20.966Z] ^
+[2026-05-22T22:42:20.966Z] 
+[2026-05-22T22:42:20.967Z] Error: Cannot find module '/tmp/debuga-ai-prod/app/node_modules/.pnpm/tsx@4.22.0/node_modules/tsx/dist/preflight.cjs'
+[2026-05-22T22:42:20.967Z] Require stack:
+[2026-05-22T22:42:20.967Z] - internal/preload
+[2026-05-22T22:42:20.968Z] at Function._resolveFilename (node:internal/modules/cjs/loader:1244:15)
+[2026-05-22T22:42:20.968Z] at Function._load (node:internal/modules/cjs/loader:1070:27)
+[2026-05-22T22:42:20.968Z] at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+[2026-05-22T22:42:20.968Z] at wrapModuleLoad (node:internal/modules/cjs/loader:217:24)
+[2026-05-22T22:42:20.969Z] at Module.require (node:internal/modules/cjs/loader:1335:12)
+[2026-05-22T22:42:20.969Z] at node:internal/modules/cjs/loader:1834:12
+[2026-05-22T22:42:20.969Z] at loadPreloadModules (node:internal/process/pre_execution:726:5)
+[2026-05-22T22:42:20.970Z] at setupUserModules (node:internal/process/pre_execution:206:5)
+[2026-05-22T22:42:20.970Z] at prepareExecution (node:internal/process/pre_execution:159:5)
+[2026-05-22T22:42:20.970Z] at prepareMainThreadExecution (node:internal/process/pre_execution:54:10) {
+[2026-05-22T22:42:20.971Z] code: 'MODULE_NOT_FOUND',
+[2026-05-22T22:42:20.971Z] requireStack: [ 'internal/preload' ]
+[2026-05-22T22:42:20.971Z] }
+[2026-05-22T22:42:20.972Z] 
+[2026-05-22T22:42:20.972Z] Node.js v22.13.0
