@@ -99,6 +99,10 @@ import {
   SearchCheck,
   CheckCircle2,
   Sparkles,
+  Download,
+  Copy,
+  ZoomIn,
+  RefreshCw,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -670,11 +674,42 @@ function ToolResultCard({ name, result }: { name: string; result: any }) {
 // ── Step Indicator ──
 function StepIndicator({ step }: { step: StepEvent }) {
   const toolNames = step.tools || [];
+  // Contextual styling for image steps
+  const isImageStep = step.step === "image_gen" || step.step === "image_edit";
+  const isImageDone = step.step === "image_edit_done" || step.step === "image_gen_done";
+  const isAudioStep = step.step === "audio_transcription";
+  const isAudioDone = step.step === "audio_transcription_done";
   return (
     <div className="my-2 flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10">
-        <Loader2 className="w-3 h-3 animate-spin text-primary" />
-        <span className="text-[10px] font-mono text-primary/80">{step.content}</span>
+      <div className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-full border",
+        isImageDone || isAudioDone
+          ? "bg-emerald-500/10 border-emerald-500/20"
+          : isImageStep
+            ? "bg-purple-500/10 border-purple-500/20"
+            : isAudioStep
+              ? "bg-blue-500/10 border-blue-500/20"
+              : "bg-primary/5 border-primary/10"
+      )}>
+        {isImageDone || isAudioDone ? (
+          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+        ) : isImageStep ? (
+          <>
+            <ImageIcon className="w-3 h-3 text-purple-400" />
+            <Loader2 className="w-3 h-3 animate-spin text-purple-400" />
+          </>
+        ) : isAudioStep ? (
+          <>
+            <Mic className="w-3 h-3 text-blue-400" />
+            <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
+          </>
+        ) : (
+          <Loader2 className="w-3 h-3 animate-spin text-primary" />
+        )}
+        <span className={cn(
+          "text-[10px] font-mono",
+          isImageDone || isAudioDone ? "text-emerald-400/80" : isImageStep ? "text-purple-400/80" : isAudioStep ? "text-blue-400/80" : "text-primary/80"
+        )}>{step.content}</span>
         {toolNames.map((t) => {
           const d = TOOL_DISPLAY[t];
           if (!d) return null;
@@ -1063,7 +1098,7 @@ function StreamLoadingIndicator({ avatarSrc }: { avatarSrc: string }) {
  * Renders a user message with clean display text and visual attachment chips.
  * Strips internal metadata (URLs, file paths, separators) from DB-stored content.
  */
-function UserMessageContent({ msg }: { msg: ChatMessage }) {
+function UserMessageContent({ msg, onImageClick }: { msg: ChatMessage; onImageClick?: (src: string, alt: string) => void }) {
   // If the message already has in-memory attachments (just sent), use them directly
   if (msg.attachments && msg.attachments.length > 0) {
     return (
@@ -1080,7 +1115,7 @@ function UserMessageContent({ msg }: { msg: ChatMessage }) {
                   src={att.url}
                   alt={att.filename}
                   className="w-full h-auto max-h-[200px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => window.open(att.url, '_blank')}
+                  onClick={() => onImageClick?.(att.url, att.filename)}
                 />
               ) : (
                 <>
@@ -1111,10 +1146,10 @@ function UserMessageContent({ msg }: { msg: ChatMessage }) {
             )}>
               {att.isImage && att.url ? (
                 <img
-                  src={att.url}
+                  src={att.url!}
                   alt={att.filename}
                   className="w-full h-auto max-h-[200px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => window.open(att.url!, '_blank')}
+                  onClick={() => onImageClick?.(att.url!, att.filename)}
                 />
               ) : (
                 <>
@@ -1152,13 +1187,14 @@ export default function ChatPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [audioState, setAudioState] = useState<"idle" | "recording" | "sending" | "error">("idle");
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; message: string; planId: string } | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<{ src: string; alt: string } | null>(null);
 
   const lastRequestBlockedRef = useRef(false);
 
-  const showAllSuggestionsRef = useRef(false);
-  const [, forceRender] = useState(0);
-  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
   const [searchQuery, setSearchQuery] = useState("");
@@ -1319,6 +1355,7 @@ export default function ChatPage() {
         const res = await fetch("/api/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ filename: file.name, content: base64, mimeType: file.type }),
         });
         if (res.ok) {
@@ -1334,7 +1371,7 @@ export default function ChatPage() {
         } else {
           const errData = await res.json().catch(() => null);
           if (res.status === 402 && (errData?.code === "IMAGE_LIMIT_REACHED" || errData?.code === "DOC_LIMIT_REACHED")) {
-            toast.error(errData.error || `Limite atingido. Faça upgrade para enviar mais.`);
+            toast.error(errData.error || "Limite temporário atingido. Novos envios estarão disponíveis em breve.");
             break; // Stop uploading remaining files
           } else if (res.status === 403) {
             toast.error(errData?.error || "Upload desativado temporariamente.");
@@ -1424,12 +1461,27 @@ export default function ChatPage() {
 
       recorder.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        if (audioBlob.size < 1000) {
-          toast.error("Gravação muito curta, tente novamente");
+        // Stop the recording timer
+        if (recordingTimerRef.current) {
+          clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+        }
+        setRecordingDuration(0);
+
+        // If chunks were cleared (cancelled), just exit silently
+        if (audioChunksRef.current.length === 0) {
           return;
         }
 
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        if (audioBlob.size < 1000) {
+          setAudioState("error");
+          toast.error("Gravação muito curta, tente novamente");
+          setTimeout(() => setAudioState("idle"), 3000);
+          return;
+        }
+
+        setAudioState("sending");
         setIsUploading(true);
         try {
           const base64 = await new Promise<string>((resolve) => {
@@ -1441,6 +1493,7 @@ export default function ChatPage() {
           const res = await fetch("/api/upload", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({
               filename: `audio-${Date.now()}.webm`,
               content: base64,
@@ -1454,6 +1507,7 @@ export default function ChatPage() {
             const transcribeRes = await fetch("/api/transcribe", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
+              credentials: "include",
               body: JSON.stringify({ audioUrl: data.file.url }),
             });
 
@@ -1461,20 +1515,28 @@ export default function ChatPage() {
               const transcription = await transcribeRes.json();
               if (transcription.text) {
                 setInput((prev) => prev + (prev ? " " : "") + transcription.text);
+                setAudioState("idle");
                 toast.success("Áudio transcrito com sucesso!");
               } else {
+                setAudioState("error");
                 toast.error("Não foi possível transcrever o áudio");
+                setTimeout(() => setAudioState("idle"), 3000);
               }
             } else {
               // Fallback: add as file attachment
               setUploadedFiles((prev) => [...prev, data.file]);
+              setAudioState("idle");
               toast.info("Áudio anexado (transcrição indisponível)");
             }
           } else {
-            toast.error("Falha ao enviar áudio");
+            setAudioState("error");
+            toast.error("Não consegui enviar o áudio. Tente novamente.");
+            setTimeout(() => setAudioState("idle"), 3000);
           }
         } catch {
-          toast.error("Erro ao processar áudio");
+          setAudioState("error");
+          toast.error("Não consegui enviar o áudio. Tente novamente.");
+          setTimeout(() => setAudioState("idle"), 3000);
         } finally {
           setIsUploading(false);
         }
@@ -1483,10 +1545,33 @@ export default function ChatPage() {
       mediaRecorderRef.current = recorder;
       recorder.start();
       setIsRecording(true);
-      toast.info("Gravando áudio... Clique novamente para parar");
+      setAudioState("recording");
+      setRecordingDuration(0);
+      // Start recording timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration((prev) => prev + 1);
+      }, 1000);
     } catch {
+      setAudioState("error");
       toast.error("Não foi possível acessar o microfone");
+      setTimeout(() => setAudioState("idle"), 3000);
     }
+  }, []);
+
+  const cancelRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      // Stop the stream tracks without triggering onstop processing
+      mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
+      mediaRecorderRef.current.stop();
+    }
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    setIsRecording(false);
+    setAudioState("idle");
+    setRecordingDuration(0);
+    audioChunksRef.current = [];
   }, []);
 
   const stopRecording = useCallback(() => {
@@ -1531,14 +1616,46 @@ export default function ChatPage() {
       let messageContent = content.trim();
       const currentFiles = [...uploadedFiles];
       if (currentFiles.length > 0) {
-        const fileDescriptions = currentFiles.map((f) => {
+        // Auto-transcribe audio files before sending
+        const audioFiles = currentFiles.filter((f) => f.mimeType?.startsWith("audio/"));
+        const nonAudioFiles = currentFiles.filter((f) => !f.mimeType?.startsWith("audio/"));
+        
+        let audioTranscriptions = "";
+        if (audioFiles.length > 0) {
+          for (const af of audioFiles) {
+            try {
+              const transcribeRes = await fetch("/api/transcribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ audioUrl: af.url }),
+              });
+              if (transcribeRes.ok) {
+                const transcription = await transcribeRes.json();
+                if (transcription.text) {
+                  audioTranscriptions += `[Áudio anexado: ${af.filename}] Transcrição:\n${transcription.text}\n\n`;
+                } else {
+                  audioTranscriptions += `[Áudio anexado: ${af.filename}] (transcrição não disponível)\n\n`;
+                }
+              } else {
+                audioTranscriptions += `[Áudio anexado: ${af.filename}] (transcrição não disponível)\n\n`;
+              }
+            } catch {
+              audioTranscriptions += `[Áudio anexado: ${af.filename}] (transcrição não disponível)\n\n`;
+            }
+          }
+        }
+        
+        const fileDescriptions = nonAudioFiles.map((f) => {
           if (f.isImage) return `[Imagem anexada: ${f.filename}] URL: ${f.url}`;
           if (f.textContent) return `[Arquivo: ${f.filename}]\n\`\`\`\n${f.textContent.slice(0, 10000)}\n\`\`\``;
-          return `[Arquivo anexado: ${f.filename} (${f.mimeType}, ${(f.size / 1024).toFixed(1)}KB)]`;
+          return `[Arquivo anexado: ${f.filename} (${f.mimeType}, ${(f.size / 1024).toFixed(1)}KB)] URL: ${f.url}`;
         }).join("\n\n");
+        
+        const allDescriptions = [audioTranscriptions.trim(), fileDescriptions].filter(Boolean).join("\n\n");
         messageContent = messageContent
-          ? `${messageContent}\n\n---\nArquivos anexados:\n${fileDescriptions}`
-          : `Analise os seguintes arquivos:\n\n${fileDescriptions}`;
+          ? `${messageContent}\n\n---\nArquivos anexados:\n${allDescriptions}`
+          : allDescriptions ? `Analise os seguintes arquivos:\n\n${allDescriptions}` : messageContent;
       }
 
       const userMsg: ChatMessage = {
@@ -1576,11 +1693,48 @@ export default function ChatPage() {
         const response = await fetch("/api/chat/stream", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ conversationId: convId, content: messageContent }),
           signal: controller.signal,
         });
 
         if (!response.ok || !response.body) {
+          // Handle 401 (not authenticated)
+          if (response.status === 401) {
+            lastRequestBlockedRef.current = true;
+            toast.error("Sessão expirada. Faça login novamente.");
+            setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
+            setTimeout(() => { window.location.href = getLoginUrl("/chat"); }, 2000);
+            return;
+          }
+          // Handle 403 (email not verified or other forbidden)
+          if (response.status === 403) {
+            lastRequestBlockedRef.current = true;
+            try {
+              const errData = await response.clone().json();
+              if (errData.code === "EMAIL_NOT_VERIFIED") {
+                toast.error("Verifique seu e-mail antes de usar o chat.");
+                setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
+                setLocation("/verify-email");
+              } else if (errData.code === "CAPABILITY_BLOCKED") {
+                const reason = errData.error || "Limite temporário atingido. Tente novamente em breve.";
+                const suggestedUpgrade = errData.suggestedUpgrade;
+                if (suggestedUpgrade) {
+                  setUpgradeModal({ open: true, message: reason, planId: suggestedUpgrade });
+                } else {
+                  toast.error(reason, { duration: 5000 });
+                }
+                setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
+              } else {
+                toast.error(errData.error || errData.message || "Acesso negado.");
+                setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
+              }
+            } catch {
+              toast.error("Acesso negado. Tente fazer login novamente.");
+              setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
+            }
+            return;
+          }
           // Handle 402 (limit reached) with upgrade modal
           if (response.status === 402) {
             lastRequestBlockedRef.current = true;
@@ -1588,19 +1742,19 @@ export default function ChatPage() {
             try {
               const errData = await response.json();
               const planId = errData.planId || "free";
-              const msg = errData.error || "Você atingiu o limite do seu plano.";
+              const msg = errData.error || "Limite temporário atingido. Novas operações estarão disponíveis em breve.";
               setUpgradeModal({ open: true, message: msg, planId });
               // Remove the user message we optimistically added
               setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
             } catch {
-              setUpgradeModal({ open: true, message: "Você atingiu o limite do seu plano. Faça upgrade para continuar.", planId: "free" });
+              setUpgradeModal({ open: true, message: "Limite temporário atingido. Novas operações estarão disponíveis em breve.", planId: "free" });
             }
             return;
           }
           if (response.status === 429) {
             lastRequestBlockedRef.current = true;
 
-            toast.error("Muitas mensagens em pouco tempo. Aguarde um momento.");
+            toast.error("Alta demanda no momento. Aguarde um instante.");
             setMessages((prev) => prev.filter(m => m.id !== userMsg.id));
             return;
           }
@@ -1638,7 +1792,14 @@ export default function ChatPage() {
                   break;
 
                 case "step":
-                  setActiveSteps((prev) => [...prev, parsed as StepEvent]);
+                  // Hide technical fallback messages that expose provider names
+                  if (parsed.step === "fallback") {
+                    console.debug("[debug] Provider fallback:", parsed.content);
+                    // Show a generic processing message instead
+                    setActiveSteps((prev) => [...prev, { step: "processing", content: "Processando..." }]);
+                  } else {
+                    setActiveSteps((prev) => [...prev, parsed as StepEvent]);
+                  }
                   break;
 
                 case "tool_start":
@@ -1683,6 +1844,10 @@ export default function ChatPage() {
 
                 case "error":
                   console.error("Stream error:", parsed.content);
+                  // Show the error as assistant content so the user sees feedback
+                  if (parsed.content && !fullContent) {
+                    fullContent = parsed.content;
+                  }
                   break;
               }
             } catch {
@@ -1885,9 +2050,11 @@ export default function ChatPage() {
   }
 
   // Email verification gate: block local-auth users who haven't verified
+  // Google OAuth users (authProvider=google OR openId starts with google_) are always exempt
+  const isGoogleUser = user?.authProvider === "google" || user?.openId?.startsWith("google_");
   if (
     user &&
-    user.authProvider === "local" &&
+    !isGoogleUser &&
     !user.emailVerified &&
     user.role !== "admin"
   ) {
@@ -2372,7 +2539,7 @@ export default function ChatPage() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => (window.location.href = "/pricing?from=app")} className="cursor-pointer">
                 <ArrowUpCircle className="mr-2 h-4 w-4" />
-                Fazer Upgrade
+                Explorar Planos
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => window.open("https://wa.me/555137374357?text=Ol%C3%A1!%20Preciso%20de%20suporte%20com%20o%20debuga.ai", "_blank")} className="cursor-pointer">
                 <MessageSquare className="mr-2 h-4 w-4" />
@@ -2449,52 +2616,7 @@ export default function ChatPage() {
                   <p className="text-xs text-muted-foreground">Digite seu problema e eu resolvo.</p>
                 </div>
 
-                {/* Collapsed suggestions */}
-                <div className="px-1">
-                  <button
-                    onClick={() => setSuggestionsOpen(!suggestionsOpen)}
-                    className="mx-auto flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    Sugestões rápidas
-                    <ChevronDown className={cn("w-3 h-3 transition-transform", suggestionsOpen && "rotate-180")} />
-                  </button>
 
-                  {suggestionsOpen && (
-                    <div className="mt-3 flex flex-wrap justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                      {SUGGESTED_PROMPTS.filter(p => p.visible !== false).map((item, i) => (
-                        <button
-                          key={i}
-                          onClick={() => { lastRequestBlockedRef.current = false; handleSendMessage(item.prompt, item.displayMessage); }}
-                          disabled={isStreaming}
-                          className="flex items-center gap-1.5 py-1.5 px-3 rounded-full border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-xs font-mono text-foreground/80 hover:text-foreground"
-                        >
-                          <item.icon className="w-3 h-3 text-primary/70" />
-                          {item.title}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Shortcuts */}
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                  {[
-                    { label: "/ diagrama", prompt: "Crie um diagrama de rede profissional para minha infraestrutura. Pergunte os detalhes se necessário." },
-                    { label: "/ segurança", prompt: "Crie um checklist de segurança da informação para minha empresa. Pergunte sobre o porte e setor." },
-                    { label: "/ proposta", prompt: "Me ajude a criar uma proposta técnica profissional de serviços de TI. Pergunte sobre o tipo de serviço." },
-                    { label: "/ backup", prompt: "Elabore um plano de backup e continuidade de negócios. Pergunte sobre a infraestrutura atual." },
-                  ].map((shortcut, i) => (
-                    <button
-                      key={i}
-                      onClick={() => { lastRequestBlockedRef.current = false; handleSendMessage(shortcut.prompt); }}
-                      disabled={isStreaming}
-                      className="text-[10px] font-mono text-muted-foreground/60 hover:text-primary px-2 py-1 rounded border border-transparent hover:border-primary/20 transition-all"
-                    >
-                      {shortcut.label}
-                    </button>
-                  ))}
-                </div>
 
                 {/* Discrete human support - only for Pro/Enterprise */}
                 {(() => {
@@ -2573,11 +2695,31 @@ export default function ChatPage() {
                         </span>
                       </div>
                       {msg.role === "assistant" ? (
-                        <div className="prose prose-sm prose-invert max-w-none prose-pre:bg-[oklch(0.06_0.005_240)] prose-pre:border prose-pre:border-border prose-code:text-primary prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary">
-                          <MessageWithMermaid content={msg.content} mermaidConfig={MERMAID_CONFIG} />
-                        </div>
+                        <>
+                          <div className="prose prose-sm prose-invert max-w-none prose-pre:bg-[oklch(0.06_0.005_240)] prose-pre:border prose-pre:border-border prose-code:text-primary prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary">
+                            <MessageWithMermaid content={msg.content} mermaidConfig={MERMAID_CONFIG} />
+                          </div>
+                          {/* Retry button for failed image generation/editing */}
+                          {(msg.content.includes("Não consegui processar a imagem") || msg.content.includes("Não foi possível gerar") || msg.content.includes("indisponível, respondendo em texto")) && (() => {
+                            // Find the user message that triggered this failure
+                            const allMsgs = messages.filter(m => m.role !== "system");
+                            const msgIdx = allMsgs.findIndex(m => m.id === msg.id);
+                            const prevUserMsg = msgIdx > 0 ? allMsgs.slice(0, msgIdx).reverse().find(m => m.role === "user") : null;
+                            if (!prevUserMsg) return null;
+                            return (
+                              <button
+                                onClick={() => handleSendMessage(prevUserMsg.content)}
+                                disabled={isStreaming}
+                                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 transition-all text-[10px] font-mono text-purple-400/80 hover:text-purple-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                                Tentar novamente
+                              </button>
+                            );
+                          })()}
+                        </>
                       ) : (
-                        <UserMessageContent msg={msg} />
+                        <UserMessageContent msg={msg} onImageClick={(src, alt) => setLightboxImage({ src, alt })} />
                       )}
                     </div>
                   </div>
@@ -2702,21 +2844,70 @@ export default function ChatPage() {
               >
                 {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
               </Button>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                disabled={isStreaming || isUploading}
-                onClick={toggleRecording}
-                className={cn(
-                  "absolute right-12 bottom-2 h-9 w-9 rounded-lg transition-all",
-                  isRecording
-                    ? "text-red-500 bg-red-500/10 hover:bg-red-500/20 animate-pulse"
-                    : "text-muted-foreground hover:text-primary hover:bg-primary/10"
-                )}
-              >
-                {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-              </Button>
+              {/* Audio Recording Button with States */}
+              {audioState === "recording" ? (
+                <div className="absolute right-12 bottom-2 flex items-center gap-1.5">
+                  <span className="text-xs text-red-400 font-mono tabular-nums min-w-[32px]">
+                    {Math.floor(recordingDuration / 60).toString().padStart(1, "0")}:{(recordingDuration % 60).toString().padStart(2, "0")}
+                  </span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={cancelRecording}
+                    className="h-7 w-7 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    title="Cancelar gravação"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={stopRecording}
+                    className="h-9 w-9 rounded-lg text-red-500 bg-red-500/10 hover:bg-red-500/20 animate-pulse"
+                    title="Parar e enviar"
+                  >
+                    <MicOff className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : audioState === "sending" ? (
+                <div className="absolute right-12 bottom-2 flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">Enviando...</span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    disabled
+                    className="h-9 w-9 rounded-lg text-primary/60"
+                  >
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </Button>
+                </div>
+              ) : audioState === "error" ? (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  onClick={toggleRecording}
+                  className="absolute right-12 bottom-2 h-9 w-9 rounded-lg text-destructive bg-destructive/10 hover:bg-destructive/20"
+                  title="Tentar novamente"
+                >
+                  <Mic className="w-4 h-4" />
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  disabled={isStreaming || isUploading}
+                  onClick={toggleRecording}
+                  className="absolute right-12 bottom-2 h-9 w-9 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                  title="Gravar áudio"
+                >
+                  <Mic className="w-4 h-4" />
+                </Button>
+              )}
               {isStreaming ? (
                 <Button
                   type="button"
@@ -2742,37 +2933,28 @@ export default function ChatPage() {
                 </Button>
               )}
             </form>
-            {/* Usage Indicator */}
-            {usageQuery.data && !usageQuery.data.isAdmin && (
+            {/* Usage Indicator - premium, contextual */}
+            {usageQuery.data && (
               <div className="flex items-center justify-center gap-2 md:gap-4 mt-1.5 md:mt-2 flex-wrap">
-                {usageQuery.data.planId === "pro" || usageQuery.data.planId === "enterprise" ? (
-                  <span className="text-[9px] md:text-[10px] font-mono text-muted-foreground/50">
-                    {usageQuery.data.planId === "pro" ? "Uso ilimitado" : "Limites por contrato"}
+                {usageQuery.data.isAdmin ? (
+                  <span className="text-[9px] md:text-[10px] font-mono text-emerald-400/60">
+                    Modo administrativo
+                  </span>
+                ) : usageQuery.data.planId === "pro" || usageQuery.data.planId === "enterprise" ? (
+                  <span className="text-[9px] md:text-[10px] font-mono text-emerald-400/50">
+                    Acesso completo
                   </span>
                 ) : (
-                  <>
-                    <span className={cn(
-                      "text-[9px] md:text-[10px] font-mono",
-                      usageQuery.data.todayMessages >= usageQuery.data.limits.messagesPerDay
-                        ? "text-red-400/80"
-                        : usageQuery.data.todayMessages >= usageQuery.data.limits.messagesPerDay * 0.8
-                        ? "text-yellow-400/70"
-                        : "text-muted-foreground/50"
-                    )}>
-                      Msgs: {usageQuery.data.todayMessages}/{usageQuery.data.limits.messagesPerDay}
-                    </span>
-                    <span className="text-muted-foreground/20">|</span>
-                    <span className={cn(
-                      "text-[9px] md:text-[10px] font-mono",
-                      usageQuery.data.monthConversations >= usageQuery.data.limits.conversationsPerMonth
-                        ? "text-red-400/80"
-                        : usageQuery.data.monthConversations >= usageQuery.data.limits.conversationsPerMonth * 0.8
-                        ? "text-yellow-400/70"
-                        : "text-muted-foreground/50"
-                    )}>
-                      Conv: {usageQuery.data.monthConversations}/{usageQuery.data.limits.conversationsPerMonth}
-                    </span>
-                  </>
+                  <span className={cn(
+                    "text-[9px] md:text-[10px] font-mono",
+                    usageQuery.data.todayMessages >= usageQuery.data.limits.messagesPerDay
+                      ? "text-amber-400/60"
+                      : "text-muted-foreground/35"
+                  )}>
+                    {usageQuery.data.todayMessages >= usageQuery.data.limits.messagesPerDay
+                      ? "Novas mensagens em breve"
+                      : "Pronto para usar"}
+                  </span>
                 )}
               </div>
             )}
@@ -2800,10 +2982,10 @@ export default function ChatPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
               <Crown className="w-5 h-5 text-primary" />
-              Limite atingido
+              Limite temporário
             </DialogTitle>
             <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
-              {upgradeModal?.message || "Você está próximo do limite do plano gratuito. Recursos avançados estão disponíveis nos planos pagos."}
+              {upgradeModal?.message || "Limite temporário atingido. Novas operações estarão disponíveis em breve. Explore nossos planos para acesso expandido."}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 sm:gap-2">
@@ -2836,6 +3018,62 @@ export default function ChatPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ═══ IMAGE LIGHTBOX MODAL ═══ */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setLightboxImage(null)}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            aria-label="Fechar"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Action buttons */}
+          <div className="absolute top-4 left-4 z-10 flex gap-2">
+            {/* Download */}
+            <a
+              href={lightboxImage.src}
+              download={lightboxImage.alt || "imagem"}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1.5 text-xs"
+              aria-label="Baixar imagem"
+            >
+              <Download className="w-5 h-5" />
+              <span className="hidden sm:inline">Baixar</span>
+            </a>
+
+            {/* Copy link */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(lightboxImage.src);
+                toast.success("Link copiado!");
+              }}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1.5 text-xs"
+              aria-label="Copiar link"
+            >
+              <Copy className="w-5 h-5" />
+              <span className="hidden sm:inline">Copiar link</span>
+            </button>
+          </div>
+
+          {/* Image */}
+          <img
+            src={lightboxImage.src}
+            alt={lightboxImage.alt || "Imagem gerada"}
+            className="max-w-[92vw] max-h-[88vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

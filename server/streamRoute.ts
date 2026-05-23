@@ -28,12 +28,15 @@ import { resolveChatCompletionsUrl } from "./_core/llmUrl";
 // ── Capability Routing Modules ──
 import { classifyIntent, getTaskTypePromptEnhancement, type TaskType, type IntentResult } from "./intentClassifier";
 import { routeToProvider, type RoutingDecision } from "./capabilityRouter";
-import { generateImage, isImageGenerationAvailable, type ImageGenerationResult } from "./imageProvider";
+import { generateImage, isImageGenerationAvailable, parseImageRequest, type ImageGenerationResult } from "./imageProvider";
 import { saveInteraction } from "./learningMemory";
 import { searchKnowledge, buildAugmentedPrompt, type KnowledgeContext } from "./knowledgeReuse";
 import { checkCapabilityAccess, recordUsage, checkCostSafety, type UsageCheckResult } from "./capabilityLimits";
 import { submitVideoGeneration, isVideoGenerationAvailable, type VideoJobResult } from "./videoProvider";
+import { getInternalUrl, storageGetBuffer } from "./storage";
 import { getDiagramSystemPrompt, processDiagramResponse, isDiagramGenerationAvailable, type DiagramType } from "./diagramProvider";
+import { transcribeAudio } from "./_core/voiceTranscription";
+import { buildAccountContext, formatAccountContextBlock } from "./accountContext";
 import { getDb } from "./db";
 import { generatedAssets } from "../drizzle/schema";
 
@@ -104,15 +107,18 @@ Você tem acesso a ferramentas que pode usar automaticamente. Quando o usuário 
 - **get_account_usage**: Para consultar plano, uso, limites e informações da conta do usuário
 
 ## Consultas sobre Conta/Plano/Uso:
-Quando o usuário perguntar sobre créditos, plano, uso, limites, renovação, upgrade, suporte humano ou onde ver informações da conta, USE a ferramenta get_account_usage IMEDIATAMENTE.
-- NÃO responda genericamente que "não tem acesso" aos dados da conta.
-- NÃO invente números de uso ou limites.
-- Após receber os dados, responda de forma natural e amigável, por exemplo:
-  "Você está no plano X. Hoje você usou Y de Z mensagens. Neste mês, usou A de B conversas."
-- Sempre oriente sobre onde encontrar mais detalhes: "Menu lateral → Plano e Uso" ou "Menu lateral → Minha Conta".
-- Para perguntas sobre upgrade: "Clique em Fazer Upgrade no menu lateral ou acesse a página de planos."
-- NUNCA exponha IDs internos (stripeCustomerId, subscriptionId, userId).
-- Se a consulta falhar, oriente: "Você pode acessar Plano e Uso no menu lateral."
+Você recebe um bloco [ACCOUNT_CONTEXT] no prompt com dados atualizados do plano e uso do usuário. USE esses dados para responder perguntas sobre conta, plano, uso, limites, renovação, upgrade e suporte.
+- Quando o usuário perguntar sobre créditos, plano, uso, limites, renovação, upgrade ou suporte humano, RESPONDA usando os dados do [ACCOUNT_CONTEXT] diretamente.
+- Se precisar de dados mais detalhados (histórico, assinatura completa), USE a ferramenta get_account_usage como complemento.
+- NÃO responda genericamente que "não tem acesso" aos dados da conta — você TEM os dados no contexto.
+- NÃO invente números de uso ou limites. Use APENAS os dados do [ACCOUNT_CONTEXT] ou da ferramenta.
+- Responda de forma natural e amigável, por exemplo:
+  "Você está no plano X. Tem acesso a todas as ferramentas de diagnóstico, geração e análise."
+- Sempre oriente sobre onde encontrar mais detalhes: "Menu lateral → Minha Conta".
+- Para perguntas sobre planos: "Você pode explorar os planos disponíveis pelo menu lateral ou na página de planos."
+- NUNCA mencione limites numéricos explícitos (ex: "5 mensagens", "3 conversas") ao usuário. Se atingir limite, diga apenas "Limite temporário atingido" ou "Disponível em breve".
+- NUNCA exponha: IDs internos, stripeCustomerId, subscriptionId, userId, custos em USD, tokens, nomes de providers, nomes de modelos de IA, ou detalhes de infraestrutura.
+- Se o [ACCOUNT_CONTEXT] mostrar planId="unknown", oriente: "Você pode acessar Plano e Uso no menu lateral."
 
 ## Diretrizes Operacionais:
 1. Sempre responda em português brasileiro
@@ -329,6 +335,58 @@ function sendSSE(res: Response, data: any) {
 }
 
 // Helper: call LLM with streaming and collect full response
+/**
+ * Per-model max completion token limits.
+ * These are hard limits from each provider's API documentation.
+ */
+const MODEL_MAX_COMPLETION_TOKENS: Record<string, number> = {
+  // OpenAI models
+  "gpt-4o-mini": 16384,
+  "gpt-4o": 16384,
+  "gpt-4-turbo": 4096,
+  "gpt-4": 8192,
+  "gpt-3.5-turbo": 4096,
+  "o1-mini": 65536,
+  "o1": 100000,
+  "o3-mini": 100000,
+  // Gemini models (generous limits)
+  "gemini-2.5-flash": 65536,
+  "gemini-2.5-pro": 65536,
+  "gemini-2.0-flash": 65536,
+  "gemini-1.5-flash": 65536,
+  "gemini-1.5-pro": 65536,
+};
+
+/**
+ * Clamp max_tokens to the model's supported maximum.
+ * If model is unknown, defaults to 16384 (safe for most models).
+ */
+function clampMaxTokens(requestedTokens: number, model: string): number {
+  // Find exact match first
+  let modelLimit = MODEL_MAX_COMPLETION_TOKENS[model];
+  
+  // If no exact match, try prefix matching (e.g., "gpt-4o-mini-2024-07-18")
+  if (!modelLimit) {
+    for (const [key, limit] of Object.entries(MODEL_MAX_COMPLETION_TOKENS)) {
+      if (model.startsWith(key)) {
+        modelLimit = limit;
+        break;
+      }
+    }
+  }
+  
+  // Default safe limit for unknown models
+  if (!modelLimit) {
+    modelLimit = 16384;
+  }
+  
+  const effectiveTokens = Math.min(requestedTokens, modelLimit);
+  if (effectiveTokens !== requestedTokens) {
+    console.log(`[Stream] max_tokens clamped: ${requestedTokens} → ${effectiveTokens} (model: ${model}, limit: ${modelLimit})`);
+  }
+  return effectiveTokens;
+}
+
 async function streamLLMResponse(
   messages: any[],
   res: Response,
@@ -344,16 +402,23 @@ async function streamLLMResponse(
   const apiUrl = resolveApiUrl(activeProvider);
   const apiKey = getApiKey(activeProvider);
   const model = getModel(activeProvider);
+  // Clamp max_tokens to model's supported maximum
+  const effectiveMaxTokens = clampMaxTokens(maxTokens, model);
   const body: any = {
     model,
     messages,
     stream: true,
-    max_tokens: maxTokens,
+    max_tokens: effectiveMaxTokens,
   };
 
   if (tools && tools.length > 0) {
     body.tools = tools;
     body.tool_choice = "auto";
+  }
+
+  // Keep model loaded in VRAM for local GPU (prevents cold start on next request)
+  if (activeProvider.name === "local_gpu") {
+    body.keep_alive = "30m";
   }
 
   // Apply timeout for local GPU (longer inference time)
@@ -397,9 +462,23 @@ async function streamLLMResponse(
   const decoder = new TextDecoder();
   let buffer = "";
 
+  // Chunk timeout: if no data arrives for 45s after stream opens, abort
+  const CHUNK_TIMEOUT_MS = 45_000;
+  let chunkTimer: ReturnType<typeof setTimeout> | null = null;
+  const resetChunkTimer = () => {
+    if (chunkTimer) clearTimeout(chunkTimer);
+    chunkTimer = setTimeout(() => {
+      console.error(`[Stream] Chunk timeout: no data for ${CHUNK_TIMEOUT_MS / 1000}s, aborting reader`);
+      reader.cancel("chunk_timeout").catch(() => {});
+    }, CHUNK_TIMEOUT_MS);
+  };
+  resetChunkTimer(); // Start timer when stream opens
+
+  try {
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
+    resetChunkTimer(); // Reset on each chunk received
 
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split("\n");
@@ -452,6 +531,9 @@ async function streamLLMResponse(
         // Skip malformed chunks
       }
     }
+  }
+  } finally {
+    if (chunkTimer) clearTimeout(chunkTimer);
   }
 
   return { content: fullContent, toolCalls: toolCalls.filter(Boolean), finishReason };
@@ -534,22 +616,27 @@ export function registerStreamRoute(app: Express) {
   app.post("/api/chat/stream", async (req: Request, res: Response) => {
     try {
       // Authenticate
+      const hasCookie = !!req.headers.cookie?.includes("app_session_id");
+      console.log(`[Stream] POST /api/chat/stream — cookie_present=${hasCookie}, origin=${req.headers.origin || "same-origin"}, ip=${req.ip}`);
       const user = await sdk.authenticateRequest(req);
       if (!user) {
+        console.warn(`[Stream] Auth failed: no valid session. cookie_header=${req.headers.cookie ? "present" : "missing"}`);
         res.status(401).json({ error: "Unauthorized" });
         return;
       }
+      console.log(`[Stream] Auth OK: user=${user.id} (${user.email}), role=${user.role}, provider=${user.authProvider}`);
 
-      const { conversationId, content } = req.body;
+      const { conversationId } = req.body;
+      let content: string = req.body.content;
       if (!conversationId || !content) {
         res.status(400).json({ error: "Missing conversationId or content" });
         return;
       }
 
-      // ── Rate limiting ──
-      if (!checkRateLimit(user.id)) {
+      // ── Rate limiting (admin bypass) ──
+      if (user.role !== "admin" && !checkRateLimit(user.id)) {
         res.status(429).json({
-          error: "Limite de requisições excedido. Aguarde um momento antes de enviar outra mensagem.",
+          error: "Alta demanda no momento. Aguarde um instante antes de enviar outra mensagem.",
           code: "RATE_LIMITED",
         });
         return;
@@ -569,7 +656,7 @@ export function registerStreamRoute(app: Express) {
         const todayMessages = await getTodayMessageCount(user.id);
         if (todayMessages >= plan.limits.messagesPerDay) {
           res.status(402).json({
-            error: `Você usou ${todayMessages} de ${plan.limits.messagesPerDay} mensagens hoje (plano ${plan.name}). Faça upgrade para continuar.`,
+            error: "Alta demanda no momento. Novas mensagens estarão disponíveis em breve.",
             code: "DAILY_LIMIT_REACHED",
             limit: plan.limits.messagesPerDay,
             used: todayMessages,
@@ -585,7 +672,7 @@ export function registerStreamRoute(app: Express) {
           const monthConversations = await getMonthConversationCount(user.id);
           if (monthConversations >= plan.limits.conversationsPerMonth) {
             res.status(402).json({
-              error: `Você usou ${monthConversations} de ${plan.limits.conversationsPerMonth} conversas este mês (plano ${plan.name}). Faça upgrade para continuar.`,
+              error: "Limite temporário atingido. Novas conversas estarão disponíveis em breve.",
               code: "MONTHLY_CONV_LIMIT_REACHED",
               limit: plan.limits.conversationsPerMonth,
               used: monthConversations,
@@ -647,8 +734,13 @@ export function registerStreamRoute(app: Express) {
       if (isKnowledgeReuseEnabled()) {
         knowledgeContext = await searchKnowledge(content);
         if (knowledgeContext.items.length > 0) {
-          console.log(`[Stream] Knowledge: ${knowledgeContext.items.length} items matched (${knowledgeContext.injectedTokenEstimate} tokens)`);
+          console.log(`[RAG] user=${user.id} query="${content.substring(0, 80)}" matched=${knowledgeContext.items.length} tokens=${knowledgeContext.injectedTokenEstimate}`);
+          console.log(`[RAG] items: ${knowledgeContext.items.map((i: any) => `[${i.id}] ${(i.title || '').substring(0, 40)}`).join(', ')}`);
+        } else {
+          console.log(`[RAG] user=${user.id} query="${content.substring(0, 80)}" matched=0`);
         }
+      } else {
+        console.log(`[RAG] disabled (ENABLE_KNOWLEDGE_REUSE != true)`);
       }
 
       // ══════════════════════════════════════════════════════════════
@@ -715,6 +807,9 @@ export function registerStreamRoute(app: Express) {
       // IMAGE GENERATION INTERCEPT
       // ══════════════════════════════════════════════════════════════
 
+      let imageGenFailed = false;
+      let imageGenFailReason = "";
+
       if (
         isImageGenEnabled() &&
         intentResult?.taskType === "image_generation" &&
@@ -732,11 +827,25 @@ export function registerStreamRoute(app: Express) {
         sendSSE(res, { type: "step", step: "image_gen", content: "Gerando imagem..." });
 
         try {
-          const imageResult: ImageGenerationResult = await generateImage({ prompt: content, userId: user.id });
+          // Silent retry: attempt once, if retryable error wait 2s and try again
+          let imageResult: ImageGenerationResult;
+          try {
+            imageResult = await generateImage({ prompt: content, userId: user.id });
+          } catch (firstAttemptErr: any) {
+            if (firstAttemptErr?.retryable) {
+              console.log(`[Stream] Image gen first attempt failed (${firstAttemptErr.code}), retrying in 2s...`);
+              await new Promise(r => setTimeout(r, 2000));
+              imageResult = await generateImage({ prompt: content, userId: user.id });
+            } else {
+              throw firstAttemptErr;
+            }
+          }
 
           // Send image result as a special message
-          const imageMarkdown = `![Imagem gerada](${imageResult.url})\n\n*Prompt revisado: ${imageResult.revisedPrompt || content}*\n*Modelo: ${imageResult.model} | Tamanho: ${imageResult.size} | Custo: $${imageResult.cost.toFixed(4)}*`;
-
+          // Log technical details server-side only (never expose to user)
+          console.log(`[Image] Generated: model=${imageResult.model} size=${imageResult.size} cost=$${imageResult.cost.toFixed(4)}`);
+          const imageMarkdown = `![Imagem gerada](${imageResult.url})`;
+          sendSSE(res, { type: "step", step: "image_gen_done", content: "Imagem gerada com sucesso!" });
           sendSSE(res, { type: "chunk", content: imageMarkdown });
 
           // Save assistant message
@@ -800,15 +909,16 @@ export function registerStreamRoute(app: Express) {
               providerUsed: imageResult.provider,
               tokensUsed: 50,
               responseTimeMs: imageResult.generationTimeMs,
-            }).catch(() => {});
+            }).catch((err: any) => {
+              console.warn("[Learning] save failed (image, non-blocking):", err?.message || err);
+            });
           }
-
           sendSSE(res, { type: "done" });
           res.write("data: [DONE]\n\n");
           res.end();
           return;
         } catch (imgErr: any) {
-          console.error("[Stream] Image generation failed:", imgErr.error || imgErr.message || imgErr);
+          console.error("[Stream] Image generation failed:", imgErr.error || imgErr.message || imgErr);;
 
           // Log the failed image generation attempt
           try {
@@ -851,9 +961,167 @@ export function registerStreamRoute(app: Express) {
             }
           } catch (_) {}
 
-          // Fall through to text generation — let the LLM explain it can't generate the image
+          // Fall through to text generation with proper context
+          imageGenFailed = true;
+          imageGenFailReason = imgErr?.code || imgErr?.error || imgErr?.message || "provider indisponível";
           sendSSE(res, { type: "step", step: "fallback", content: "Geração de imagem indisponível, respondendo em texto..." });
         }
+      }
+
+      // ══════════════════════════════════════════════════════════════
+      // IMAGE EDITING INTERCEPT (image-to-image transformation)
+      // ══════════════════════════════════════════════════════════════
+      if (
+        !imageGenFailed &&
+        isImageGenEnabled() &&
+        intentResult?.taskType === "image_editing" &&
+        intentResult.confidence > 0.5
+      ) {
+        // Extract attached image URL from the content
+        const imageUrlRegex = /\[Imagem anexada: [^\]]+\] URL: ((?:https?:\/\/|data:image\/)[^\s]+)/;
+        const imageMatch = content.match(imageUrlRegex);
+        if (imageMatch && imageMatch[1]) {
+          const sourceImageUrl = imageMatch[1];
+          // Set SSE headers
+          if (!res.headersSent) {
+            res.writeHead(200, {
+              "Content-Type": "text/event-stream",
+              "Cache-Control": "no-cache",
+              Connection: "keep-alive",
+              "X-Accel-Buffering": "no",
+            });
+          }
+          const editStartTime = Date.now();
+          sendSSE(res, { type: "step", step: "image_edit", content: "Editando imagem..." });
+          try {
+            // Extract just the user's instruction (remove the attachment text)
+            const userInstruction = content.replace(/\n*---\nArquivos anexados:\n.*$/s, "").trim();
+            const parsedReq = parseImageRequest(userInstruction);
+            const imageRequest = {
+              prompt: userInstruction || "Transform this image as requested",
+              size: parsedReq.size || "auto",
+              quality: parsedReq.quality || "auto",
+              style: parsedReq.style,
+              userId: user.id,
+              conversationId,
+              originalImages: [{ url: sourceImageUrl, mimeType: "image/png" }] as Array<{url: string; mimeType: string}>,
+            };
+            // Silent retry: attempt once, if retryable error wait 2s and try again
+            let imageResult: ImageGenerationResult;
+            try {
+              imageResult = await generateImage(imageRequest);
+            } catch (firstAttemptErr: any) {
+              if (firstAttemptErr?.retryable) {
+                console.log(`[Stream] Image edit first attempt failed (${firstAttemptErr.code}), retrying in 2s...`);
+                await new Promise(r => setTimeout(r, 2000));
+                imageResult = await generateImage(imageRequest);
+              } else {
+                throw firstAttemptErr;
+              }
+            }
+            sendSSE(res, { type: "step", step: "image_edit_done", content: "Imagem editada com sucesso!" });
+            const imageMarkdown = `![Imagem editada](${imageResult.url})`;
+            sendSSE(res, { type: "chunk", content: imageMarkdown });
+            await addMessage({ conversationId, role: "assistant", content: imageMarkdown, tokenCount: 50 });
+            await createProviderLog({
+              userId: user.id,
+              conversationId,
+              provider: imageResult.provider,
+              model: imageResult.model,
+              endpoint: "images/edits",
+              tokenCount: 50,
+              responseTimeMs: imageResult.generationTimeMs,
+              success: true,
+              errorMessage: null,
+              fallbackUsed: false,
+              fallbackProvider: null,
+              taskType: "image_editing",
+              capabilityScore: 5,
+              routingReason: "Image editing via provider",
+              estimatedCostUsd: imageResult.cost.toFixed(6),
+              knowledgeSource: null,
+              knowledgeItemsUsed: 0,
+            });
+            recordUsage(user.id, "image_editing", imageResult.cost);
+            try {
+              const dbConn = await getDb();
+              if (dbConn) {
+                await dbConn.insert(generatedAssets).values({
+                  userId: user.id,
+                  conversationId,
+                  assetType: "image",
+                  prompt: userInstruction,
+                  revisedPrompt: imageResult.revisedPrompt || null,
+                  url: imageResult.url,
+                  storageKey: imageResult.storageKey || null,
+                  provider: imageResult.provider,
+                  model: imageResult.model,
+                  generationTimeMs: imageResult.generationTimeMs,
+                  estimatedCostUsd: imageResult.cost.toFixed(6),
+                  status: "completed",
+                });
+              }
+            } catch (assetErr: any) {
+              console.error("[Stream] Failed to save edited asset:", assetErr.message);
+            }
+            if (isLearningEnabled()) {
+              saveInteraction({
+                userId: user.id,
+                conversationId,
+                userMessage: content,
+                assistantResponse: imageMarkdown,
+                taskType: "image_editing",
+                providerUsed: imageResult.provider,
+                tokensUsed: 50,
+                responseTimeMs: imageResult.generationTimeMs,
+              }).catch((err: any) => {
+                console.warn("[Learning] save failed (image edit, non-blocking):", err?.message || err);
+              });
+            }
+            sendSSE(res, { type: "done" });
+            res.write("data: [DONE]\n\n");
+            res.end();
+            return;
+          } catch (imgErr: any) {
+            console.error("[Stream] Image editing failed:", imgErr.error || imgErr.message || imgErr);
+            try {
+              await createProviderLog({
+                userId: user.id,
+                conversationId,
+                provider: imgErr?.provider || "openai_image",
+                model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-1",
+                endpoint: "images/edits",
+                tokenCount: 0,
+                responseTimeMs: Date.now() - editStartTime,
+                success: false,
+                errorMessage: imgErr?.error || imgErr?.message || "Image editing failed",
+                fallbackUsed: false,
+                fallbackProvider: null,
+                taskType: "image_editing",
+                capabilityScore: 0,
+                routingReason: `Image editing failed: ${imgErr?.code || "UNKNOWN"}`,
+                estimatedCostUsd: null,
+                knowledgeSource: null,
+                knowledgeItemsUsed: 0,
+              });
+            } catch (_) {}
+            // Fall through to text generation with context
+            imageGenFailed = true;
+            imageGenFailReason = imgErr?.code || imgErr?.error || imgErr?.message || "edição de imagem indisponível";
+            sendSSE(res, { type: "step", step: "fallback", content: "Edição de imagem indisponível, respondendo em texto..." });
+          }
+        }
+      }
+
+      // If image gen/edit is NOT enabled but user asked for image, mark as failed gracefully
+      if (
+        !imageGenFailed &&
+        !isImageGenEnabled() &&
+        (intentResult?.taskType === "image_generation" || intentResult?.taskType === "image_editing") &&
+        intentResult!.confidence > 0.6
+      ) {
+        imageGenFailed = true;
+        imageGenFailReason = "provider não configurado";
       }
 
       // ══════════════════════════════════════════════════════════════
@@ -885,7 +1153,7 @@ export function registerStreamRoute(app: Express) {
             conversationId,
           });
 
-          const videoMessage = `🎥 **Vídeo em geração**\n\nSeu vídeo está sendo processado. ID do job: \`${videoJob.jobId}\`\n\n- **Provider:** ${videoJob.provider}\n- **Modelo:** ${videoJob.model}\n- **Status:** ${videoJob.status}\n- **Duração estimada:** ${videoJob.estimatedDuration || 60}s\n\n_Você será notificado quando o vídeo estiver pronto._`;
+          const videoMessage = `🎥 **Vídeo em geração**\n\nSeu vídeo está sendo processado.\n\n- **Status:** ${videoJob.status}\n- **Duração estimada:** ${videoJob.estimatedDuration || 60}s\n\n_Você será notificado quando o vídeo estiver pronto._`;
 
           sendSSE(res, { type: "chunk", content: videoMessage });
 
@@ -927,9 +1195,10 @@ export function registerStreamRoute(app: Express) {
               providerUsed: videoJob.provider,
               tokensUsed: 50,
               responseTimeMs: Date.now() - streamStartTime,
-            }).catch(() => {});
+             }).catch((err: any) => {
+              console.warn("[Learning] save failed (video, non-blocking):", err?.message || err);
+            });
           }
-
           sendSSE(res, { type: "done" });
           res.write("data: [DONE]\n\n");
           res.end();
@@ -962,6 +1231,53 @@ export function registerStreamRoute(app: Express) {
 
           sendSSE(res, { type: "step", step: "fallback", content: "Geração de vídeo indisponível, respondendo em texto..." });
           // Fall through to text generation
+        }
+      }
+
+      // ══════════════════════════════════════════════════════════════
+      // AUDIO TRANSCRIPTION INTERCEPT
+      // ══════════════════════════════════════════════════════════════
+      // If the message contains audio file references that weren't transcribed by the frontend,
+      // auto-transcribe them here as a safety net
+      const audioUrlMatch = content.match(/\[Arquivo anexado:\s*([^\]]+?)\s*\(audio\/[^)]+\)\]/i);
+      if (audioUrlMatch && !content.includes("[Áudio anexado:") && !content.includes("Transcrição:")) {
+        // Extract the audio URL from the message context
+        const audioUrlInContent = content.match(/URL:\s*(https?:\/\/[^\s]+)/i);
+        const audioFileRef = content.match(/\[Arquivo anexado:\s*([^\(]+?)\s*\(audio\/([^,]+)/i);
+        if (audioFileRef) {
+          const audioFilename = audioFileRef[1].trim();
+          // Find the URL in the uploaded files context or construct from S3
+          const urlMatch = content.match(new RegExp(`${audioFilename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^\n]*URL:\\s*(https?:\/\/[^\s]+)`, 'i'));
+          const audioUrl = urlMatch?.[1] || audioUrlInContent?.[1];
+          
+          if (audioUrl) {
+            try {
+              console.log(`[Stream] Auto-transcribing audio: ${audioFilename}`);
+              // Set SSE headers if not already sent
+              if (!res.headersSent) {
+                res.writeHead(200, {
+                  "Content-Type": "text/event-stream",
+                  "Cache-Control": "no-cache",
+                  Connection: "keep-alive",
+                });
+              }
+              sendSSE(res, { type: "step", step: "audio_transcription", content: "Transcrevendo áudio..." });
+              const transcriptionResult = await transcribeAudio({ audioUrl, language: "pt" });
+              if ('text' in transcriptionResult && transcriptionResult.text) {
+                // Replace the audio file reference with the transcription
+                content = content.replace(
+                  /\[Arquivo anexado:\s*[^\]]*?\(audio\/[^)]+\)\]/i,
+                  `[Áudio anexado: ${audioFilename}] Transcrição:\n${transcriptionResult.text}`
+                );
+                console.log(`[Stream] Audio transcribed successfully: ${transcriptionResult.text.slice(0, 100)}...`);
+                sendSSE(res, { type: "step", step: "audio_transcription_done", content: "Áudio transcrito com sucesso" });
+              } else {
+                console.log(`[Stream] Audio transcription failed:`, transcriptionResult);
+              }
+            } catch (err) {
+              console.error(`[Stream] Audio transcription error:`, err);
+            }
+          }
         }
       }
 
@@ -1006,35 +1322,125 @@ export function registerStreamRoute(app: Express) {
         systemPrompt += taskTypeEnhancement;
       }
 
+      // ══════════════════════════════════════════════════════════════
+      // INJECT ACCOUNT CONTEXT (non-blocking)
+      // ══════════════════════════════════════════════════════════════
+      try {
+        const accountCtx = await buildAccountContext(user.id);
+        const accountBlock = formatAccountContextBlock(accountCtx);
+        systemPrompt += accountBlock;
+        if (accountCtx.planId !== "unknown") {
+          console.log(`[AccountContext] Injected: user=${user.id} plan=${accountCtx.planName} msgs=${accountCtx.messagesUsedToday}/${accountCtx.messagesLimitDaily}`);
+        }
+      } catch (err: any) {
+        console.warn(`[AccountContext] Failed for user=${user.id}: ${err.message}`);
+        // Non-blocking: continue without account context
+      }
+
       // Build messages for LLM with multimodal support
-      const llmMessages: any[] = [
-        { role: "system", content: systemPrompt },
-        ...history.map((m: { role: string; content: string }) => {
-          // Detect image URLs in user messages and convert to multimodal format
+      // Determine provider early so we know how to handle images
+      const targetProvider: LLMProviderConfig = (isCapabilityRoutingEnabled() && routingDecision)
+        ? routingDecision.provider
+        : getPrimaryProvider();
+      const isLocalProvider = targetProvider.name === "local_gpu";
+
+      // Process history messages - convert image attachments to multimodal format
+      // For cloud providers: fetch image bytes and send as base64 data URI
+      // For local providers: send internal S3 URL (container-to-container access)
+      const processedHistory = await Promise.all(
+        history.map(async (m: { role: string; content: string }) => {
           if (m.role === "user") {
-            const imageUrlRegex = /\[Imagem anexada: [^\]]+\] URL: (https?:\/\/[^\s]+)/g;
+            const imageUrlRegex = /\[Imagem anexada: [^\]]+\] URL: ((?:https?:\/\/|\/api\/assets\/)[^\s]+)/g;
             const imageMatches = Array.from(m.content.matchAll(imageUrlRegex));
-            
+
             if (imageMatches.length > 0) {
               const contentParts: any[] = [];
-              const textContent = m.content.replace(/\[Imagem anexada: [^\]]+\] URL: https?:\/\/[^\s]+/g, "").trim();
+              const textContent = m.content.replace(/\[Imagem anexada: [^\]]+\] URL: (?:https?:\/\/|\/api\/assets\/)[^\s]+/g, "").trim();
               if (textContent) {
                 contentParts.push({ type: "text", text: textContent });
               } else {
                 contentParts.push({ type: "text", text: "Analise esta imagem:" });
               }
+
               for (const match of imageMatches) {
+                const rawUrl = match[1];
+                let imageUrl: string;
+
+                if (isLocalProvider) {
+                  // Local GPU (Ollama): use internal S3 URL directly (container-to-container)
+                  imageUrl = getInternalUrl(rawUrl);
+                  console.log(`[Stream] Vision (local): sending internal URL to ${targetProvider.name}`);
+                } else {
+                  // Cloud provider (OpenAI/Gemini/Anthropic): fetch bytes and convert to base64
+                  try {
+                    const proxyPrefix = "/api/assets/";
+                    let key: string;
+                    if (rawUrl.startsWith(proxyPrefix)) {
+                      key = decodeURIComponent(rawUrl.slice(proxyPrefix.length));
+                    } else if (rawUrl.startsWith("http")) {
+                      // Already a full URL — try to extract key or use as-is
+                      // If it's our own S3 URL, extract key; otherwise pass through
+                      const s3Endpoint = process.env.S3_ENDPOINT || "";
+                      const bucket = process.env.S3_BUCKET || "";
+                      const prefix = `${s3Endpoint}/${bucket}/`;
+                      if (rawUrl.startsWith(prefix)) {
+                        key = rawUrl.slice(prefix.length);
+                      } else {
+                        // External URL — pass directly (provider can fetch it)
+                        imageUrl = rawUrl;
+                        contentParts.push({
+                          type: "image_url",
+                          image_url: { url: imageUrl, detail: "auto" },
+                        });
+                        continue;
+                      }
+                    } else {
+                      key = rawUrl;
+                    }
+
+                    const result = await storageGetBuffer(key);
+                    if (result) {
+                      const base64 = result.buffer.toString("base64");
+                      const mimeType = result.contentType || "image/png";
+                      imageUrl = `data:${mimeType};base64,${base64}`;
+                      console.log(`[Stream] Vision (cloud): converted image to base64 (${(result.buffer.length / 1024).toFixed(1)}KB) for ${targetProvider.name}`);
+                    } else {
+                      console.warn(`[Stream] Vision: image not found in S3 for key: ${key}`);
+                      imageUrl = getInternalUrl(rawUrl); // fallback
+                    }
+                  } catch (err: any) {
+                    console.error(`[Stream] Vision: failed to fetch image for base64 conversion:`, err?.message);
+                    // Fallback: send internal URL (may not work for cloud providers)
+                    imageUrl = getInternalUrl(rawUrl);
+                  }
+                }
+
                 contentParts.push({
                   type: "image_url",
-                  image_url: { url: match[1], detail: "auto" },
+                  image_url: { url: imageUrl, detail: "auto" },
                 });
               }
               return { role: m.role, content: contentParts };
             }
           }
           return { role: m.role, content: m.content };
-        }),
+        })
+      );
+
+      const llmMessages: any[] = [
+        { role: "system", content: systemPrompt },
+        ...processedHistory,
       ];
+
+      // ── IMAGE GEN/EDIT FALLBACK: inject context so LLM provides useful response ──
+      if (imageGenFailed) {
+        const isEditTask = intentResult?.taskType === "image_editing";
+        const fallbackInstruction = isEditTask
+          ? `\n\n## IMPORTANTE — Edição de Imagem Indisponível:\nA ferramenta de edição de imagem falhou (motivo: ${imageGenFailReason}).\nVocê NÃO pode editar imagens agora. Em vez disso, faça o seguinte:\n1. Reconheça que não foi possível editar a imagem no momento.\n2. Crie um prompt detalhado de edição/transformação que o usuário pode usar em ferramentas como DALL-E (images/edits), Midjourney, ou Photoshop AI.\n3. Descreva como a imagem ficaria após a transformação: estilo, mudanças, efeitos aplicados.\n4. Sugira que o usuário tente novamente mais tarde ou use o prompt em outra ferramenta.\n5. Após responder sobre a imagem, continue a conversa normalmente.\nNUNCA mostre erro técnico ao usuário. Sempre forneça valor.`
+          : `\n\n## IMPORTANTE — Geração de Imagem Indisponível:\nA ferramenta de geração de imagem falhou (motivo: ${imageGenFailReason}).\nVocê NÃO pode gerar imagens agora. Em vez disso, faça o seguinte:\n1. Reconheça que não foi possível gerar a imagem no momento.\n2. Crie um prompt visual profissional e detalhado que o usuário pode usar em ferramentas como DALL-E, Midjourney, Stable Diffusion ou Leonardo AI.\n3. Descreva a imagem que seria gerada: estilo, composição, cores, iluminação, perspectiva.\n4. Sugira que o usuário tente novamente mais tarde ou use o prompt em outra ferramenta.\n5. Após responder sobre a imagem, continue a conversa normalmente — responda qualquer próxima pergunta do usuário sem mencionar a falha anterior.\nNUNCA mostre erro técnico, stack trace ou mensagem de sistema ao usuário.\nNUNCA diga apenas "ocorreu um erro". Sempre forneça valor ao usuário.`;
+        llmMessages[0].content += fallbackInstruction;
+        console.log(`[Stream] Image ${isEditTask ? "edit" : "gen"} fallback injected: reason=${imageGenFailReason}`);
+      }
 
       // Set SSE headers (if not already set by image gen intercept)
       if (!res.headersSent) {
@@ -1058,18 +1464,17 @@ export function registerStreamRoute(app: Express) {
       console.log("[Stream] Starting agent loop for conversation:", conversationId);
 
       // Determine tools available for this plan
-      const planTools = isAdmin ? AGENT_TOOLS : getToolsForPlan(plan);
-      // Admin always gets max tokens; for diagram tasks, ensure minimum 8192 to avoid JSON truncation
+      let planTools = isAdmin ? AGENT_TOOLS : getToolsForPlan(plan);
+      // Remove generate_image tool when image gen is unavailable to prevent LLM from calling broken tool
+      if (imageGenFailed || !isImageGenEnabled()) {
+        planTools = planTools?.filter(t => t.function.name !== "generate_image") || null;
+      }
+      // Admin always gets high token limit; diagram tasks need minimum 8192
       const isDiagramTask = intentResult && ["network_diagram", "architecture_diagram", "flowchart_diagram"].includes(intentResult.taskType);
       const maxTokens = isAdmin ? 65536 : isDiagramTask ? Math.max(plan.limits.maxTokensPerMessage, 8192) : plan.limits.maxTokensPerMessage;
 
-      // Determine which provider to use
-      let usedProvider: LLMProviderConfig;
-      if (isCapabilityRoutingEnabled() && routingDecision) {
-        usedProvider = routingDecision.provider;
-      } else {
-        usedProvider = getPrimaryProvider();
-      }
+      // Use the provider already determined for image handling
+      let usedProvider: LLMProviderConfig = targetProvider;
 
       let fallbackUsed = false;
       let fallbackReason: string | undefined;
@@ -1106,10 +1511,11 @@ export function registerStreamRoute(app: Express) {
               usedProvider = fallback;
               fallbackUsed = true;
 
+              console.log(`[Stream] Provider fallback: ${originalProviderName} -> ${fallback.name}`);
               sendSSE(res, {
                 type: "step",
                 step: "fallback",
-                content: `Provider ${originalProviderName} indispon\u00edvel. Usando ${fallback.name} como fallback...`,
+                content: "Reconectando...",
               });
 
               try {
@@ -1119,11 +1525,16 @@ export function registerStreamRoute(app: Express) {
                 finishReason = result.finishReason;
               } catch (fallbackErr: any) {
                 console.error(`[Stream] Fallback provider (${usedProvider.name}) also failed:`, fallbackErr.message);
-                sendSSE(res, {
-                  type: "error",
-                  content: "Todos os providers de IA est\u00e3o indispon\u00edveis no momento. Tente novamente em alguns minutos.",
-                });
+                // Save a contextual fallback message so the chat history stays consistent
+                const contextualFallback = imageGenFailed
+                  ? "Não consegui processar a imagem no momento. Posso ajudar de outra forma — por exemplo, criando um prompt visual detalhado para você usar em outra ferramenta, ou respondendo qualquer outra dúvida. Tente novamente em alguns instantes."
+                  : "Estou com dificuldades técnicas temporárias, mas posso tentar novamente em instantes. Por favor, envie sua mensagem novamente ou me pergunte outra coisa.";
+                sendSSE(res, { type: "chunk", content: contextualFallback });
                 sendSSE(res, { type: "done" });
+                // Save to DB so next message works normally
+                try {
+                  await addMessage({ conversationId, role: "assistant", content: contextualFallback, tokenCount: 30 });
+                } catch (_) {}
                 res.end();
                 try {
                   await createProviderLog({
@@ -1149,11 +1560,15 @@ export function registerStreamRoute(app: Express) {
                 return;
               }
             } else {
-              sendSSE(res, {
-                type: "error",
-                content: `Provider ${usedProvider.name} indispon\u00edvel e nenhum fallback configurado.`,
-              });
+              console.error(`[Stream] Provider ${usedProvider.name} unavailable, no fallback configured`);
+              const contextualFallback = imageGenFailed
+                ? "Não consegui processar a imagem no momento. Posso ajudar de outra forma — por exemplo, criando um prompt visual detalhado para você usar em outra ferramenta, ou respondendo qualquer outra dúvida. Tente novamente em alguns instantes."
+                : "Estou com dificuldades técnicas temporárias, mas posso tentar novamente em instantes. Por favor, envie sua mensagem novamente ou me pergunte outra coisa.";
+              sendSSE(res, { type: "chunk", content: contextualFallback });
               sendSSE(res, { type: "done" });
+              try {
+                await addMessage({ conversationId, role: "assistant", content: contextualFallback, tokenCount: 30 });
+              } catch (_) {}
               res.end();
               try {
                 await createProviderLog({
@@ -1178,11 +1593,14 @@ export function registerStreamRoute(app: Express) {
               return;
             }
           } else {
-            sendSSE(res, {
-              type: "error",
-              content: "Provider de IA indispon\u00edvel. Tente novamente em alguns minutos.",
-            });
+            const contextualFallback = imageGenFailed
+              ? "Não consegui processar a imagem no momento. Posso ajudar de outra forma — por exemplo, criando um prompt visual detalhado para você usar em outra ferramenta, ou respondendo qualquer outra dúvida. Tente novamente em alguns instantes."
+              : "Estou com dificuldades técnicas temporárias, mas posso tentar novamente em instantes. Por favor, envie sua mensagem novamente ou me pergunte outra coisa.";
+            sendSSE(res, { type: "chunk", content: contextualFallback });
             sendSSE(res, { type: "done" });
+            try {
+              await addMessage({ conversationId, role: "assistant", content: contextualFallback, tokenCount: 30 });
+            } catch (_) {}
             res.end();
             return;
           }
@@ -1287,7 +1705,22 @@ export function registerStreamRoute(app: Express) {
         });
         console.log("[Stream] Assistant message saved to DB");
       } else {
-        console.log("[Stream] WARNING: No final content to save!");
+        // If image gen failed and LLM returned empty, save a fallback message
+        if (imageGenFailed) {
+          const fallbackMsg = "Não consegui gerar a imagem no momento, mas estou aqui para ajudar com qualquer outra questão. Posso criar um prompt visual profissional para você usar em outra ferramenta, ou responder qualquer outra dúvida.";
+          await addMessage({
+            conversationId,
+            role: "assistant",
+            content: fallbackMsg,
+            tokenCount: 50,
+          });
+          // Stream the fallback message to the user
+          sendSSE(res, { type: "chunk", content: fallbackMsg });
+          finalContent = fallbackMsg;
+          console.log("[Stream] Image gen fallback message saved (LLM returned empty)");
+        } else {
+          console.log("[Stream] WARNING: No final content to save!");
+        }
       }
 
       // ── AI Provider Log (with capability routing fields) ──
@@ -1404,21 +1837,23 @@ export function registerStreamRoute(app: Express) {
     } catch (error: any) {
       console.error("[Stream] Error:", error?.message || error);
 
-      let userMessage = "Erro interno do servidor. Tente novamente.";
+      let userMessage = "Ocorreu um erro inesperado. Tente novamente.";
       if (error?.message?.includes("LLM API returned")) {
         if (error.message.includes("401") || error.message.includes("403")) {
-          userMessage = "Erro de autenticação com o provedor de IA. Verifique a configuração da API key (LLM_CLOUD_API_KEY).";
+          userMessage = "Erro de configuração do serviço. Contate o suporte.";
+          console.error("[Stream] Auth error - check API key configuration");
         } else if (error.message.includes("404")) {
-          userMessage = "Endpoint do provedor de IA não encontrado. Verifique LLM_CLOUD_API_URL no .env.";
+          userMessage = "Serviço não encontrado. Contate o suporte.";
+          console.error("[Stream] 404 - check LLM endpoint configuration");
         } else if (error.message.includes("429")) {
-          userMessage = "Limite de requisições do provedor de IA excedido. Aguarde um momento.";
+          userMessage = "Muitas solicitações simultâneas. Aguarde um momento e tente novamente.";
         } else if (error.message.includes("500") || error.message.includes("502") || error.message.includes("503")) {
-          userMessage = "O provedor de IA está temporariamente indisponível. Tente novamente em instantes.";
+          userMessage = "Serviço temporariamente indisponível. Tente novamente em instantes.";
         } else {
-          userMessage = "Erro na comunicação com o provedor de IA. Verifique os logs do servidor.";
+          userMessage = "Erro de comunicação. Tente novamente em instantes.";
         }
       } else if (error?.message?.includes("fetch failed") || error?.message?.includes("ECONNREFUSED")) {
-        userMessage = "Não foi possível conectar ao provedor de IA. Verifique se o serviço está acessível.";
+        userMessage = "Serviço temporariamente inacessível. Tente novamente em instantes.";
       }
 
       // Log the unhandled error
@@ -1444,10 +1879,19 @@ export function registerStreamRoute(app: Express) {
         });
       } catch (_) {}
 
+      // Always save a message to DB so the next message works normally
+      const conversationId = req.body?.conversationId;
+      if (conversationId) {
+        try {
+          await addMessage({ conversationId, role: "assistant", content: userMessage, tokenCount: 10 });
+        } catch (_) {}
+      }
       if (!res.headersSent) {
         res.status(500).json({ error: userMessage });
       } else {
-        sendSSE(res, { type: "error", content: userMessage });
+        // Send as chunk (not error) so the frontend displays it as a normal message
+        sendSSE(res, { type: "chunk", content: userMessage });
+        sendSSE(res, { type: "done" });
         res.write("data: [DONE]\n\n");
         res.end();
       }

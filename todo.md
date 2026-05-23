@@ -781,3 +781,15 @@
 - [x] Mostrar diferenciação nas inferências (multi-model, routing inteligente)
 - [x] Remover informações de contato sensíveis da documentação pública
 - [x] Garantir que o projeto pareça original e profissional (não cópia de outra IA)
+
+### Fix: Auto-transcrição de arquivos de áudio no chat
+- [x] Adicionar import de transcribeAudio no streamRoute.ts
+- [x] Mudar content de const para let para permitir mutação pós-transcrição
+- [x] Adicionar bloco AUDIO TRANSCRIPTION INTERCEPT que detecta padrão [Arquivo anexado: *.webm (audio/...)]
+- [x] Extrair URL do áudio e chamar transcribeAudio()
+- [x] Substituir referência do arquivo pela transcrição no conteúdo da mensagem
+- [x] Adicionar URL ao formato genérico de arquivo no ChatPage.tsx (safety net)
+- [x] Adicionar step indicators de áudio (ícone Mic azul → checkmark verde) no StepIndicator
+- [x] TypeScript compila sem erros
+- [x] 388 testes passando
+- [x] Commit e push para GitHub
