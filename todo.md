@@ -750,3 +750,8 @@
 - [x] Prop onRegenerate propagada de MessageWithMermaid para o placeholder
 - [x] Chat não trava, JSON bruto nunca aparece
 - [x] Testes existentes continuam passando (15/15)
+
+### UX Improvements - Image Editing & Retry
+- [x] Visual feedback spinner com ícone de imagem durante edição/geração de imagem (StepIndicator aprimorado)
+- [x] Cache de classificação de intenção para mensagens repetidas (evita re-processamento)
+- [x] Botão "Refazer" em mensagens de imagem que falharam (retry com mesmo prompt)
