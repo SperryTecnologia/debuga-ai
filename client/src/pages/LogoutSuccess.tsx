@@ -1,20 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
 import { LogIn, ArrowLeft, ShieldCheck } from "lucide-react";
-
-const LOGO_ICON =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga-logo-v2-A2P25ZnkFwTU2RkRjz85nk.webp";
+import { useBranding } from "@/contexts/BrandingContext";
 
 export default function LogoutSuccess() {
+  const { appName, companyName, logoUrl } = useBranding();
+
   return (
     <div className="h-screen bg-background flex items-center justify-center">
       <div className="flex flex-col items-center gap-8 max-w-md text-center px-6">
         {/* Logo */}
-        <img
-          src={LOGO_ICON}
-          alt="debuga.ai"
-          className="w-20 h-20 rounded-2xl shadow-lg shadow-primary/20"
-        />
+        {logoUrl && (
+          <img
+            src={logoUrl}
+            alt={appName}
+            className="w-20 h-20 rounded-2xl shadow-lg shadow-primary/20"
+          />
+        )}
 
         {/* Success indicator */}
         <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
@@ -30,7 +32,7 @@ export default function LogoutSuccess() {
             Você saiu da sua conta com segurança.
           </h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Para continuar usando o debuga.ai, entre novamente.
+            Para continuar usando o {appName}, entre novamente.
           </p>
         </div>
 
@@ -56,7 +58,10 @@ export default function LogoutSuccess() {
 
         {/* Footer */}
         <p className="text-[10px] font-mono text-muted-foreground/40">
-          Powered by Sperry Tecnologia
+          Desenvolvido por{" "}
+          <a href="https://www.sperrytecnologia.com.br" target="_blank" rel="noopener noreferrer" className="hover:text-muted-foreground/60">
+            {companyName}
+          </a>
         </p>
       </div>
     </div>

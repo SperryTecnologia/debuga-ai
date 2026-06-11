@@ -34,14 +34,7 @@ import {
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import HeroAnimation from "@/components/HeroAnimation";
-
-const LOGO_FULL =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga_logo_full-Sz8NVLnwpPYSyjyTTd3PJT.webp";
-const HERO_3D =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga_hero_3d-fhFhio2TpgpshMBLNXCSmE.webp";
-const LOGO_ICON =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga-logo-v2-A2P25ZnkFwTU2RkRjz85nk.webp";
-const AVATAR_AGENT = LOGO_ICON;
+import { useBranding, getWhatsAppUrl } from "@/contexts/BrandingContext";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
@@ -57,13 +50,13 @@ const FEATURES = [
   {
     icon: Bot,
     title: "IA com Contexto Técnico Especializado",
-    desc: "O debuga.ai foi desenhado para atuar em cenários de infraestrutura, segurança, redes, servidores, DNS, SSL, DevOps, documentação técnica e análise de evidências — não é uma IA genérica.",
+    desc: "Desenhado para atuar em cenários de infraestrutura, segurança, redes, servidores, DNS, SSL, DevOps, documentação técnica e análise de evidências — não é uma IA genérica.",
     highlight: true,
   },
   {
     icon: Eye,
     title: "Base Orientada por Experiência Humana",
-    desc: "A plataforma incorpora padrões de resposta, fluxos de diagnóstico e boas práticas inspiradas na atuação técnica da Sperry Tecnologia em ambientes corporativos.",
+    desc: "A plataforma incorpora padrões de resposta, fluxos de diagnóstico e boas práticas inspiradas na atuação técnica em ambientes corporativos.",
     highlight: true,
   },
   {
@@ -81,7 +74,7 @@ const FEATURES = [
   {
     icon: Rocket,
     title: "Roadmap Enterprise",
-    desc: "A evolução do debuga.ai prevê laboratório próprio, autenticação independente, PostgreSQL, GPU local e inferência híbrida cloud/local para cenários Enterprise.",
+    desc: "A evolução da plataforma prevê laboratório próprio, autenticação independente, PostgreSQL, GPU local e inferência híbrida cloud/local para cenários Enterprise.",
     highlight: true,
   },
   {
@@ -138,6 +131,7 @@ const INTEGRATIONS = [
 export default function Home() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
+  const { appName, companyName, logoUrl, description, supportWhatsapp, githubUrl } = useBranding();
 
   const handleGetStarted = () => {
     if (user) {
@@ -157,9 +151,9 @@ export default function Home() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={LOGO_ICON} alt="debuga.ai" className="w-8 h-8 rounded-lg" />
+            {logoUrl && <img src={logoUrl} alt={appName} className="w-8 h-8 rounded-lg" />}
             <span className="font-mono font-bold text-lg">
-              debuga<span className="text-primary">.ai</span>
+              {appName}
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
@@ -231,9 +225,7 @@ export default function Home() {
                 variants={fadeInUp}
                 className="text-lg text-muted-foreground leading-relaxed max-w-lg"
               >
-                O debuga.ai combina inteligência artificial, contexto técnico especializado
-                e apoio humano sênior para acelerar diagnósticos, gerar documentação e
-                orientar decisões em ambientes corporativos.
+                {description || "Combina inteligência artificial, contexto técnico especializado e apoio humano sênior para acelerar diagnósticos, gerar documentação e orientar decisões em ambientes corporativos."}
               </motion.p>
 
               <motion.p
@@ -418,7 +410,7 @@ export default function Home() {
               White Label Enterprise
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-muted-foreground text-center max-w-3xl mx-auto mb-14 leading-relaxed">
-              A arquitetura do debuga.ai pode ser implantada como solução White Label para
+              A arquitetura pode ser implantada como solução White Label para
               empresas que desejam uma IA própria — em cloud dedicada, VPS, ou infraestrutura
               própria do cliente. Identidade visual, base de conhecimento, fluxos de atendimento
               e deploy sob medida.
@@ -478,18 +470,15 @@ export default function Home() {
               <Button
                 size="lg"
                 onClick={() => {
-                  const msg = encodeURIComponent(
-                    "Olá! Tenho interesse no debuga.ai White Label / Enterprise. " +
-                    "Gostaria de entender como adaptar a plataforma para minha empresa."
-                  );
-                  window.open(`https://wa.me/555137374357?text=${msg}`, "_blank");
+                  const url = getWhatsAppUrl(supportWhatsapp, `Olá! Tenho interesse no ${appName} White Label / Enterprise. Gostaria de entender como adaptar a plataforma para minha empresa.`);
+                  if (url) window.open(url, "_blank");
                 }}
                 className="gap-2 font-mono text-base px-8 h-12"
               >
                 Falar com a Equipe Comercial <ArrowRight className="w-5 h-5" />
               </Button>
               <p className="text-xs text-muted-foreground/60 mt-3">
-                Sem compromisso. Entenda como o debuga.ai pode ser adaptado para sua operação.
+                Sem compromisso. Entenda como a plataforma pode ser adaptada para sua operação.
               </p>
             </motion.div>
           </motion.div>
@@ -508,8 +497,8 @@ export default function Home() {
           >
             <motion.img
               variants={fadeInUp}
-              src={LOGO_ICON}
-              alt="debuga.ai"
+              src={logoUrl}
+              alt={appName}
               className="w-24 mx-auto mb-8 drop-shadow-[0_0_20px_rgba(0,255,65,0.3)]"
             />
             <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">
@@ -539,9 +528,9 @@ export default function Home() {
             {/* Brand */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <img src={LOGO_ICON} alt="debuga.ai" className="w-6 h-6 rounded" />
+                {logoUrl && <img src={logoUrl} alt={appName} className="w-6 h-6 rounded" />}
                 <span className="font-mono text-sm font-semibold">
-                  debuga<span className="text-primary">.ai</span>
+                  {appName}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -553,7 +542,7 @@ export default function Home() {
                 rel="noopener noreferrer"
                 className="text-xs text-primary/70 hover:text-primary transition-colors inline-flex items-center gap-1"
               >
-                Desenvolvido por Sperry Tecnologia <ExternalLink className="w-3 h-3" />
+                Desenvolvido por {companyName} <ExternalLink className="w-3 h-3" />
               </a>
             </div>
 
@@ -569,11 +558,12 @@ export default function Home() {
             </div>
 
             {/* Documentação */}
+            {githubUrl && (
             <div className="space-y-3">
               <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Documentação</p>
               <div className="flex flex-col gap-2">
                 <a
-                  href="https://github.com/SperryTecnologia/debuga-ai"
+                  href={githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
@@ -581,7 +571,7 @@ export default function Home() {
                   <Github className="w-4 h-4" /> GitHub
                 </a>
                 <a
-                  href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITEPAPER_PTBR.md"
+                  href={`${githubUrl}/blob/main/docs/WHITEPAPER_PTBR.md`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
@@ -589,7 +579,7 @@ export default function Home() {
                   <FileText className="w-4 h-4" /> Whitepaper
                 </a>
                 <a
-                  href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/ARCHITECTURE_PTBR.md"
+                  href={`${githubUrl}/blob/main/docs/ARCHITECTURE_PTBR.md`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
@@ -597,7 +587,7 @@ export default function Home() {
                   <FileText className="w-4 h-4" /> Arquitetura
                 </a>
                 <a
-                  href="https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITE_LABEL_OVERVIEW.md"
+                  href={`${githubUrl}/blob/main/docs/WHITE_LABEL_OVERVIEW.md`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
@@ -606,12 +596,13 @@ export default function Home() {
                 </a>
               </div>
             </div>
+            )}
           </div>
 
           {/* Bottom bar */}
           <div className="border-t border-border/30 pt-6 flex items-center justify-center">
             <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} Sperry Tecnologia. Todos os direitos reservados.
+              &copy; {new Date().getFullYear()} {companyName}. Todos os direitos reservados.
             </p>
           </div>
         </div>

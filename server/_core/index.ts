@@ -16,6 +16,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerRateLimiting } from "../rateLimiter";
+import { registerBrandingRoute } from "../branding";
 import { requireEmailVerification } from "../verificationGate";
 import { logLLMConfig, ENV } from "./env";
 
@@ -87,6 +88,9 @@ async function startServer() {
           : null,
     });
   });
+
+  // Public branding endpoint (no auth required)
+  registerBrandingRoute(app);
 
   // Rate limiting on auth and chat endpoints
   registerRateLimiting(app);

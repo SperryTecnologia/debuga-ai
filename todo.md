@@ -793,3 +793,14 @@
 - [x] TypeScript compila sem erros
 - [x] 388 testes passando
 - [x] Commit e push para GitHub
+
+### Sprint 1 — Consolidação White-Label P0
+- [x] Criar endpoint público GET /api/branding que retorna nome, logo, cor, WhatsApp, empresa do DB
+- [x] Criar BrandingProvider React (context + hook useBranding)
+- [x] Substituir hardcodes em Home.tsx (nome, empresa, logo, WhatsApp, links GitHub)
+- [x] Substituir hardcodes em ChatPage.tsx (logo, nome, WhatsApp)
+- [x] Substituir hardcodes em PricingPage.tsx (logo, nome)
+- [x] Substituir hardcodes em LogoutSuccess.tsx (logo, nome, empresa)
+- [x] Substituir hardcodes em WhatsAppButton.tsx (número WhatsApp)
+- [x] Corrigir duplicação de prompt: remover SYSTEM_PROMPT estático de routers.ts e usar pipeline dinâmico
+- [x] Gerar relatório final com hardcodes removidos, arquivos alterados e referências restantes

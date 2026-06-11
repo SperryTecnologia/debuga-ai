@@ -1,13 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
-
-const WHATSAPP_NUMBER = "555137374357";
-const WHATSAPP_MESSAGE = encodeURIComponent(
-  "Olá! Gostaria de saber mais sobre o debuga.ai"
-);
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
+import { useBranding, getWhatsAppUrl } from "@/contexts/BrandingContext";
 
 const DISMISS_KEY = "whatsapp_tooltip_dismissed";
 
@@ -35,6 +30,7 @@ function WhatsAppIcon({ className }: { className?: string }) {
 
 export default function WhatsAppButton() {
   const [location] = useLocation();
+  const { supportWhatsapp, appName } = useBranding();
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(() => {
     try {
@@ -43,6 +39,12 @@ export default function WhatsAppButton() {
       return false;
     }
   });
+
+  // Build WhatsApp URL dynamically from branding
+  const whatsappUrl = useMemo(() => {
+    const message = `Olá! Gostaria de saber mais sobre o ${appName}`;
+    return getWhatsAppUrl(supportWhatsapp, message);
+  }, [supportWhatsapp, appName]);
 
   // Show tooltip after 3 seconds (only on public routes)
   useEffect(() => {
@@ -70,6 +72,9 @@ export default function WhatsAppButton() {
     }
   };
 
+  // Don't render if no WhatsApp number configured
+  if (!supportWhatsapp) return null;
+
   // Don't render anything on authenticated/internal routes
   if (!isPublicRoute(location)) return null;
 
@@ -79,7 +84,7 @@ export default function WhatsAppButton() {
     return (
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
         <a
-          href={WHATSAPP_URL}
+          href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="group relative flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
@@ -122,7 +127,7 @@ export default function WhatsAppButton() {
 
       {/* WhatsApp FAB */}
       <a
-        href={WHATSAPP_URL}
+        href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="group relative flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"

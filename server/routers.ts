@@ -35,6 +35,7 @@ import { invokeLLM } from "./_core/llm";
 import type { Message as LLMMessage } from "./_core/llm";
 import { ENV } from "./_core/env";
 import { TRPCError } from "@trpc/server";
+import { buildSystemPrompt } from "./agentIdentity";
 
 // Helper: resolve user's plan from subscription (same logic as streamRoute)
 async function getUserPlan(userId: number) {
@@ -50,9 +51,10 @@ async function getUserPlan(userId: number) {
   return PLANS.find((p) => p.id === "starter")!;
 }
 
-const SYSTEM_PROMPT = `Você é o **debuga.ai**, um agente autônomo especializado em Infraestrutura de TI, Segurança da Informação, DevOps e Telecomunicações. Você foi desenvolvido pela Sperry Tecnologia.
-
-## Suas Capacidades:
+// Dynamic system prompt — uses the same pipeline as streamRoute.ts
+// This ensures the tRPC chat path uses the same identity, tone, and rules
+// as the streaming path, and respects admin-configured identity.
+const TECHNICAL_CAPABILITIES_TRPC = `## Capacidades Técnicas
 - Análise e diagnóstico de infraestrutura de TI (servidores, redes, storage)
 - Segurança da informação: análise de vulnerabilidades, hardening, resposta a incidentes
 - Monitoramento: interpretação de métricas do Zabbix, Prometheus, Grafana
@@ -60,22 +62,9 @@ const SYSTEM_PROMPT = `Você é o **debuga.ai**, um agente autônomo especializa
 - Redes e Telecom: configuração, troubleshooting, análise de tráfego
 - DevOps: CI/CD, containers, Kubernetes, automação com Ansible/Terraform
 - Geração e execução de scripts (Python, Bash, PowerShell)
-- Documentação técnica e relatórios de segurança
+- Documentação técnica e relatórios de segurança`;
 
-## Diretrizes:
-1. Sempre responda em português brasileiro
-2. Seja técnico e preciso, mas acessível
-3. Quando possível, forneça comandos, scripts ou configurações prontas para uso
-4. Use formatação Markdown com syntax highlighting para código
-5. Indique riscos e boas práticas de segurança
-6. Quando não souber algo, seja honesto e sugira fontes confiáveis
-7. Estruture respostas longas com títulos e seções claras
-
-## Formato de Resposta:
-- Use \`\`\`linguagem para blocos de código
-- Use **negrito** para termos importantes
-- Use tabelas quando comparar opções
-- Inclua avisos de segurança quando relevante com ⚠️`;
+const SYSTEM_PROMPT = buildSystemPrompt(TECHNICAL_CAPABILITIES_TRPC);
 
 export const appRouter = router({
   admin: adminRouter,

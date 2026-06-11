@@ -176,6 +176,14 @@ export function getPublicUrl(key: string): string {
 }
 
 /**
+ * Alias for getPublicUrl — resolves a storage key to an accessible URL.
+ * Used by streamRoute for image attachments.
+ */
+export function getInternalUrl(key: string): string {
+  return getPublicUrl(key);
+}
+
+/**
  * Upload data to S3/MinIO.
  * Returns { key, url, publicUrl } where:
  * - key: the storage key

@@ -8,6 +8,7 @@ import { router, protectedProcedure } from "./_core/trpc";
 import * as db from "./db";
 import { hashPassword, validatePassword } from "./localAuth";
 import { getAllConfiguredProviders, getCapabilitySummary } from "./capabilityRouter";
+import { invalidateBrandingCache } from "./branding";
 import { getLearningStats, getCapabilityUsageStats, getProviderPerformanceStats } from "./learningMemory";
 import { isImageGenerationAvailable, getImageProviderInfo } from "./imageProvider";
 import { isVideoGenerationAvailable, getVideoProviderInfo } from "./videoProvider";
@@ -97,7 +98,17 @@ export const adminRouter = router({
         },
       };
 
+      // Also save agentName and niche/domain if provided
+      if (kvMap.agent_name) (dbData as any).agentName = kvMap.agent_name;
+      if (kvMap.agent_domain) (dbData as any).niche = kvMap.agent_domain;
+      if (kvMap.welcome_message) (dbData as any).welcomeMessage = kvMap.welcome_message;
+      if (kvMap.github_url) {
+        (dbData as any).institutionalLinks = { ...(dbData.institutionalLinks as any || {}), githubUrl: kvMap.github_url };
+      }
+
       const result = await db.upsertAppSettings(dbData);
+      // Invalidate branding cache so frontend picks up changes immediately
+      invalidateBrandingCache();
       await db.createAuditLog({
         userId: ctx.user.id,
         action: "update_settings",
@@ -130,6 +141,7 @@ export const adminRouter = router({
     }))
     .mutation(async ({ input, ctx }) => {
       const result = await db.upsertAppSettings(input);
+      invalidateBrandingCache();
       await db.createAuditLog({
         userId: ctx.user.id,
         action: "update_settings",

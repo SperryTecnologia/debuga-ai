@@ -110,6 +110,7 @@ import { Streamdown } from "streamdown";
 import type { MermaidConfig } from "mermaid";
 import MessageWithMermaid from "@/components/MessageWithMermaid";
 import { toast } from "sonner";
+import { useBranding, getWhatsAppUrl } from "@/contexts/BrandingContext";
 
 // Mermaid dark theme aligned to debuga.ai brand
 const MERMAID_CONFIG: MermaidConfig = {
@@ -142,9 +143,7 @@ const MERMAID_CONFIG: MermaidConfig = {
   fontSize: 12,
 };
 
-const LOGO_ICON =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga-logo-v2-A2P25ZnkFwTU2RkRjz85nk.webp";
-const AVATAR_AGENT = LOGO_ICON;
+// LOGO_ICON and AVATAR_AGENT are now dynamic via useBranding()
 
 type ChatMessage = {
   id: number;
@@ -839,15 +838,15 @@ Não sugira exploração, brute force, bypass ou ataque. Apenas defesa e hardeni
     icon: SearchCheck,
     title: "Auditor de Domínio",
     visible: false,
-    displayMessage: "Faça uma auditoria externa do domínio debuga.ai.",
-    prompt: "Faça uma auditoria externa e passiva do domínio debuga.ai. Analise DNS público, registros A/AAAA, MX, TXT, SPF, DMARC, NS, SSL/TLS e headers HTTP quando disponíveis. Organize em pontos positivos, pontos de atenção, recomendações e conclusão executiva. Não execute varredura invasiva. Se alguma consulta falhar, continue com os dados disponíveis e trate como ponto de atenção.",
+    displayMessage: "Faça uma auditoria externa do domínio da empresa.",
+    prompt: "Faça uma auditoria externa e passiva do domínio principal da empresa. Analise DNS público, registros A/AAAA, MX, TXT, SPF, DMARC, NS, SSL/TLS e headers HTTP quando disponíveis. Organize em pontos positivos, pontos de atenção, recomendações e conclusão executiva. Não execute varredura invasiva. Se alguma consulta falhar, continue com os dados disponíveis e trate como ponto de atenção.",
     description: "Analisa DNS, e-mail, SSL e postura externa",
   },
   {
     icon: ImageIcon,
     title: "Gerar Diagrama",
     description: "Cria diagramas técnicos de rede, segurança e infraestrutura",
-    displayMessage: "Gerar um diagrama técnico profissional de infraestrutura com cenário sugerido pelo debuga.ai.",
+    displayMessage: "Gerar um diagrama técnico profissional de infraestrutura com cenário sugerido pela IA.",
     prompt: `Você é um arquiteto de infraestrutura sênior com 15+ anos de experiência em projetos corporativos de grande porte. Sua tarefa é gerar um diagrama técnico PREMIUM de rede/infraestrutura usando o formato diagram-spec JSON, com qualidade de documentação vendável para cliente corporativo.
 
 REGRA OBRIGATÓRIA: Sempre responda com um diagrama no bloco \`\`\`diagram-spec contendo JSON válido. NUNCA use \`\`\`mermaid. NUNCA tente gerar imagem. NUNCA use a ferramenta generate_image. O formato é SEMPRE diagram-spec JSON.
@@ -1015,7 +1014,7 @@ REGRAS FINAIS INVIOLÁVEIS:
     icon: Globe,
     title: "Navegar em Site",
     visible: false,
-    displayMessage: "Analise a página debuga.ai/demo/web-analysis.",
+    displayMessage: "Analise uma página web de demonstração.",
     prompt: "Analise a página https://debuga.ai/demo/web-analysis. Tente acessar a URL com a ferramenta web_fetch. Se conseguir, apresente os dados reais extraídos. Se a ferramenta falhar, apresente uma análise baseada no que você sabe sobre a página.",
     description: "Análise completa de página web com status e resumo",
   },
@@ -1172,6 +1171,9 @@ function UserMessageContent({ msg, onImageClick }: { msg: ChatMessage; onImageCl
 
 export default function ChatPage() {
   const { user, loading: authLoading, logout } = useAuth();
+  const { appName: brandAppName, logoUrl: brandLogoUrl, supportWhatsapp: brandWhatsapp, companyName: brandCompany, description: brandDescription } = useBranding();
+  const LOGO_ICON = brandLogoUrl || "";
+  const AVATAR_AGENT = LOGO_ICON;
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -1310,7 +1312,7 @@ export default function ChatPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "success") {
-      toast.success("Assinatura ativada com sucesso! Bem-vindo ao debuga.ai.");
+      toast.success(`Assinatura ativada com sucesso! Bem-vindo ao ${brandAppName}.`);
       window.history.replaceState({}, "", "/chat");
       subQuery.refetch();
     }
@@ -2000,7 +2002,7 @@ export default function ChatPage() {
     return (
       <div className="h-dvh bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <img src={LOGO_ICON} alt="debuga.ai" className="w-16 h-16 rounded-xl animate-pulse" />
+          <img src={LOGO_ICON} alt={brandAppName} className="w-16 h-16 rounded-xl animate-pulse" />
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span className="font-mono text-sm">Inicializando...</span>
@@ -2015,13 +2017,13 @@ export default function ChatPage() {
     return (
       <div className="h-dvh bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-8 max-w-md text-center px-6">
-          <img src={LOGO_ICON} alt="debuga.ai" className="w-20 h-20 rounded-2xl shadow-lg shadow-primary/20" />
+          <img src={LOGO_ICON} alt={brandAppName} className="w-20 h-20 rounded-2xl shadow-lg shadow-primary/20" />
           <div className="space-y-3">
             <h1 className="text-2xl font-bold font-mono text-foreground">
               Entre para acessar o chat
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Faça login para usar o agente autônomo de IA do debuga.ai.
+              Faça login para usar o agente autônomo de IA.
             </p>
           </div>
           <div className="flex flex-col gap-3 w-full">
@@ -2042,7 +2044,7 @@ export default function ChatPage() {
             </Button>
           </div>
           <p className="text-[10px] font-mono text-muted-foreground/40">
-            debuga.ai &mdash; Agente Autônomo de IA
+            {brandAppName} &mdash; {brandDescription}
           </p>
         </div>
       </div>
@@ -2061,7 +2063,7 @@ export default function ChatPage() {
     return (
       <div className="h-dvh bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-8 max-w-md text-center px-6">
-          <img src={LOGO_ICON} alt="debuga.ai" className="w-16 h-16 rounded-2xl shadow-lg" />
+          <img src={LOGO_ICON} alt={brandAppName} className="w-16 h-16 rounded-2xl shadow-lg" />
           <div className="space-y-3">
             <h2 className="text-xl font-bold font-mono text-foreground">
               Verifique seu e-mail
@@ -2097,7 +2099,7 @@ export default function ChatPage() {
     return (
       <div className="h-dvh bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-8 max-w-md text-center px-6">
-          <img src={LOGO_ICON} alt="debuga.ai" className="w-16 h-16 rounded-2xl shadow-lg" />
+          <img src={LOGO_ICON} alt={brandAppName} className="w-16 h-16 rounded-2xl shadow-lg" />
           <div className="space-y-2">
             <h2 className="text-xl font-bold font-mono">Assinatura Necessária</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
@@ -2137,9 +2139,9 @@ export default function ChatPage() {
       )}>
         <div className="h-14 flex items-center justify-between px-3 border-b border-sidebar-border shrink-0">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
-            <img src={LOGO_ICON} alt="debuga.ai" className="w-7 h-7 rounded-lg" />
+            <img src={LOGO_ICON} alt={brandAppName} className="w-7 h-7 rounded-lg" />
             <span className="font-mono font-semibold text-sm text-sidebar-foreground">
-              debuga<span className="text-primary">.ai</span>
+              {brandAppName}
             </span>
           </Link>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent" onClick={() => setSidebarOpen(false)}>
@@ -2541,7 +2543,7 @@ export default function ChatPage() {
                 <ArrowUpCircle className="mr-2 h-4 w-4" />
                 Explorar Planos
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.open("https://wa.me/555137374357?text=Ol%C3%A1!%20Preciso%20de%20suporte%20com%20o%20debuga.ai", "_blank")} className="cursor-pointer">
+              <DropdownMenuItem onClick={() => { const url = getWhatsAppUrl(brandWhatsapp, `Olá! Preciso de suporte com o ${brandAppName}`); if (url) window.open(url, "_blank"); }} className="cursor-pointer">
                 <MessageSquare className="mr-2 h-4 w-4" />
                 Suporte WhatsApp
               </DropdownMenuItem>
@@ -2600,7 +2602,7 @@ export default function ChatPage() {
             })()}
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[10px] font-mono text-muted-foreground/50 hidden sm:inline">debuga.ai v3.0</span>
+            <span className="text-[10px] font-mono text-muted-foreground/50 hidden sm:inline">{brandAppName}</span>
           </div>
         </div>
 
@@ -2611,8 +2613,8 @@ export default function ChatPage() {
               <div className="max-w-xl w-full space-y-5">
                 {/* Minimal branding */}
                 <div className="text-center space-y-1.5">
-                  <img src={AVATAR_AGENT} alt="debuga.ai" className="w-10 h-10 rounded-lg mx-auto opacity-80" />
-                  <h2 className="text-sm font-bold font-mono text-primary">debuga.ai</h2>
+                  <img src={AVATAR_AGENT} alt={brandAppName} className="w-10 h-10 rounded-lg mx-auto opacity-80" />
+                  <h2 className="text-sm font-bold font-mono text-primary">{brandAppName}</h2>
                   <p className="text-xs text-muted-foreground">Digite seu problema e eu resolvo.</p>
                 </div>
 
@@ -2623,7 +2625,7 @@ export default function ChatPage() {
                   const userPlan = usageQuery.data?.planId || "free";
                   const userName = user?.name || "Usuário";
                   const userEmail = user?.email || "";
-                  const WHATSAPP_NUM = "555137374357";
+                  const WHATSAPP_NUM = brandWhatsapp || "";
 
                   const buildWhatsAppUrl = (plan: string) => {
                     const planLabel = plan === "enterprise" ? "Enterprise" : "Pro";
@@ -2688,7 +2690,7 @@ export default function ChatPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-mono font-medium text-foreground">
-                          {msg.role === "assistant" ? "debuga.ai" : user?.name || "Você"}
+                          {msg.role === "assistant" ? brandAppName : user?.name || "Você"}
                         </span>
                         <span className="text-[10px] text-muted-foreground/50 font-mono">
                           {msg.createdAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
@@ -2748,7 +2750,7 @@ export default function ChatPage() {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono font-medium text-foreground">debuga.ai</span>
+                      <span className="text-xs font-mono font-medium text-foreground">{brandAppName}</span>
                       <span className="text-[10px] text-primary/60 font-mono agent-pulse">gerando...</span>
                     </div>
                     <div className="prose prose-sm prose-invert max-w-none prose-pre:bg-[oklch(0.06_0.005_240)] prose-pre:border prose-pre:border-border prose-code:text-primary prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary">

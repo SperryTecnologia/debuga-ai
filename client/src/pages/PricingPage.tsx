@@ -17,9 +17,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-const LOGO_ICON =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310419663032143822/JiyqPBx8bCsA9W2jSDpwkK/debuga-logo-v2-A2P25ZnkFwTU2RkRjz85nk.webp";
+import { useBranding, getWhatsAppUrl } from "@/contexts/BrandingContext";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
@@ -146,6 +144,7 @@ function getSavingsPercent(monthly: number, yearly: number): number {
 
 export default function PricingPage() {
   const { user, loading: authLoading } = useAuth();
+  const { appName, logoUrl, supportWhatsapp } = useBranding();
   const [, setLocation] = useLocation();
   const search = useSearch();
   const [interval, setInterval] = useState<"monthly" | "yearly">("monthly");
@@ -174,12 +173,9 @@ export default function PricingPage() {
     }
 
     if (planId === "enterprise") {
-      const msg = encodeURIComponent(
-        "Olá! Tenho interesse no plano Enterprise do debuga.ai. " +
-        "Gostaria de saber mais sobre API dedicada com SLA, integrações avançadas (NetBox, CMDB, SSO/SAML/LDAP) " +
-        "e treinamento para minha equipe. Podem me ajudar?"
-      );
-      window.open(`https://wa.me/555137374357?text=${msg}`, "_blank");
+      const enterpriseMsg = `Olá! Tenho interesse no plano Enterprise do ${appName}. Gostaria de saber mais sobre API dedicada com SLA, integrações avançadas (NetBox, CMDB, SSO/SAML/LDAP) e treinamento para minha equipe. Podem me ajudar?`;
+      const url = getWhatsAppUrl(supportWhatsapp, enterpriseMsg);
+      if (url) window.open(url, "_blank");
       toast.info("Redirecionando para o WhatsApp da equipe comercial...");
       return;
     }
@@ -242,9 +238,9 @@ export default function PricingPage() {
             </Button>
           </div>
           <div className="flex items-center gap-3">
-            <img src={LOGO_ICON} alt="debuga.ai" className="w-7 h-7 rounded-lg" />
+            {logoUrl && <img src={logoUrl} alt={appName} className="w-7 h-7 rounded-lg" />}
             <span className="font-mono font-bold">
-              debuga<span className="text-primary">.ai</span>
+              {appName}
             </span>
           </div>
           <div className="w-20" />
