@@ -21,6 +21,7 @@ import {
 } from "./db";
 import { AGENT_TOOLS, executeToolCall, type ToolContext } from "./agentTools";
 import { buildSystemPrompt } from "./agentIdentity";
+import { getAgentIdentity } from "./agentIdentityLoader";
 import { PLANS, type Plan } from "./products";
 import type { Tool, ToolCall } from "./_core/llm";
 import { resolveChatCompletionsUrl } from "./_core/llmUrl";
@@ -145,7 +146,9 @@ const BASE_SYSTEM_PROMPT = buildSystemPrompt(TECHNICAL_CAPABILITIES);
 // Dynamically build system prompt with admin-configured instructions and knowledge base
 // (Legacy path — used when capability routing is DISABLED)
 async function buildDynamicSystemPrompt(): Promise<string> {
-  let prompt = BASE_SYSTEM_PROMPT;
+  // Load dynamic identity from database (cached, with fallback to defaults)
+  const identity = await getAgentIdentity();
+  let prompt = buildSystemPrompt(TECHNICAL_CAPABILITIES, identity);
 
   // Inject current date/time (NEVER use placeholders like strftime or {{ }})
   prompt += `\n\n## Informações Temporais:\n${getCurrentDateForPrompt()}\nSempre use esta data/hora real ao responder perguntas sobre data, hora ou dia da semana. NUNCA use placeholders, variáveis de template ou código como strftime.\n`;
@@ -1307,9 +1310,11 @@ export function registerStreamRoute(app: Express) {
       let systemPrompt: string;
 
       if (isCapabilityRoutingEnabled() && knowledgeContext) {
-        // Use augmented prompt with knowledge context + date/time injection
+        // Use augmented prompt with knowledge context + date/time injection + dynamic identity
+        const identity = await getAgentIdentity();
+        const dynamicBase = buildSystemPrompt(TECHNICAL_CAPABILITIES, identity);
         const dateTimeBlock = `\n\n## Informações Temporais:\n${getCurrentDateForPrompt()}\nSempre use esta data/hora real ao responder perguntas sobre data, hora ou dia da semana. NUNCA use placeholders, variáveis de template ou código como strftime.\n`;
-        const baseWithEnhancement = BASE_SYSTEM_PROMPT + dateTimeBlock + taskTypeEnhancement;
+        const baseWithEnhancement = dynamicBase + dateTimeBlock + taskTypeEnhancement;
 
         // Get active instructions for augmented prompt
         const { getActiveInstructions } = await import("./knowledgeReuse");

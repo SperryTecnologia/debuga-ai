@@ -804,3 +804,11 @@
 - [x] Substituir hardcodes em WhatsAppButton.tsx (número WhatsApp)
 - [x] Corrigir duplicação de prompt: remover SYSTEM_PROMPT estático de routers.ts e usar pipeline dinâmico
 - [x] Gerar relatório final com hardcodes removidos, arquivos alterados e referências restantes
+
+### Bug: Campos vazios no White Label não persistem como NULL
+- [x] Auditar saveSettings/updateSettings: garantir que string vazia → NULL no banco
+- [x] Auditar cache de identidade: invalidar ao salvar settings
+- [x] Garantir fallback debuga.ai/Sperry Tecnologia quando agentName/legalCompanyName forem NULL/vazios
+- [x] Testar fluxo completo: limpar campo → salvar → IA usa fallback
+- [x] Adicionar campos "Nome do Agente" e "Domínio/Especialidade" ao formulário White Label
+- [x] Testes unitários (10 testes passando)

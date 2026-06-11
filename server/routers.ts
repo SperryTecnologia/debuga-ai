@@ -36,6 +36,7 @@ import type { Message as LLMMessage } from "./_core/llm";
 import { ENV } from "./_core/env";
 import { TRPCError } from "@trpc/server";
 import { buildSystemPrompt } from "./agentIdentity";
+import { getAgentIdentity } from "./agentIdentityLoader";
 
 // Helper: resolve user's plan from subscription (same logic as streamRoute)
 async function getUserPlan(userId: number) {
@@ -64,7 +65,11 @@ const TECHNICAL_CAPABILITIES_TRPC = `## Capacidades Técnicas
 - Geração e execução de scripts (Python, Bash, PowerShell)
 - Documentação técnica e relatórios de segurança`;
 
-const SYSTEM_PROMPT = buildSystemPrompt(TECHNICAL_CAPABILITIES_TRPC);
+// Build system prompt dynamically per-request to use admin-configured identity
+async function getSystemPrompt(): Promise<string> {
+  const identity = await getAgentIdentity();
+  return buildSystemPrompt(TECHNICAL_CAPABILITIES_TRPC, identity);
+}
 
 export const appRouter = router({
   admin: adminRouter,
@@ -366,7 +371,7 @@ export const appRouter = router({
 
         // Build LLM messages
         const llmMessages: LLMMessage[] = [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: await getSystemPrompt() },
           ...fullHistory.map((m) => ({
             role: m.role as "user" | "assistant" | "system",
             content: m.content,

@@ -10,6 +10,8 @@ import { toast } from "sonner";
 type WhiteLabelSettings = {
   // Identidade
   app_name: string;
+  agent_name: string;
+  agent_domain: string;
   app_description: string;
   // Legal
   legal_company_name: string;
@@ -30,6 +32,8 @@ type WhiteLabelSettings = {
 
 const defaults: WhiteLabelSettings = {
   app_name: "debuga.ai",
+  agent_name: "",
+  agent_domain: "",
   app_description: "Agente Autônomo de IA para Análise de Segurança",
   legal_company_name: "",
   legal_cnpj: "",
@@ -125,6 +129,28 @@ export default function AdminWhiteLabel() {
               <p className="text-xs text-muted-foreground mt-1">Exibido no título do navegador e interface</p>
             </div>
             <div>
+              <label className="text-sm font-medium">Nome do Agente</label>
+              <Input
+                value={form.agent_name}
+                onChange={(e) => handleChange("agent_name", e.target.value)}
+                placeholder="debuga.ai"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                A IA dirá: "Sou o <strong>{form.agent_name || "debuga.ai"}</strong>, agente técnico da..."
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Domínio / Especialidade</label>
+              <Input
+                value={form.agent_domain}
+                onChange={(e) => handleChange("agent_domain", e.target.value)}
+                placeholder="Infraestrutura de TI, Segurança da Informação, DevOps"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                A IA dirá: "...especializado em <strong>{form.agent_domain || "Infraestrutura de TI, Segurança da Informação, DevOps"}</strong>"
+              </p>
+            </div>
+            <div>
               <label className="text-sm font-medium">Descrição</label>
               <Textarea
                 value={form.app_description}
@@ -160,7 +186,9 @@ export default function AdminWhiteLabel() {
                 onChange={(e) => handleChange("legal_company_name", e.target.value)}
                 placeholder="Empresa Ltda."
               />
-              <p className="text-xs text-muted-foreground mt-1">Exibido nos Termos de Uso e Política de Privacidade</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Exibido nos Termos de Uso e Política de Privacidade. A IA dirá: "...agente técnico da <strong>{form.legal_company_name || "Sperry Tecnologia"}</strong>"
+              </p>
             </div>
             <div>
               <label className="text-sm font-medium">CNPJ</label>

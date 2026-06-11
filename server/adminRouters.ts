@@ -9,6 +9,7 @@ import * as db from "./db";
 import { hashPassword, validatePassword } from "./localAuth";
 import { getAllConfiguredProviders, getCapabilitySummary } from "./capabilityRouter";
 import { invalidateBrandingCache } from "./branding";
+import { invalidateIdentityCache } from "./agentIdentityLoader";
 import { getLearningStats, getCapabilityUsageStats, getProviderPerformanceStats } from "./learningMemory";
 import { isImageGenerationAvailable, getImageProviderInfo } from "./imageProvider";
 import { isVideoGenerationAvailable, getVideoProviderInfo } from "./videoProvider";
@@ -44,6 +45,8 @@ export const adminRouter = router({
       // Map DB columns to key-value pairs for frontend
       const keyMap: Record<string, string> = {
         app_name: settings.appName || "",
+        agent_name: settings.agentName || "",
+        agent_domain: settings.niche || "",
         app_description: settings.landingSubtitle || "",
         legal_company_name: settings.legalCompanyName || "",
         legal_cnpj: (settings.institutionalLinks as any)?.cnpj || "",
@@ -80,35 +83,38 @@ export const adminRouter = router({
         kvMap[s.key] = s.value;
       }
 
+      // Helper: convert empty string to null for DB persistence
+      const emptyToNull = (val: string | undefined): string | null => {
+        if (val === undefined) return null;
+        return val.trim() === "" ? null : val.trim();
+      };
+
       const dbData: Partial<typeof import("../drizzle/schema").appSettings.$inferInsert> = {
-        appName: kvMap.app_name || undefined,
-        landingSubtitle: kvMap.app_description || undefined,
-        legalCompanyName: kvMap.legal_company_name || undefined,
-        supportEmail: kvMap.support_email || undefined,
-        supportWhatsapp: kvMap.support_whatsapp || undefined,
-        primaryColor: kvMap.primary_color || undefined,
-        logoUrl: kvMap.logo_url || undefined,
-        faviconUrl: kvMap.favicon_url || undefined,
-        termsUrl: kvMap.terms_url || undefined,
-        privacyUrl: kvMap.privacy_url || undefined,
+        appName: emptyToNull(kvMap.app_name),
+        agentName: emptyToNull(kvMap.agent_name),
+        niche: emptyToNull(kvMap.agent_domain),
+        landingSubtitle: emptyToNull(kvMap.app_description),
+        legalCompanyName: emptyToNull(kvMap.legal_company_name),
+        supportEmail: emptyToNull(kvMap.support_email),
+        supportWhatsapp: emptyToNull(kvMap.support_whatsapp),
+        primaryColor: emptyToNull(kvMap.primary_color),
+        logoUrl: emptyToNull(kvMap.logo_url),
+        faviconUrl: emptyToNull(kvMap.favicon_url),
+        termsUrl: emptyToNull(kvMap.terms_url),
+        privacyUrl: emptyToNull(kvMap.privacy_url),
+        welcomeMessage: emptyToNull(kvMap.welcome_message),
         institutionalLinks: {
           cnpj: kvMap.legal_cnpj || "",
           footerText: kvMap.footer_text || "",
           customCss: kvMap.custom_css || "",
+          githubUrl: kvMap.github_url || "",
         },
       };
 
-      // Also save agentName and niche/domain if provided
-      if (kvMap.agent_name) (dbData as any).agentName = kvMap.agent_name;
-      if (kvMap.agent_domain) (dbData as any).niche = kvMap.agent_domain;
-      if (kvMap.welcome_message) (dbData as any).welcomeMessage = kvMap.welcome_message;
-      if (kvMap.github_url) {
-        (dbData as any).institutionalLinks = { ...(dbData.institutionalLinks as any || {}), githubUrl: kvMap.github_url };
-      }
-
       const result = await db.upsertAppSettings(dbData);
-      // Invalidate branding cache so frontend picks up changes immediately
+      // Invalidate both branding and identity caches so changes take effect immediately
       invalidateBrandingCache();
+      invalidateIdentityCache();
       await db.createAuditLog({
         userId: ctx.user.id,
         action: "update_settings",
@@ -139,9 +145,16 @@ export const adminRouter = router({
       termsUrl: z.string().url().optional().or(z.literal("")),
       privacyUrl: z.string().url().optional().or(z.literal("")),
     }))
-    .mutation(async ({ input, ctx }) => {
-      const result = await db.upsertAppSettings(input);
+     .mutation(async ({ input, ctx }) => {
+      // Convert empty strings to null for proper DB persistence
+      const cleaned: Record<string, any> = {};
+      for (const [key, val] of Object.entries(input)) {
+        if (val === undefined) continue;
+        cleaned[key] = typeof val === "string" && val.trim() === "" ? null : val;
+      }
+      const result = await db.upsertAppSettings(cleaned);
       invalidateBrandingCache();
+      invalidateIdentityCache();
       await db.createAuditLog({
         userId: ctx.user.id,
         action: "update_settings",
@@ -152,7 +165,6 @@ export const adminRouter = router({
       });
       return result;
     }),
-
   // ── AI Instructions ──
   listInstructions: adminProcedure
     .input(z.object({ onlyActive: z.boolean().optional() }).optional())
