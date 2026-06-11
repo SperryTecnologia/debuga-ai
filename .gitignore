@@ -1,27 +1,74 @@
-# OS
+# ═══════════════════════════════════════════════════════════
+# .gitignore — debuga.ai (repositório público / vitrine)
+# ═══════════════════════════════════════════════════════════
+
+# ── OS ──
 .DS_Store
 Thumbs.db
-
-# Editor
-.vscode/
-.idea/
 *.swp
 *.swo
+*~
 
-# Environment
+# ── Editor / IDE ──
+.vscode/
+.idea/
+*.code-workspace
+
+# ── Environment & Secrets ──
 .env
 .env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.cert
 
-# Node
+# ── Node / Dependencies ──
 node_modules/
-dist/
 pnpm-lock.yaml
+package-lock.json
+yarn.lock
 
-# Internal tooling
-.manus/
-.manus-logs/
-.manus-db/
-todo.md
-
-# Build artifacts
+# ── Build Artifacts ──
+dist/
+build/
+.next/
+out/
 *.tsbuildinfo
+
+# ── Coverage & Tests ──
+coverage/
+.nyc_output/
+*.lcov
+
+# ── Logs ──
+*.log
+logs/
+.manus-logs/
+
+# ── Internal Tooling ──
+.manus/
+.manus-db/
+
+# ── Uploads / Storage / Temp ──
+uploads/
+storage/
+tmp/
+temp/
+
+# ── Database ──
+*.sql.dump
+*.sqlite
+*.db
+
+# ── Internal Dev Notes ──
+todo.md
+TODO.md
+
+# ── Internal Reports (não públicos) ──
+docs/RELATORIO_*
+docs/AUDITORIA_*
+
+# ── Docker (se aplicável) ──
+docker-compose.override.yml
