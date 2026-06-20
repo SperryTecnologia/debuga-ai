@@ -215,7 +215,7 @@ Na seção de Fontes Técnicas, a fonte "httpd" (tipo Apache, apachev2) foi cria
 
 ### Análise de Logs Linux
 
-A fonte "Linux Auth" (tipo Linux, auth.log) foi processada com 23 linhas, 6 erros detectados, 2 IPs e 9 serviços. Tags geradas: `technical_source`, `linux`, `sshd`, `httpd`, `systemd`, `apache`, `apache2`. A Base de Conhecimento exibe o resumo estruturado com detecção de tentativas de brute force ("Failed password for invalid user admin from 177.85.120.45").
+A fonte "Linux Auth" (tipo Linux, auth.log) foi processada com 23 linhas, 6 erros detectados, 2 IPs e 9 serviços. Tags geradas: `technical_source`, `linux`, `sshd`, `httpd`, `systemd`, `apache`, `apache2`. A Base de Conhecimento exibe o resumo estruturado com detecção de tentativas de brute force ("Failed password for invalid user admin from 203.0.113.45").
 
 ### Investigação de Incidentes
 
