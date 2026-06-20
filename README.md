@@ -61,7 +61,7 @@ graph LR
     <td align="center" width="50%">
       <img src="docs/screenshots/02-chat-diagrama.png" alt="Geração de Diagramas" /><br />
       <strong>Geração de Diagramas</strong><br />
-      <sub>Diagramas Mermaid gerados e renderizados inline a partir de linguagem natural.</sub>
+      <sub>Diagramas de infraestrutura gerados por IA e renderizados com visualização interativa.</sub>
     </td>
   </tr>
   <tr>
