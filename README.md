@@ -59,9 +59,9 @@ graph LR
       <sub>Interface conversacional com streaming, entrada multimodal (texto, voz, arquivos) e histórico persistente.</sub>
     </td>
     <td align="center" width="50%">
-      <img src="docs/screenshots/02-chat-diagrama.png" alt="Geração de Diagramas" /><br />
-      <strong>Geração de Diagramas</strong><br />
-      <sub>Diagramas de infraestrutura gerados por IA e renderizados com visualização interativa.</sub>
+      <img src="docs/screenshots/02-white-label.png" alt="White Label" /><br />
+      <strong>White Label</strong><br />
+      <sub>Plataforma totalmente white label com personalização de identidade visual, branding da IA, domínio, suporte, LGPD e CSS customizado.</sub>
     </td>
   </tr>
   <tr>
