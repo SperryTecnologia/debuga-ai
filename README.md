@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://debuga.ai">Plataforma</a> · <a href="docs/WHITEPAPER_PTBR.md">Whitepaper</a> · <a href="docs/ARCHITECTURE_PTBR.md">Arquitetura</a> · <a href="docs/ROADMAP.md">Roadmap</a>
+  <a href="https://debuga.ai">Plataforma</a> · <a href="docs/WHITEPAPER_PTBR.md">Whitepaper</a> · <a href="docs/ARCHITECTURE_PTBR.md">Arquitetura</a> · <a href="docs/ROADMAP.md">Roadmap</a> · <a href="docs/USE_CASES.md">Casos de Uso</a>
 </p>
 
 ---
@@ -45,6 +45,7 @@ graph LR
 | DevOps e SRE | Automação de infraestrutura, troubleshooting |
 | Consultorias de TI | Ferramenta interna de produtividade técnica |
 | Telecomunicações | Configuração de equipamentos, análise de topologia |
+| Setor público e cartórios | Suporte técnico especializado com dados isolados |
 
 ---
 
@@ -356,6 +357,45 @@ flowchart LR
 | [Providers](docs/PROVIDERS_OVERVIEW.md) | Providers de IA suportados |
 | [White Label](docs/WHITE_LABEL_OVERVIEW.md) | Modelo de implantação |
 | [Segurança](docs/SECURITY_OVERVIEW.md) | Políticas de segurança |
+| [Casos de Uso](docs/USE_CASES.md) | Cenários de aplicação |
+
+---
+
+## Screenshots
+
+> As screenshots serão adicionadas conforme o [Guia de Screenshots](docs/public/SCREENSHOT_GUIDE.md).
+
+| Tela | Descrição |
+|------|-----------|
+| Chat principal | Conversa com diagnóstico técnico em tempo real |
+| Diagramas | Geração de diagramas Mermaid inline |
+| Knowledge Base | Gestão de conhecimento operacional |
+| Admin Dashboard | Métricas e gestão de usuários |
+| White Label | Personalização de marca |
+
+---
+
+## FAQ
+
+**O debuga.ai substitui a equipe de TI?**
+
+Não. O agente é uma ferramenta de produtividade que auxilia profissionais técnicos, acelerando diagnósticos e automatizando tarefas repetitivas. A decisão final permanece com o operador humano.
+
+**Meus dados ficam seguros?**
+
+Sim. Cada instância opera com dados isolados. O sistema suporta zero-data-retention em providers cloud, inferência local via GPU própria, e criptografia em trânsito e repouso.
+
+**Posso usar com minha própria marca?**
+
+Sim. O modelo white label permite personalização completa: marca, domínio, cores, planos e comportamento do agente.
+
+**Quais modelos de IA são suportados?**
+
+O sistema é agnóstico de provider. Suporta OpenAI (GPT-4o), Anthropic (Claude), Google (Gemini), OpenRouter, e modelos locais via Ollama/vLLM.
+
+**Preciso de GPU?**
+
+Não. A GPU é opcional para inferência local (custo zero por token). O sistema funciona perfeitamente apenas com providers cloud.
 
 ---
 
