@@ -205,4 +205,34 @@ Equipes de monitoramento lidam com grandes volumes de alertas e métricas. O age
 
 ---
 
+## Exemplos Reais Documentados
+
+Os cenários abaixo foram extraídos de sessões reais da plataforma em produção, conforme evidenciado nas capturas de tela do sistema.
+
+### Análise de Logs Apache
+
+Na seção de Fontes Técnicas, a fonte "httpd" (tipo Apache, apachev2) foi criada com upload de `apache-error.log`. O sistema processou automaticamente o arquivo, identificando 8 erros detectados, 7 IPs distintos, 3 serviços envolvidos. Tags semânticas geradas: `technical_source`, `apache`, `httpd`, `mysql`, `has_errors`, `multi_host`. Conversas como "Erros Apache logados?" e "Problemas no log Apache" demonstram consultas reais sobre esse conteúdo.
+
+### Análise de Logs Linux
+
+A fonte "Linux Auth" (tipo Linux, auth.log) foi processada com 23 linhas, 6 erros detectados, 2 IPs e 9 serviços. Tags geradas: `technical_source`, `linux`, `sshd`, `httpd`, `systemd`, `apache`, `apache2`. A Base de Conhecimento exibe o resumo estruturado com detecção de tentativas de brute force ("Failed password for invalid user admin from 177.85.120.45").
+
+### Investigação de Incidentes
+
+O log de Auditoria registra 84 eventos administrativos com rastreabilidade completa: ações de `login_local`, `register_local`, `email_verified`, `admin_user_deleted`, `update_settings`. Cada evento inclui timestamp, entidade afetada, admin responsável e IP de origem — permitindo reconstrução de timeline de incidentes.
+
+### Geração de Diagramas
+
+Conversas como "Diagrama de Rede" e "Diagrama" demonstram o uso real da capacidade de geração de diagramas (network_diagram, architecture_diagram, flowchart_diagram). O orquestrador roteia automaticamente para o provider Gemini com gemini-2.5-flash, gerando diagramas Mermaid renderizados inline.
+
+### Base de Conhecimento Corporativa
+
+A Base de Conhecimento em produção contém 2 itens indexados com RAG ativo, demonstrando o ciclo completo: upload de fonte técnica → processamento → geração de resumo → indexação com tags → disponibilização para consulta contextual durante o chat.
+
+### Observabilidade Operacional
+
+Os Logs IA registram 239 chamadas com detalhamento completo: provider `local_gpu` com modelo `qwen2.5:7b-instruct` para chat_text (latência 1.1s–27.2s), provider `openai_image` com `gpt-image-1` para image_generation (latência 19.6s, custo $0.04), provider `gemini` com `gemini-2.5-flash` para network_diagram (latência 13.2s–15.4s). O painel de Configuração do Agente mostra métricas consolidadas: 8 chamadas nos últimos 7 dias, 0 erros, 0 fallbacks, tempo médio de 6835ms.
+
+---
+
 *Sperry Tecnologia — Junho 2026*

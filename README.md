@@ -324,7 +324,7 @@ flowchart LR
 | Billing com Stripe | **Produção** |
 | White label com marca própria | **Produção** |
 | Auditoria e logs estruturados | **Produção** |
-| Integração Zabbix/Grafana/Prometheus | Em desenvolvimento |
+| Integração Zabbix/Grafana/Prometheus | Planejado |
 | Embeddings vetoriais para RAG semântico | Em desenvolvimento |
 | WhatsApp Business | Planejado |
 | SSO/SAML | Planejado |
@@ -361,17 +361,58 @@ flowchart LR
 
 ---
 
-## Screenshots
+## Interface do Produto
 
-> As screenshots serão adicionadas conforme o [Guia de Screenshots](docs/public/SCREENSHOT_GUIDE.md).
+A debuga.ai apresenta uma interface conversacional especializada com tema escuro e acentos em verde. O chat principal oferece histórico persistente, busca, entrada por voz, drag-and-drop de arquivos e atalhos rápidos para diagramas e segurança. O status de conexão e versão são exibidos em tempo real.
 
-| Tela | Descrição |
-|------|-----------|
-| Chat principal | Conversa com diagnóstico técnico em tempo real |
-| Diagramas | Geração de diagramas Mermaid inline |
-| Knowledge Base | Gestão de conhecimento operacional |
-| Admin Dashboard | Métricas e gestão de usuários |
-| White Label | Personalização de marca |
+| Tela | Funcionalidade Principal |
+|------|-------------------------|
+| Chat principal | Conversa com diagnóstico técnico, streaming SSE, entrada multimodal |
+| Histórico | Sidebar com busca, títulos automáticos, conversas arquivadas |
+| Atalhos | Ctrl+V/Drag para logs, botão de voz, diagramas, segurança |
+
+---
+
+## Painel Administrativo
+
+O painel admin oferece 14 seções de gestão com métricas em tempo real, controle de providers, observabilidade completa e governança centralizada.
+
+| Seção | Funcionalidade |
+|-------|---------------|
+| Visão Geral | KPIs consolidados (usuários, conversas, mensagens, chamadas LLM) + status do sistema |
+| White Label | Identidade da IA, visual, dados legais, suporte, CSS customizado |
+| Instruções IA | Regras de comportamento e personalidade configuráveis |
+| Base de Conhecimento | RAG ativo — itens indexados com tags, busca e CRUD completo |
+| Modelos / Providers | GPU local (Ollama) + 5 providers cloud com teste integrado |
+| Logs IA | 239+ registros com provider, modelo, tipo, tokens, tempo e routing |
+| Conversas | Supervisão de todas as conversas com busca e métricas |
+| Usuários | Gestão de contas e controle de acesso |
+| Aprendizado | Ciclo human-in-the-loop para melhoria contínua do RAG |
+| Capacidades | Orquestrador multimodal com 13 tipos de tarefa e feature flags |
+| Assets Gerados | Central de mídia com galeria, custos e rastreabilidade |
+| Fontes Técnicas | Upload e processamento de logs para alimentação do RAG |
+| Config. Agente | Governança de runtime, métricas de uso real dos providers |
+| Auditoria | 84+ eventos com rastreabilidade completa (ação, entidade, admin, IP) |
+
+---
+
+## Fontes Técnicas e Base de Conhecimento
+
+O sistema permite upload de logs e documentação técnica (auth.log, apache-error.log, configurações) que são processados automaticamente, categorizados por tags e disponibilizados para o RAG. A Base de Conhecimento exibe resumos estruturados com tags semânticas (linux, sshd, httpd, apache, mysql) e indicador de status do RAG.
+
+---
+
+## Observabilidade
+
+A plataforma oferece observabilidade completa sobre o uso de IA:
+
+| Métrica | Visibilidade |
+|---------|-------------|
+| Chamadas LLM | Provider, modelo, tipo, tokens, tempo, status, routing |
+| Custos | Por geração ($0.04/imagem), acumulado por página |
+| Erros | Último erro com detalhes (ex: 429 quota exceeded) |
+| Fallbacks | Contagem e detecção automática |
+| Auditoria | Ações administrativas com timestamp, entidade e IP |
 
 ---
 
