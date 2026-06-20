@@ -49,6 +49,49 @@ graph LR
 
 ---
 
+## O Produto em 30 Segundos
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/01-chat-principal.png" alt="Chat Principal" /><br />
+      <strong>Chat com IA Especializada</strong><br />
+      <sub>Interface conversacional com streaming, entrada multimodal (texto, voz, arquivos) e histórico persistente.</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/02-chat-diagrama.png" alt="Geração de Diagramas" /><br />
+      <strong>Geração de Diagramas</strong><br />
+      <sub>Diagramas Mermaid gerados e renderizados inline a partir de linguagem natural.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/03-painel-admin.png" alt="Painel Administrativo" /><br />
+      <strong>Painel Administrativo</strong><br />
+      <sub>Dashboard com KPIs em tempo real: usuários, conversas, mensagens e chamadas LLM.</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/04-providers.png" alt="Providers LLM" /><br />
+      <strong>Multi-Provider LLM</strong><br />
+      <sub>5 providers configuráveis (OpenAI, Anthropic, Gemini, Ollama, OpenRouter) com fallback automático.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/05-fontes-tecnicas.png" alt="Fontes Técnicas" /><br />
+      <strong>Fontes Técnicas</strong><br />
+      <sub>Upload e processamento automático de logs (Apache, Linux, Syslog) com extração de metadados.</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/06-logs-ia.png" alt="Logs IA" /><br />
+      <strong>Observabilidade IA</strong><br />
+      <sub>Rastreamento completo de cada chamada: provider, modelo, tokens, latência e custo.</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## Arquitetura de Inferência Multi-Model
 
 A debuga.ai não depende de um único modelo. O sistema utiliza **roteamento inteligente** que seleciona automaticamente o melhor modelo para cada tipo de tarefa, combinando inferência local (GPU) com providers cloud de alta qualidade.
