@@ -363,7 +363,7 @@ graph TB
     subgraph "Monitoramento"
         ZABBIX[Zabbix - Alertas + Métricas]
         GRAFANA[Grafana - Dashboards]
-        PROMETHEUS[Prometheus - Time Series]
+        GRAYLOG[Graylog - Log Management]
     end
 
     subgraph "ITSM"
@@ -387,7 +387,7 @@ graph TB
     DEBUGA[debuga.ai - Agente Autônomo]
     ZABBIX --> DEBUGA
     GRAFANA --> DEBUGA
-    PROMETHEUS --> DEBUGA
+    GRAYLOG --> DEBUGA
     GLPI --> DEBUGA
     OTRS --> DEBUGA
     JIRA --> DEBUGA
@@ -403,7 +403,7 @@ graph TB
 |-----------|--------|------|-------------|
 | **Zabbix** | Em desenvolvimento | Bidirecional | Consulta de alertas, ack automático, correlação |
 | **Grafana** | Em desenvolvimento | Leitura | Visualização de métricas via agente |
-| **Prometheus** | Em desenvolvimento | Leitura | Consulta de time series |
+| **Graylog** | Planejado | Leitura | Análise centralizada de logs e correlação de eventos |
 | **GLPI** | Planejado | Bidirecional | Abertura/atualização de tickets |
 | **WhatsApp Business** | Planejado | Bidirecional | Atendimento via WhatsApp |
 | **Telegram** | Planejado | Bidirecional | Notificações e consultas |

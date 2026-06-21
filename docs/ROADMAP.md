@@ -40,7 +40,7 @@
 | Embeddings vetoriais | pgvector para busca semântica na Knowledge Base |
 | Integração Zabbix | Consulta de alertas e métricas via agente |
 | Integração Grafana | Visualização de dashboards via agente |
-| Integração Prometheus | Consulta de métricas de infraestrutura |
+| Integração Graylog | Análise centralizada de logs e correlação de eventos |
 | Workflows automatizados | Sequências de ações programáveis com triggers |
 
 ---

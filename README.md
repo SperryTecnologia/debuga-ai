@@ -367,7 +367,7 @@ flowchart LR
 | Billing com Stripe | **Produção** |
 | White label com marca própria | **Produção** |
 | Auditoria e logs estruturados | **Produção** |
-| Integração Zabbix/Grafana/Prometheus | Planejado |
+| Integrações (Zabbix, Wazuh, Graylog, NetBox, Grafana, Ansible) | Planejado |
 | Embeddings vetoriais para RAG semântico | Em desenvolvimento |
 | WhatsApp Business | Planejado |
 | SSO/SAML | Planejado |

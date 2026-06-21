@@ -325,7 +325,7 @@ gantt
 | Horizon | Features | Status |
 |---------|----------|--------|
 | **Production** | Conversational agent, network tools, billing, white label, multimodal generation, document upload | Available |
-| **Q1-Q2 2026** | RAG with internal documentation, Zabbix/Grafana/Prometheus integration | In development |
+| **Q1-Q2 2026** | RAG with internal documentation, Zabbix/Grafana/Graylog integration | In development |
 | **Q3-Q4 2026** | Advanced code execution, automated workflows, proactive notifications | Planned |
 | **2027** | Domain-specific fine-tuning, multi-tenant enterprise, integration marketplace | Research |
 

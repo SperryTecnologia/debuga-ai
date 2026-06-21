@@ -328,7 +328,7 @@ gantt
 | Horizonte | Funcionalidades | Status |
 |-----------|----------------|--------|
 | **Produção** | Agente conversacional, ferramentas de rede, billing, white label, geração multimodal, upload de documentos | Disponível |
-| **Q1-Q2 2026** | RAG com documentação interna, integração Zabbix/Grafana/Prometheus | Em desenvolvimento |
+| **Q1-Q2 2026** | RAG com documentação interna, integração Zabbix/Grafana/Graylog | Em desenvolvimento |
 | **Q3-Q4 2026** | Execução de código avançada, workflows automatizados, notificações proativas | Planejado |
 | **2027** | Fine-tuning para domínio técnico, multi-tenant enterprise, marketplace de integrações | Pesquisa |
 

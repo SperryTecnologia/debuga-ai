@@ -166,7 +166,7 @@ Cartórios operam com sistemas legados, certificação digital e requisitos rigo
 
 ---
 
-## 7. Monitoramento (Zabbix, Grafana, Prometheus)
+## 7. Monitoramento (Zabbix, Grafana, Graylog)
 
 ### Contexto
 
@@ -187,7 +187,7 @@ Equipes de monitoramento lidam com grandes volumes de alertas e métricas. O age
 
 > "O Zabbix está gerando alertas de disco em 5 servidores. Analise e priorize."
 
-> "Gere uma query PromQL para monitorar latência P99 do serviço de API."
+> "Gere uma query para monitorar latência P99 do serviço de API no Grafana."
 
 > "Crie um runbook para o alerta 'CPU acima de 90% por mais de 5 minutos'."
 
