@@ -137,7 +137,8 @@ export default function HeroAnimation() {
       ctx.stroke();
     };
 
-    // Data stream lines
+    // Data stream lines with discrete labels
+    const nodeLabels = ["Docs", "API", "SQL", "Logs", "", ""];
     const drawDataStreams = (cx: number, cy: number) => {
       for (let i = 0; i < 6; i++) {
         const angle = (Math.PI * 2 / 6) * i + time * 0.008;
@@ -171,6 +172,15 @@ export default function HeroAnimation() {
         ctx.beginPath();
         ctx.arc(x2, y2, 8, 0, Math.PI * 2);
         ctx.stroke();
+
+        // Discrete label for first 4 nodes
+        if (nodeLabels[i]) {
+          ctx.font = "9px monospace";
+          ctx.fillStyle = `rgba(34,197,94,${nodeAlpha * 0.7})`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+          ctx.fillText(nodeLabels[i], x2, y2 + 12);
+        }
       }
     };
 
@@ -241,7 +251,7 @@ export default function HeroAnimation() {
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="text-center">
           <p className="text-[10px] font-mono text-primary/60 tracking-[0.3em] uppercase">
-            IA + Suporte Humano
+            Operational Intelligence
           </p>
         </div>
       </div>

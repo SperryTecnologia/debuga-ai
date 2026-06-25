@@ -59,9 +59,12 @@ function Router() {
       <Route path={"/privacidade"} component={PrivacyPage} />
 
       {/* Docs routes — redirect to GitHub */}
-      <Route path="/docs/whitepaper">{() => { window.location.href = "https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITEPAPER_PTBR.md"; return null; }}</Route>
-      <Route path="/docs/architecture">{() => { window.location.href = "https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/ARCHITECTURE_PTBR.md"; return null; }}</Route>
-      <Route path="/docs/white-label-enterprise">{() => { window.location.href = "https://github.com/SperryTecnologia/debuga-ai/blob/main/docs/WHITE_LABEL_OVERVIEW.md"; return null; }}</Route>
+      <Route path="/docs/whitepaper">{() => { window.location.href = "https://github.com/SperryTecnologia/debuga-ai-prod/blob/main/docs/WHITEPAPER_PT-BR.md"; return null; }}</Route>
+      <Route path="/docs/architecture">{() => { window.location.href = "https://github.com/SperryTecnologia/debuga-ai-prod/blob/main/docs/ARCHITECTURE_PT-BR.md"; return null; }}</Route>
+      <Route path="/docs/white-label-enterprise">{() => { window.location.href = "https://github.com/SperryTecnologia/debuga-ai-prod/blob/main/docs/WHITE_LABEL_ENTERPRISE.md"; return null; }}</Route>
+      <Route path="/docs/security">{() => { window.location.href = "https://github.com/SperryTecnologia/debuga-ai-prod/blob/main/docs/SECURITY_OVERVIEW.md"; return null; }}</Route>
+      <Route path="/docs/roadmap">{() => { window.location.href = "https://github.com/SperryTecnologia/debuga-ai-prod/blob/main/docs/public/PUBLIC_ROADMAP.md"; return null; }}</Route>
+      <Route path="/docs/connectors">{() => { window.location.href = "https://github.com/SperryTecnologia/debuga-ai-prod/blob/main/docs/public/CONNECTORS_OVERVIEW.md"; return null; }}</Route>
 
       {/* Admin routes */}
       <Route path={"/admin"}>{() => <AdminPage component={AdminDashboard} />}</Route>
